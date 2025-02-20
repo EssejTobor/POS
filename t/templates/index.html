@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Personal Operating System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet" type="text/css" />
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .completed { text-decoration: line-through; color: gray; }
+        .section { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; }
+        #mynetwork { width: 600px; height: 400px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>My Personal Operating System</h1>
+
+    <!-- Message Feedback -->
+    {% if message %}
+    <p style="color: green;">{{ message }}</p>
+    {% endif %}
+
+    <!-- Add Project Form -->
+    <div class="section">
+        <h2>Add New Project</h2>
+        <form method="post" action="/add_project">
+            <label for="name">Project Name:</label>
+            <input type="text" id="name" name="name" required>
+            <button type="submit">Add Project</button>
+        </form>
+    </div>
+
+    <!-- Add Task Form -->
+    <div class="section">
+        <h2>Add New Task</h2>
+        <form method="post" action="/add_task">
+            <label for="project_id">Project:</label>
+            <select id="project_id" name="project_id" required>
+                {% for project in projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endfor %}
+            </select>
+            <br>
+            <label for="name">Task Name:</label>
+            <input type="text" id="name" name="name" required>
+            <br>
+            <label for="priority">Priority:</label>
+            <select id="priority" name="priority">
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+            </select>
+            <br>
+            <label for="learning">Is this a learning task?</label>
+            <input type="checkbox" id="learning" name="learning">
+            <br>
+            <button type="submit">Add Task</button>
+        </form>
+    </div>
+
+    <!-- Projects List -->
+    <div class="section">
+        <h2>Projects</h2>
+        <ul>
+            {% for project in projects %}
+            <li>
+                <strong>{{ project.name }}</strong>
+                <ul>
+                    {% for task in project.tasks %}
+                    <li>{{ task.name }} [{{ task.priority }}] {% if task.learning %}(learning){% endif %}</li>
+                    {% endfor %}
+                </ul>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Tasks List -->
+    <div class="section">
+        <h2>All Tasks Ordered by Priority</h2>
+        <ul>
+            {% for task in tasks %}
+            <li>{{ task.project.name }} - {{ task.name }} [{{ task.priority }}] {% if task.learning %}(learning){% endif %}</li>
+            {% endfor %}
+        </ul>
+    </div>
+<!-- index.html (partial update for the "All Tasks" section) -->
+<div class="section">
+    <h2>All Tasks Ordered by Priority</h2>
+    <ul>
+        {% for task in tasks %}
+        <li class="{% if task.completed %}completed{% endif %}">
+            <form method="post" action="/toggle_complete" style="display: inline;">
+                <input type="hidden" name="task_id" value="{{ task.id }}">
+                <input type="checkbox" name="completed" value="true" {% if task.completed %}checked{% endif %} onchange="this.form.submit()">
+            </form>
+            {{ task.project.name }} - {{ task.name }} [{{ task.priority }}] {% if task.learning %}(learning){% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+
+    <!-- Visualization -->
+    <div class="section">
+        <h2>Visualization</h2>
+        <div id="mynetwork"></div>
+        <script type="text/javascript">
+            var nodes = new vis.DataSet({{ nodes | tojson }});
+            var edges = new vis.DataSet({{ edges | tojson }});
+            var container = document.getElementById('mynetwork');
+            var data = { nodes: nodes, edges: edges };
+            var options = {
+                nodes: {
+                    shape: 'dot',
+                    size: 20,
+                    font: { size: 14 },
+                    color: {
+                        background: function(params) {
+                            return params.group === 'project' ? 'lightblue' : 'lightgreen';
+                        }
+                    }
+                },
+                edges: { arrows: 'to' }
+            };
+            var network = new vis.Network(container, data, options);
+        </script>
+    </div>
+</body>
+</html>
