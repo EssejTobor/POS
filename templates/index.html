@@ -80,25 +80,18 @@
         <h2>All Tasks Ordered by Priority</h2>
         <ul>
             {% for task in tasks %}
-            <li>{{ task.project.name }} - {{ task.name }} [{{ task.priority }}] {% if task.learning %}(learning){% endif %}</li>
+            <li class="{% if task.completed %}completed{% endif %}">
+                <form method="post" action="/toggle_complete" style="display: inline;">
+                    <input type="hidden" name="task_id" value="{{ task.id }}">
+                    <input type="checkbox" name="completed" value="true" {% if task.completed %}checked{% endif %} onchange="this.form.submit()">
+                </form>
+                {{ task.project.name }} - {{ task.name }} [{{ task.priority }}] {% if task.learning %}(learning){% endif %}
+            </li>
             {% endfor %}
         </ul>
     </div>
 <!-- index.html (partial update for the "All Tasks" section) -->
-<div class="section">
-    <h2>All Tasks Ordered by Priority</h2>
-    <ul>
-        {% for task in tasks %}
-        <li class="{% if task.completed %}completed{% endif %}">
-            <form method="post" action="/toggle_complete" style="display: inline;">
-                <input type="hidden" name="task_id" value="{{ task.id }}">
-                <input type="checkbox" name="completed" value="true" {% if task.completed %}checked{% endif %} onchange="this.form.submit()">
-            </form>
-            {{ task.project.name }} - {{ task.name }} [{{ task.priority }}] {% if task.learning %}(learning){% endif %}
-        </li>
-        {% endfor %}
-    </ul>
-</div>
+
 
 
     <!-- Visualization -->
