@@ -3,21 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>My Personal Operating System</title>
+    <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet" type="text/css" />
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .completed { text-decoration: line-through; color: gray; }
-        .section { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; }
-        #mynetwork { width: 600px; height: 400px; border: 1px solid #ccc; }
-    </style>
 </head>
 <body>
     <h1>My Personal Operating System</h1>
 
     <!-- Message Feedback -->
     {% if message %}
-    <p style="color: green;">{{ message }}</p>
+    <p class="message">{{ message }}</p>
     {% endif %}
 
     <!-- Add Project Form -->
@@ -54,11 +49,19 @@
             <label for="learning">Is this a learning task?</label>
             <input type="checkbox" id="learning" name="learning">
             <br>
+            <label for="parent_id">Parent Task (optional):</label>
+            <select id="parent_id" name="parent_id">
+                <option value="">None</option>
+                {% for task in tasks %}
+                <option value="{{ task.id }}">{{ task.project.name }} - {{ task.name }}</option>
+                {% endfor %}
+            </select>
+            <br>
             <button type="submit">Add Task</button>
         </form>
     </div>
 
-    <!-- Projects List -->
+    <!-- Projects List with Hierarchy -->
     <div class="section">
         <h2>Projects</h2>
         <ul>
@@ -66,8 +69,8 @@
             <li>
                 <strong>{{ project.name }}</strong>
                 <ul>
-                    {% for task in project.tasks %}
-                    <li>{{ task.name }} [{{ task.priority }}] {% if task.learning %}(learning){% endif %}</li>
+                    {% for task in project.tasks if task.parent_id is none %}
+                    {{ render_task(task) }}
                     {% endfor %}
                 </ul>
             </li>
@@ -80,8 +83,8 @@
         <h2>All Tasks Ordered by Priority</h2>
         <ul>
             {% for task in tasks %}
-            <li class="{% if task.completed %}completed{% endif %}">
-                <form method="post" action="/toggle_complete" style="display: inline;">
+            <li class="{% if task.completed %}completed{% endif %} {{ task.priority }}">
+                <form method="post" action="/toggle_complete" class="inline-form">
                     <input type="hidden" name="task_id" value="{{ task.id }}">
                     <input type="checkbox" name="completed" value="true" {% if task.completed %}checked{% endif %} onchange="this.form.submit()">
                 </form>
@@ -90,9 +93,6 @@
             {% endfor %}
         </ul>
     </div>
-<!-- index.html (partial update for the "All Tasks" section) -->
-
-
 
     <!-- Visualization -->
     <div class="section">
@@ -107,17 +107,30 @@
                 nodes: {
                     shape: 'dot',
                     size: 20,
-                    font: { size: 14 },
-                    color: {
-                        background: function(params) {
-                            return params.group === 'project' ? 'lightblue' : 'lightgreen';
-                        }
-                    }
+                    font: { size: 14 }
                 },
                 edges: { arrows: 'to' }
             };
             var network = new vis.Network(container, data, options);
         </script>
     </div>
+
+    <!-- Recursive Macro for Task Hierarchy -->
+    {% macro render_task(task, level=0) %}
+    <li style="margin-left: {{ level * 20 }}px;" class="{% if task.completed %}completed{% endif %} {{ task.priority }}">
+        <form method="post" action="/toggle_complete" class="inline-form">
+            <input type="hidden" name="task_id" value="{{ task.id }}">
+            <input type="checkbox" name="completed" value="true" {% if task.completed %}checked{% endif %} onchange="this.form.submit()">
+        </form>
+        {{ task.name }} [{{ task.priority }}] {% if task.learning %}(learning){% endif %}
+        {% if task.subtasks %}
+        <ul>
+            {% for subtask in task.subtasks %}
+            {{ render_task(subtask, level + 1) }}
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </li>
+    {% endmacro %}
 </body>
 </html>

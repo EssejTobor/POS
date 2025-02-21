@@ -1,0 +1,41 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+.completed {
+    text-decoration: line-through;
+    color: gray;
+}
+
+.high {
+    color: red;
+}
+
+.medium {
+    color: orange;
+}
+
+.low {
+    color: green;
+}
+
+.section {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+#mynetwork {
+    width: 600px;
+    height: 400px;
+    border: 1px solid #ccc;
+}
+
+.message {
+    color: green;
+}
+
+.inline-form {
+    display: inline;
+}
