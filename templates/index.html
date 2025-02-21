@@ -1,136 +1,145 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>My Personal Operating System</title>
+    <title>Project Management Tool</title>
     <link rel="stylesheet" href="/static/style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
 <body>
-    <h1>My Personal Operating System</h1>
+    <h1>Project Management Tool</h1>
 
-    <!-- Message Feedback -->
-    {% if message %}
-    <p class="message">{{ message }}</p>
-    {% endif %}
+    <!-- Forms for adding entities -->
+    <h2>Add Goal</h2>
+    <form method="post" action="/add_goal">
+        <label>Title: <input type="text" name="title" required></label><br>
+        <label>Time Horizon: <input type="text" name="time_horizon" required></label><br>
+        <label>Rationale: <textarea name="rationale" required></textarea></label><br>
+        <label>Key Metrics: <textarea name="key_metrics" required></textarea></label><br>
+        <button type="submit">Add Goal</button>
+    </form>
 
-    <!-- Add Project Form -->
-    <div class="section">
-        <h2>Add New Project</h2>
-        <form method="post" action="/add_project">
-            <label for="name">Project Name:</label>
-            <input type="text" id="name" name="name" required>
-            <button type="submit">Add Project</button>
-        </form>
-    </div>
+    <h2>Add Subgoal</h2>
+    <form method="post" action="/add_subgoal">
+        <label>Goal: <select name="goal_id" required>
+            {% for goal in goals %}
+                <option value="{{ goal.id }}">{{ goal.title }}</option>
+            {% endfor %}
+        </select></label><br>
+        <label>Title: <input type="text" name="title" required></label><br>
+        <label>Time Horizon: <input type="text" name="time_horizon" required></label><br>
+        <label>Rationale: <textarea name="rationale" required></textarea></label><br>
+        <label>Key Metrics: <textarea name="key_metrics" required></textarea></label><br>
+        <button type="submit">Add Subgoal</button>
+    </form>
 
-    <!-- Add Task Form -->
-    <div class="section">
-        <h2>Add New Task</h2>
-        <form method="post" action="/add_task">
-            <label for="project_id">Project:</label>
-            <select id="project_id" name="project_id" required>
-                {% for project in projects %}
-                <option value="{{ project.id }}">{{ project.name }}</option>
+    <h2>Add Task</h2>
+    <form method="post" action="/add_task">
+        <label>Subgoal: <select name="subgoal_id" required>
+            {% for goal in goals %}
+                {% for subgoal in goal.subgoals %}
+                    <option value="{{ subgoal.id }}">{{ goal.title }} - {{ subgoal.title }}</option>
                 {% endfor %}
-            </select>
-            <br>
-            <label for="name">Task Name:</label>
-            <input type="text" id="name" name="name" required>
-            <br>
-            <label for="priority">Priority:</label>
-            <select id="priority" name="priority">
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-            </select>
-            <br>
-            <label for="learning">Is this a learning task?</label>
-            <input type="checkbox" id="learning" name="learning">
-            <br>
-            <label for="parent_id">Parent Task (optional):</label>
-            <select id="parent_id" name="parent_id">
-                <option value="">None</option>
-                {% for task in tasks %}
-                <option value="{{ task.id }}">{{ task.project.name }} - {{ task.name }}</option>
-                {% endfor %}
-            </select>
-            <br>
-            <button type="submit">Add Task</button>
-        </form>
-    </div>
+            {% endfor %}
+        </select></label><br>
+        <label>Title: <input type="text" name="title" required></label><br>
+        <button type="submit">Add Task</button>
+    </form>
 
-    <!-- Projects List with Hierarchy -->
-    <div class="section">
-        <h2>Projects</h2>
-        <ul>
-            {% for project in projects %}
+    <h2>Add Subtask</h2>
+    <form method="post" action="/add_subtask">
+        <label>Task: <select name="task_id" required>
+            {% for goal in goals %}
+                {% for subgoal in goal.subgoals %}
+                    {% for task in subgoal.tasks %}
+                        <option value="{{ task.id }}">{{ goal.title }} - {{ subgoal.title }} - {{ task.title }}</option>
+                    {% endfor %}
+                {% endfor %}
+            {% endfor %}
+        </select></label><br>
+        <label>Title: <input type="text" name="title" required></label><br>
+        <button type="submit">Add Subtask</button>
+    </form>
+
+    <!-- Hierarchy display -->
+    <h2>Hierarchy</h2>
+    <ul>
+        {% for goal in goals %}
             <li>
-                <strong>{{ project.name }}</strong>
+                <strong>{{ goal.title }}</strong>
+                <p>Time Horizon: {{ goal.time_horizon }}</p>
+                <p>Rationale: {{ goal.rationale }}</p>
+                <p>Key Metrics:</p>
                 <ul>
-                    {% for task in project.tasks if task.parent_id is none %}
-                    {{ render_task(task) }}
+                    {% for metric in goal.key_metrics.split('\n') %}
+                        <li>{{ metric }}</li>
+                    {% endfor %}
+                </ul>
+                <ul>
+                    {% for subgoal in goal.subgoals %}
+                        <li>
+                            <strong>Subgoal: {{ subgoal.title }}</strong>
+                            <p>Time Horizon: {{ subgoal.time_horizon }}</p>
+                            <p>Rationale: {{ subgoal.rationale }}</p>
+                            <p>Key Metrics:</p>
+                            <ul>
+                                {% for metric in subgoal.key_metrics.split('\n') %}
+                                    <li>{{ metric }}</li>
+                                {% endfor %}
+                            </ul>
+                            <ul>
+                                {% for task in subgoal.tasks %}
+                                    <li class="{% if task.completed %}completed{% endif %}">
+                                        Task: {{ task.title }}
+                                        <form method="post" action="/toggle_completion">
+                                            <input type="hidden" name="entity_type" value="task">
+                                            <input type="hidden" name="entity_id" value="{{ task.id }}">
+                                            <input type="checkbox" name="completed" {% if task.completed %}checked{% endif %} onchange="this.form.submit()">
+                                        </form>
+                                        <ul>
+                                            {% for subtask in task.subtasks %}
+                                                <li class="{% if subtask.completed %}completed{% endif %}">
+                                                    Sub-Task: {{ subtask.title }}
+                                                    <form method="post" action="/toggle_completion">
+                                                        <input type="hidden" name="entity_type" value="subtask">
+                                                        <input type="hidden" name="entity_id" value="{{ subtask.id }}">
+                                                        <input type="checkbox" name="completed" {% if subtask.completed %}checked{% endif %} onchange="this.form.submit()">
+                                                    </form>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </li>
                     {% endfor %}
                 </ul>
             </li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <!-- Tasks List -->
-    <div class="section">
-        <h2>All Tasks Ordered by Priority</h2>
-        <ul>
-            {% for task in tasks %}
-            <li class="{% if task.completed %}completed{% endif %} {{ task.priority }}">
-                <form method="post" action="/toggle_complete" class="inline-form">
-                    <input type="hidden" name="task_id" value="{{ task.id }}">
-                    <input type="checkbox" name="completed" value="true" {% if task.completed %}checked{% endif %} onchange="this.form.submit()">
-                </form>
-                {{ task.project.name }} - {{ task.name }} [{{ task.priority }}] {% if task.learning %}(learning){% endif %}
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
+        {% endfor %}
+    </ul>
 
     <!-- Visualization -->
-    <div class="section">
-        <h2>Visualization</h2>
-        <div id="mynetwork"></div>
-        <script type="text/javascript">
-            var nodes = new vis.DataSet({{ nodes | tojson }});
-            var edges = new vis.DataSet({{ edges | tojson }});
-            var container = document.getElementById('mynetwork');
-            var data = { nodes: nodes, edges: edges };
-            var options = {
-                nodes: {
-                    shape: 'dot',
-                    size: 20,
-                    font: { size: 14 }
-                },
-                edges: { arrows: 'to' }
-            };
-            var network = new vis.Network(container, data, options);
-        </script>
-    </div>
-
-    <!-- Recursive Macro for Task Hierarchy -->
-    {% macro render_task(task, level=0) %}
-    <li style="margin-left: {{ level * 20 }}px;" class="{% if task.completed %}completed{% endif %} {{ task.priority }}">
-        <form method="post" action="/toggle_complete" class="inline-form">
-            <input type="hidden" name="task_id" value="{{ task.id }}">
-            <input type="checkbox" name="completed" value="true" {% if task.completed %}checked{% endif %} onchange="this.form.submit()">
-        </form>
-        {{ task.name }} [{{ task.priority }}] {% if task.learning %}(learning){% endif %}
-        {% if task.subtasks %}
-        <ul>
-            {% for subtask in task.subtasks %}
-            {{ render_task(subtask, level + 1) }}
-            {% endfor %}
-        </ul>
-        {% endif %}
-    </li>
-    {% endmacro %}
+    <h2>Visualization</h2>
+    <div id="network" style="height: 600px; border: 1px solid lightgray;"></div>
+    <script type="text/javascript">
+        var nodes = new vis.DataSet({{ nodes | tojson }});
+        var edges = new vis.DataSet({{ edges | tojson }});
+        var container = document.getElementById('network');
+        var data = { nodes: nodes, edges: edges };
+        var options = {
+            layout: {
+                hierarchical: {
+                    direction: "UD",
+                    sortMethod: "directed"
+                }
+            },
+            nodes: {
+                shape: 'dot',
+                size: 20,
+                font: { size: 14 }
+            },
+            edges: { arrows: 'to' }
+        };
+        var network = new vis.Network(container, data, options);
+    </script>
 </body>
 </html>
