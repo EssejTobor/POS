@@ -1,4 +1,4 @@
-# Version 0.009
+# Version 0.010 - Enhanced with rich
 # Updated with enhanced listing capabilities
 
 from dataclasses import dataclass, field
@@ -9,6 +9,12 @@ import json
 from pathlib import Path
 import cmd
 
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from rich.prompt import Prompt
+
+# Define Enums and Data Classes
 class ItemType(Enum):
     TASK = "t"
     LEARNING = "l"
@@ -263,33 +269,48 @@ class WorkSystem:
                             f.write(f"- **Description**: {item.description}\n\n")
 
 class WorkSystemCLI(cmd.Cmd):
-    intro = 'Welcome to the Work System. Type help or ? to list commands.\n'
-    prompt = '(work) '
+    intro = "[bold green]Welcome to the Work System CLI![/bold green] Type help or ? to list commands.\n"
+    prompt = "(work) "
 
     def __init__(self):
         super().__init__()
         self.work_system = WorkSystem()
+        self.console = Console()
 
     def print_items(self, items: List[WorkItem]):
-        """Helper method to print items in a consistent format"""
+        """Helper method to print items in a table format using rich"""
+        if not items:
+            self.console.print("[bold yellow]No items to display.[/bold yellow]")
+            return
+
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("ID", style="cyan", no_wrap=True)
+        table.add_column("Title", style="green")
+        table.add_column("Type", style="yellow")
+        table.add_column("Priority", style="red")
+        table.add_column("Status", style="blue")
+        table.add_column("Created", style="white")
+        table.add_column("Description", style="white")
         for item in items:
-            print(f"\nID: {item.id}")
-            print(f"Title: {item.title}")
-            print(f"Type: {item.item_type.value}")
-            print(f"Priority: {item.priority.name}")
-            print(f"Status: {item.status.value}")
-            print(f"Description: {item.description}")
-            print(f"Created: {item.created_at.strftime('%Y-%m-%d %H:%M')}")
-            print("-" * 40)
+            table.add_row(
+                item.id,
+                item.title,
+                item.item_type.value,
+                item.priority.name,
+                item.status.value,
+                item.created_at.strftime('%Y-%m-%d %H:%M'),
+                item.description
+            )
+        self.console.print(table)
 
     def do_add(self, arg):
         """Add a new work item using hyphen-separated format:
-        add <goal>-<type>-<priority>-<title>-<description>
-        Example: add agentsee-task-hi-deploy landing page-finish landing page content"""
+    add <goal>-<type>-<priority>-<title>-<description>
+Example: add agentsee-t-hi-deploy landing page-Finish landing page content"""
         try:
             parts = arg.split('-', 4)
             if len(parts) < 5:
-                print("Error: Not enough parts. Format: goal-type-priority-title-description")
+                self.console.print("[bold red]Error:[/bold red] Not enough parts. Format: goal-type-priority-title-description")
                 return
 
             goal, type_, priority, title, description = parts
@@ -301,31 +322,30 @@ class WorkSystemCLI(cmd.Cmd):
                 title=title.strip(),
                 description=description.strip()
             )
-            print(f"Added: {item.title} (ID: {item.id})")
+            self.console.print(f"[bold green]Added:[/bold green] {item.title} (ID: {item.id})")
         except Exception as e:
-            print(f"Error: {e}")
+            self.console.print(f"[bold red]Error:[/bold red] {e}")
 
     def do_list(self, arg):
         """
-        List work items with various filtering options:
-        list [goal]                  - List all items for a goal
-        list <goal> priority         - List items for goal by priority (high to low)
-        list <goal> id              - List items for goal by creation time (newest first)
-        list incomplete             - List all incomplete items by priority
-        list all                    - List everything
+List work items with various filtering options:
+  list [goal]                  - List all items for a goal
+  list <goal> priority         - List items for goal by priority (high to low)
+  list <goal> id               - List items for goal by creation time (newest first)
+  list incomplete              - List all incomplete items by priority
+  list all                     - List everything
         """
         args = arg.lower().strip().split()
         
         try:
             # Handle empty argument
             if not args:
-                print("Please specify what to list. Type 'help list' for options.")
+                self.console.print("[bold yellow]Please specify what to list.[/bold yellow] Type 'help list' for options.")
                 return
 
             # Handle 'list incomplete'
             if args[0] == 'incomplete':
-                print("\nINCOMPLETE ITEMS (All Goals, By Priority)")
-                print("=" * 40)
+                self.console.rule("[bold red]INCOMPLETE ITEMS (All Goals, By Priority)[/bold red]")
                 items = self.work_system.get_incomplete_items()
                 self.print_items(items)
                 return
@@ -334,8 +354,7 @@ class WorkSystemCLI(cmd.Cmd):
             if args[0] == 'all':
                 goals = self.work_system.get_all_goals()
                 for goal in goals:
-                    print(f"\nGOAL: {goal.upper()}")
-                    print("=" * 40)
+                    self.console.rule(f"[bold blue]GOAL: {goal.upper()}[/bold blue]")
                     items = self.work_system.get_items_by_goal(goal)
                     self.print_items(items)
                 return
@@ -345,16 +364,14 @@ class WorkSystemCLI(cmd.Cmd):
             
             # Handle 'list <goal> priority'
             if len(args) > 1 and args[1] == 'priority':
-                print(f"\nGOAL: {goal.upper()} (By Priority)")
-                print("=" * 40)
+                self.console.rule(f"[bold blue]GOAL: {goal.upper()} (By Priority)[/bold blue]")
                 items = self.work_system.get_items_by_goal_priority(goal)
                 self.print_items(items)
                 return
 
             # Handle 'list <goal> id'
             if len(args) > 1 and args[1] == 'id':
-                print(f"\nGOAL: {goal.upper()} (By Creation Time)")
-                print("=" * 40)
+                self.console.rule(f"[bold blue]GOAL: {goal.upper()} (By Creation Time)[/bold blue]")
                 items = self.work_system.get_items_by_goal_id(goal)
                 self.print_items(items)
                 return
@@ -362,22 +379,22 @@ class WorkSystemCLI(cmd.Cmd):
             # Default: list all items for the goal
             items = self.work_system.get_items_by_goal(goal)
             if items:
-                print(f"\nGOAL: {goal.upper()}")
-                print("=" * 40)
+                self.console.rule(f"[bold blue]GOAL: {goal.upper()}[/bold blue]")
                 self.print_items(items)
             else:
-                print(f"No items found for goal: {goal}")
+                self.console.print(f"[bold yellow]No items found for goal:[/bold yellow] {goal}")
 
         except Exception as e:
-            print(f"Error: {e}")
+            self.console.print(f"[bold red]Error:[/bold red] {e}")
 
     def do_update(self, arg):
-        """Update item status: update <id>-<status|priority>-<new_value>
-        Example: update at31139pm-status-in_progress"""
+        """Update item status or priority using the format:
+update <id>-<status|priority>-<new_value>
+Example: update at31139pm-status-in_progress"""
         try:
             parts = arg.split('-')
             if len(parts) != 3:
-                print("Error: Format should be: id-field-value")
+                self.console.print("[bold red]Error:[/bold red] Format should be: id-field-value")
                 return
                 
             item_id, field, value = parts
@@ -386,22 +403,23 @@ class WorkSystemCLI(cmd.Cmd):
                 self.work_system.update_item_status(item_id.strip(), ItemStatus(value.strip()))
             elif field.strip() == 'priority':
                 self.work_system.update_item_priority(item_id.strip(), Priority[value.strip().upper()])
-            print(f"Updated item {item_id}")
+            self.console.print(f"[bold green]Updated item[/bold green] {item_id}")
         except Exception as e:
-            print(f"Error: {e}")
+            self.console.print(f"[bold red]Error:[/bold red] {e}")
 
     def do_export(self, arg):
         """Export work items to markdown: export [filename]
-        If no filename is provided, defaults to 'work_items.md'"""
+If no filename is provided, defaults to 'work_items.md'"""
         filename = arg.strip() if arg.strip() else "work_items.md"
         try:
             self.work_system.export_markdown(filename)
-            print(f"Successfully exported to {filename}")
+            self.console.print(f"[bold green]Successfully exported to[/bold green] {filename}")
         except Exception as e:
-            print(f"Error exporting to markdown: {e}")
+            self.console.print(f"[bold red]Error exporting to markdown:[/bold red] {e}")
 
     def do_quit(self, arg):
         """Quit the program"""
+        self.console.print("[bold magenta]Goodbye![/bold magenta]")
         return True
 
 if __name__ == '__main__':
