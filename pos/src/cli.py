@@ -19,6 +19,7 @@ class WorkSystemCLI(cmd.Cmd):
     - update: Modify existing items
     - export: Generate markdown report
     - quit: Exit the program
+    - dedupe: Scan for and merge duplicate work items
     """
     intro = "[bold green]Welcome to the Work System CLI![/bold green] Type help or ? to list commands.\n"
     prompt = "(work) "
@@ -153,6 +154,31 @@ class WorkSystemCLI(cmd.Cmd):
         goals = self.work_system.get_all_goals()
         items = [item for item in self.work_system.items.values()]
         self.display.print_tree(items, goals)
+
+    def do_dedupe(self, arg):
+        """
+        Scans for and merges duplicate work items.
+        Usage: dedupe
+        """
+        try:
+            merged_pairs = self.work_system.merge_duplicates()
+            
+            if not merged_pairs:
+                self.display.print_success("No duplicates found!")
+                return
+            
+            self.display.print_success(f"Found and merged {len(merged_pairs)} duplicate pairs:")
+            
+            for kept_item, removed_item in merged_pairs:
+                self.display.print(
+                    f"[yellow]Merged:[/yellow] {removed_item.id} -> {kept_item.id}\n"
+                    f"  Title: {kept_item.title}\n"
+                    f"  Type: {kept_item.item_type.value}\n"
+                    f"  Priority: {kept_item.priority.name}\n"
+                )
+        
+        except Exception as e:
+            self.display.print_error(str(e))
 
     def do_quit(self, arg):
         """Quit the program"""

@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from .models import WorkItem, ItemType, ItemStatus, Priority
 
@@ -50,9 +50,44 @@ class WorkSystem:
         
         return f"{goal_initial}{type_initial}{priority_num}{entry_num}{time_str}"
 
+    def _get_item_key(self, title: str, item_type: ItemType, priority: Priority) -> str:
+        """
+        Creates a unique key for duplicate detection.
+        Normalizes the title by lowercasing and removing extra whitespace.
+        """
+        normalized_title = " ".join(title.lower().split())
+        return f"{normalized_title}|{item_type.value}|{priority.value}"
+
+    def find_duplicate(self, title: str, item_type: ItemType, priority: Priority) -> Optional[WorkItem]:
+        """
+        Checks if an item with the same title, type and priority already exists.
+        Returns the existing item if found, None otherwise.
+        """
+        search_key = self._get_item_key(title, item_type, priority)
+        
+        for item in self.items.values():
+            item_key = self._get_item_key(item.title, item.item_type, item.priority)
+            if item_key == search_key:
+                return item
+        return None
+
     def add_item(self, goal: str, title: str, item_type: ItemType,
                  description: str, priority: Priority = Priority.MED) -> WorkItem:
+        """
+        Enhanced add_item with duplicate detection.
+        Raises ValueError if a duplicate is found.
+        """
         try:
+            # Check for duplicates first
+            existing_item = self.find_duplicate(title, item_type, priority)
+            if existing_item:
+                raise ValueError(
+                    f"Duplicate item found (ID: {existing_item.id}):\n"
+                    f"Title: {existing_item.title}\n"
+                    f"Type: {existing_item.item_type.value}\n"
+                    f"Priority: {existing_item.priority.name}"
+                )
+
             item = WorkItem(
                 title=title,
                 goal=goal,
@@ -225,4 +260,38 @@ class WorkSystem:
                             f.write(f"- **ID**: {item.id}\n")
                             f.write(f"- **Status**: {item.status.value}\n")
                             f.write(f"- **Created**: {item.created_at.strftime('%Y-%m-%d %H:%M')}\n")
-                            f.write(f"- **Description**: {item.description}\n\n") 
+                            f.write(f"- **Description**: {item.description}\n\n")
+
+    def merge_duplicates(self) -> List[tuple[WorkItem, WorkItem]]:
+        """
+        Scans existing items for duplicates and merges them.
+        Returns list of merged pairs for reporting.
+        """
+        merged_pairs = []
+        seen_keys = {}
+        items_to_remove = set()
+
+        for item in list(self.items.values()):
+            key = self._get_item_key(item.title, item.item_type, item.priority)
+            
+            if key in seen_keys:
+                original_item = seen_keys[key]
+                # Keep the older item, remove the newer one
+                if item.created_at > original_item.created_at:
+                    items_to_remove.add(item.id)
+                    merged_pairs.append((original_item, item))
+                else:
+                    items_to_remove.add(original_item.id)
+                    seen_keys[key] = item
+                    merged_pairs.append((item, original_item))
+            else:
+                seen_keys[key] = item
+
+        # Remove merged duplicates
+        for item_id in items_to_remove:
+            del self.items[item_id]
+
+        if merged_pairs:
+            self.save_items()
+
+        return merged_pairs 
