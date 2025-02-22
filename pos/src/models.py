@@ -1,7 +1,7 @@
-from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import List, Dict
+from typing import List, Optional
+from pydantic import BaseModel, Field
 
 class ItemType(Enum):
     """Defines the different types of work items that can be tracked"""
@@ -21,11 +21,10 @@ class Priority(Enum):
     MED = 2    # Medium urgency/importance
     HI = 3     # High urgency/importance - critical items
 
-@dataclass
-class WorkItem:
+class WorkItem(BaseModel):
     """
     Core data structure representing a single work item.
-    Uses @dataclass for automatic generation of __init__, __repr__, etc.
+    Uses Pydantic for validation and serialization.
     
     Attributes:
         title: Short description of the item
@@ -38,15 +37,15 @@ class WorkItem:
         created_at: Timestamp of creation
         updated_at: Timestamp of last modification
     """
+    id: str = Field(default="")
     title: str
+    goal: str
     item_type: ItemType
     description: str
-    goal: str
     priority: Priority = Priority.MED
     status: ItemStatus = ItemStatus.NOT_STARTED
-    id: str = field(default="")  # Will be set by WorkSystem
-    created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
     
     def update_status(self, new_status: ItemStatus):
         self.status = new_status
@@ -67,4 +66,18 @@ class WorkItem:
             'status': self.status.value,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
-        } 
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'WorkItem':
+        return cls(
+            id=data['id'],
+            title=data['title'],
+            goal=data.get('goal', 'legacy'),
+            item_type=ItemType(data['item_type']),
+            description=data['description'],
+            priority=Priority(data['priority']),
+            status=ItemStatus(data['status']),
+            created_at=datetime.fromisoformat(data['created_at']),
+            updated_at=datetime.fromisoformat(data['updated_at'])
+        ) 

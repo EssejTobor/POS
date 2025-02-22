@@ -1,29 +1,27 @@
-import json
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
 
 from .models import WorkItem, ItemType, ItemStatus, Priority
+from .database import Database
 
 class WorkSystem:
     """
     Core system for managing work items. Provides:
-    - Persistent storage using JSON
+    - Persistent storage using SQLite
     - Item creation and retrieval
     - Status and priority updates
     - Various sorting and filtering capabilities
-    - Backup management during saves
     """
-    def __init__(self, storage_path: str = "work_items.json"):
+    def __init__(self, storage_path: str = "work_items.db"):
         """
         Initialize the work system
         Args:
-            storage_path: Location of the JSON storage file
+            storage_path: Location of the SQLite database file
         """
-        self.storage_path = Path(storage_path)
-        self.items: Dict[str, WorkItem] = {}
-        self.entry_counts: Dict[str, int] = {}  # Track entries per goal
-        self.load_items()
+        self.db = Database(storage_path)
+        self.items = self.db.get_all_items()
+        self.entry_counts = self.db.get_all_entry_counts()
 
     def generate_id(self, goal: str, item_type: ItemType, priority: Priority) -> str:
         """
@@ -48,6 +46,7 @@ class WorkSystem:
         now = datetime.now()
         time_str = str(int(now.strftime("%I"))) + now.strftime("%M%p").lower()
         
+        self.db.update_entry_count(goal, self.entry_counts[goal])
         return f"{goal_initial}{type_initial}{priority_num}{entry_num}{time_str}"
 
     def _get_item_key(self, title: str, item_type: ItemType, priority: Priority) -> str:
@@ -97,7 +96,7 @@ class WorkSystem:
             )
             item.id = self.generate_id(goal, item_type, priority)
             self.items[item.id] = item
-            self.save_items()
+            self.db.add_item(item)
             return item
         except Exception as e:
             print(f"Error adding item: {e}")
@@ -109,53 +108,57 @@ class WorkSystem:
         1. Priority (highest first)
         2. Creation time (newest first)
         """
+        items = self.db.get_items_by_goal(goal)
         return sorted(
-            [item for item in self.items.values() if item.goal.lower() == goal.lower()],
+            items,
             key=lambda x: (x.priority.value, x.created_at),
             reverse=True
         )
 
     def get_items_by_goal_priority(self, goal: str) -> List[WorkItem]:
         """Retrieves items for a goal, sorted only by priority."""
+        items = self.db.get_items_by_goal(goal)
         return sorted(
-            [item for item in self.items.values() if item.goal.lower() == goal.lower()],
+            items,
             key=lambda x: (x.priority.value),
             reverse=True
         )
 
     def get_items_by_goal_id(self, goal: str) -> List[WorkItem]:
         """Get items for a goal, sorted by creation time (newest first)"""
+        items = self.db.get_items_by_goal(goal)
         return sorted(
-            [item for item in self.items.values() if item.goal.lower() == goal.lower()],
+            items,
             key=lambda x: x.created_at,
             reverse=True
         )
 
     def get_incomplete_items(self) -> List[WorkItem]:
         """Get all incomplete items across all goals, sorted by priority"""
+        items = self.db.get_incomplete_items()
         return sorted(
-            [item for item in self.items.values() 
-             if item.status != ItemStatus.COMPLETED],
+            items,
             key=lambda x: (x.priority.value, x.created_at),
             reverse=True
         )
 
     def get_items_by_type(self, item_type: ItemType) -> List[WorkItem]:
+        items = self.db.get_items_by_type(item_type)
         return sorted(
-            [item for item in self.items.values() if item.item_type == item_type],
+            items,
             key=lambda x: (x.priority.value, x.created_at),
             reverse=True
         )
 
     def get_all_goals(self) -> List[str]:
-        return sorted(list(set(item.goal for item in self.items.values())))
+        return self.db.get_all_goals()
 
     def update_item_status(self, item_id: str, new_status: ItemStatus):
         try:
             if item_id in self.items:
                 item = self.items[item_id]
                 item.update_status(new_status)
-                self.save_items()
+                self.db.update_item(item)
             else:
                 print(f"Item {item_id} not found")
         except Exception as e:
@@ -165,72 +168,14 @@ class WorkSystem:
     def update_item_priority(self, item_id: str, new_priority: Priority):
         try:
             if item_id in self.items:
-                self.items[item_id].update_priority(new_priority)
-                self.save_items()
+                item = self.items[item_id]
+                item.update_priority(new_priority)
+                self.db.update_item(item)
             else:
                 print(f"Item {item_id} not found")
         except Exception as e:
             print(f"Error updating priority: {e}")
             raise
-
-    def save_items(self):
-        try:
-            items_dict = {id_: item.to_dict() for id_, item in self.items.items()}
-            data = {
-                'items': items_dict,
-                'entry_counts': self.entry_counts
-            }
-            
-            if self.storage_path.exists():
-                backup_path = self.storage_path.with_suffix('.json.bak')
-                self.storage_path.rename(backup_path)
-            
-            with open(self.storage_path, 'w') as f:
-                json.dump(data, f, indent=2)
-            
-            if Path(str(self.storage_path) + '.bak').exists():
-                Path(str(self.storage_path) + '.bak').unlink()
-                
-        except Exception as e:
-            print(f"Error saving items: {e}")
-            if Path(str(self.storage_path) + '.bak').exists():
-                Path(str(self.storage_path) + '.bak').rename(self.storage_path)
-            raise
-
-    def load_items(self):
-        if not self.storage_path.exists():
-            return
-        
-        with open(self.storage_path, 'r') as f:
-            data = json.load(f)
-            
-        if isinstance(data, dict) and 'items' in data:
-            items_dict = data['items']
-            self.entry_counts = data.get('entry_counts', {})
-        else:
-            items_dict = data
-            self.entry_counts = {}
-            
-        for _, item_data in items_dict.items():
-            goal = item_data.get('goal', 'legacy')
-            
-            item = WorkItem(
-                title=item_data['title'],
-                goal=goal,
-                item_type=ItemType(item_data['item_type']),
-                description=item_data['description'],
-                priority=Priority(item_data['priority']),
-                status=ItemStatus(item_data['status']),
-                id=item_data['id'],
-                created_at=datetime.fromisoformat(item_data['created_at']),
-                updated_at=datetime.fromisoformat(item_data['updated_at'])
-            )
-            self.items[item.id] = item
-            
-            if goal not in self.entry_counts:
-                self.entry_counts[goal] = 0
-            self.entry_counts[goal] = max(self.entry_counts[goal], 
-                int(''.join(filter(str.isdigit, item.id[:4])) or 0))
 
     def export_markdown(self, output_path: str = "work_items.md"):
         with open(output_path, 'w') as f:
@@ -292,6 +237,10 @@ class WorkSystem:
             del self.items[item_id]
 
         if merged_pairs:
-            self.save_items()
+            # Update the database to reflect the changes
+            for item_id in items_to_remove:
+                with self.db.get_connection() as conn:
+                    conn.execute("DELETE FROM work_items WHERE id = ?", (item_id,))
+                    conn.commit()
 
         return merged_pairs 
