@@ -25,9 +25,10 @@ class Database:
             conn.close()
             
     def _create_tables(self):
-        """Create necessary database tables if they don't exist"""
+        """Create necessary database tables and indexes"""
         with self.get_connection() as conn:
-            conn.execute("""
+            # Create tables with appropriate indexes
+            conn.executescript("""
                 CREATE TABLE IF NOT EXISTS work_items (
                     id TEXT PRIMARY KEY,
                     title TEXT NOT NULL,
@@ -38,14 +39,29 @@ class Database:
                     status TEXT NOT NULL,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
-                )
-            """)
-            
-            conn.execute("""
+                );
+
+                -- Create indexes for common queries
+                CREATE INDEX IF NOT EXISTS idx_work_items_goal 
+                ON work_items(goal);
+                
+                CREATE INDEX IF NOT EXISTS idx_work_items_status 
+                ON work_items(status);
+                
+                CREATE INDEX IF NOT EXISTS idx_work_items_priority 
+                ON work_items(priority);
+                
+                CREATE INDEX IF NOT EXISTS idx_work_items_type 
+                ON work_items(item_type);
+                
+                -- Composite index for common sorting patterns
+                CREATE INDEX IF NOT EXISTS idx_work_items_goal_priority_created 
+                ON work_items(goal, priority DESC, created_at DESC);
+                
                 CREATE TABLE IF NOT EXISTS entry_counts (
                     goal TEXT PRIMARY KEY,
                     count INTEGER NOT NULL
-                )
+                );
             """)
             conn.commit()
             
@@ -109,22 +125,100 @@ class Database:
             conn.commit()
             
     def get_items_by_goal(self, goal: str) -> List[WorkItem]:
-        """Get all items for a specific goal"""
+        """Optimized query for getting items by goal"""
         with self.get_connection() as conn:
             cursor = conn.execute(
-                "SELECT * FROM work_items WHERE LOWER(goal) = LOWER(?)",
+                """
+                SELECT * FROM work_items 
+                WHERE LOWER(goal) = LOWER(?) 
+                ORDER BY priority DESC, created_at DESC
+                """,
                 (goal,)
             )
             return [WorkItem.from_dict(dict(row)) for row in cursor.fetchall()]
-            
-    def get_incomplete_items(self) -> List[WorkItem]:
-        """Get all incomplete items"""
+
+    def get_items_by_goal_priority(self, goal: str) -> List[WorkItem]:
+        """Optimized query for getting items by goal and priority"""
         with self.get_connection() as conn:
             cursor = conn.execute(
-                "SELECT * FROM work_items WHERE status != ?",
+                """
+                SELECT * FROM work_items 
+                WHERE LOWER(goal) = LOWER(?) 
+                ORDER BY priority DESC
+                """,
+                (goal,)
+            )
+            return [WorkItem.from_dict(dict(row)) for row in cursor.fetchall()]
+
+    def get_incomplete_items(self) -> List[WorkItem]:
+        """Optimized query for getting incomplete items"""
+        with self.get_connection() as conn:
+            cursor = conn.execute(
+                """
+                SELECT * FROM work_items 
+                WHERE status != ? 
+                ORDER BY priority DESC, created_at DESC
+                """,
                 (ItemStatus.COMPLETED.value,)
             )
             return [WorkItem.from_dict(dict(row)) for row in cursor.fetchall()]
+
+    def get_items_by_filters(self, 
+                           goal: Optional[str] = None,
+                           status: Optional[ItemStatus] = None,
+                           priority: Optional[Priority] = None,
+                           item_type: Optional[ItemType] = None) -> List[WorkItem]:
+        """Flexible query with multiple optional filters"""
+        query = ["SELECT * FROM work_items WHERE 1=1"]
+        params = []
+
+        if goal:
+            query.append("AND LOWER(goal) = LOWER(?)")
+            params.append(goal)
+        if status:
+            query.append("AND status = ?")
+            params.append(status.value)
+        if priority:
+            query.append("AND priority = ?")
+            params.append(priority.value)
+        if item_type:
+            query.append("AND item_type = ?")
+            params.append(item_type.value)
+
+        query.append("ORDER BY priority DESC, created_at DESC")
+        
+        with self.get_connection() as conn:
+            cursor = conn.execute(" ".join(query), params)
+            return [WorkItem.from_dict(dict(row)) for row in cursor.fetchall()]
+
+    def batch_insert_items(self, items: List[WorkItem]) -> None:
+        """Batch insert multiple items efficiently"""
+        with self.get_connection() as conn:
+            conn.executemany(
+                """
+                INSERT INTO work_items (
+                    id, title, goal, item_type, description,
+                    priority, status, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [(
+                    item.id,
+                    item.title,
+                    item.goal,
+                    item.item_type.value,
+                    item.description,
+                    item.priority.value,
+                    item.status.value,
+                    item.created_at.isoformat(),
+                    item.updated_at.isoformat()
+                ) for item in items]
+            )
+            conn.commit()
+
+    def execute_vacuum(self) -> None:
+        """Optimize database by removing unused space"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("VACUUM")
             
     def get_items_by_type(self, item_type: ItemType) -> List[WorkItem]:
         """Get all items of a specific type"""

@@ -1,9 +1,12 @@
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
+from contextlib import contextmanager
+from sqlite3 import IntegrityError, OperationalError
 
 from .models import WorkItem, ItemType, ItemStatus, Priority
 from .database import Database
+from .backup import BackupManager
 
 class WorkSystem:
     """
@@ -20,6 +23,7 @@ class WorkSystem:
             storage_path: Location of the SQLite database file
         """
         self.db = Database(storage_path)
+        self.backup_manager = BackupManager(storage_path)
         self.items = self.db.get_all_items()
         self.entry_counts = self.db.get_all_entry_counts()
 
@@ -70,37 +74,60 @@ class WorkSystem:
                 return item
         return None
 
+    @contextmanager
+    def _atomic_operation(self):
+        """Ensure atomic operations with proper rollback"""
+        items_snapshot = self.items.copy()
+        try:
+            yield
+        except Exception as e:
+            self.items = items_snapshot
+            raise e
+
+    def _refresh_cache(self):
+        """Refresh the in-memory cache from database"""
+        self.items = self.db.get_all_items()
+        self.entry_counts = self.db.get_all_entry_counts()
+
     def add_item(self, goal: str, title: str, item_type: ItemType,
                  description: str, priority: Priority = Priority.MED) -> WorkItem:
-        """
-        Enhanced add_item with duplicate detection.
-        Raises ValueError if a duplicate is found.
-        """
-        try:
-            # Check for duplicates first
-            existing_item = self.find_duplicate(title, item_type, priority)
-            if existing_item:
-                raise ValueError(
-                    f"Duplicate item found (ID: {existing_item.id}):\n"
-                    f"Title: {existing_item.title}\n"
-                    f"Type: {existing_item.item_type.value}\n"
-                    f"Priority: {existing_item.priority.name}"
-                )
+        """Enhanced add_item with atomic operations and proper error handling"""
+        with self._atomic_operation():
+            try:
+                # Check for duplicates first
+                existing_item = self.find_duplicate(title, item_type, priority)
+                if existing_item:
+                    raise ValueError(
+                        f"Duplicate item found (ID: {existing_item.id}):\n"
+                        f"Title: {existing_item.title}\n"
+                        f"Type: {existing_item.item_type.value}\n"
+                        f"Priority: {existing_item.priority.name}"
+                    )
 
-            item = WorkItem(
-                title=title,
-                goal=goal,
-                item_type=item_type,
-                description=description,
-                priority=priority
-            )
-            item.id = self.generate_id(goal, item_type, priority)
-            self.items[item.id] = item
-            self.db.add_item(item)
-            return item
-        except Exception as e:
-            print(f"Error adding item: {e}")
-            raise
+                item = WorkItem(
+                    title=title,
+                    goal=goal,
+                    item_type=item_type,
+                    description=description,
+                    priority=priority
+                )
+                item.id = self.generate_id(goal, item_type, priority)
+                
+                # Add to database first
+                try:
+                    self.db.add_item(item)
+                except IntegrityError:
+                    raise ValueError(f"Item with ID {item.id} already exists")
+                except OperationalError as e:
+                    raise RuntimeError(f"Database error: {str(e)}")
+                
+                # Update cache only after successful database operation
+                self.items[item.id] = item
+                return item
+                
+            except Exception as e:
+                print(f"Error adding item: {e}")
+                raise
 
     def get_items_by_goal(self, goal: str) -> List[WorkItem]:
         """
@@ -154,28 +181,46 @@ class WorkSystem:
         return self.db.get_all_goals()
 
     def update_item_status(self, item_id: str, new_status: ItemStatus):
-        try:
-            if item_id in self.items:
+        """Enhanced update_status with atomic operations"""
+        with self._atomic_operation():
+            try:
+                if item_id not in self.items:
+                    raise ValueError(f"Item {item_id} not found")
+                    
                 item = self.items[item_id]
-                item.update_status(new_status)
-                self.db.update_item(item)
-            else:
-                print(f"Item {item_id} not found")
-        except Exception as e:
-            print(f"Error updating status: {e}")
-            raise
+                old_status = item.status
+                
+                try:
+                    item.update_status(new_status)
+                    self.db.update_item(item)
+                except Exception as e:
+                    item.status = old_status  # Rollback in-memory change
+                    raise RuntimeError(f"Failed to update status: {str(e)}")
+                    
+            except Exception as e:
+                print(f"Error updating status: {e}")
+                raise
 
     def update_item_priority(self, item_id: str, new_priority: Priority):
-        try:
-            if item_id in self.items:
+        """Enhanced update_priority with atomic operations"""
+        with self._atomic_operation():
+            try:
+                if item_id not in self.items:
+                    raise ValueError(f"Item {item_id} not found")
+                    
                 item = self.items[item_id]
-                item.update_priority(new_priority)
-                self.db.update_item(item)
-            else:
-                print(f"Item {item_id} not found")
-        except Exception as e:
-            print(f"Error updating priority: {e}")
-            raise
+                old_priority = item.priority
+                
+                try:
+                    item.update_priority(new_priority)
+                    self.db.update_item(item)
+                except Exception as e:
+                    item.priority = old_priority  # Rollback in-memory change
+                    raise RuntimeError(f"Failed to update priority: {str(e)}")
+                    
+            except Exception as e:
+                print(f"Error updating priority: {e}")
+                raise
 
     def export_markdown(self, output_path: str = "work_items.md"):
         with open(output_path, 'w') as f:
@@ -208,39 +253,58 @@ class WorkSystem:
                             f.write(f"- **Description**: {item.description}\n\n")
 
     def merge_duplicates(self) -> List[tuple[WorkItem, WorkItem]]:
-        """
-        Scans existing items for duplicates and merges them.
-        Returns list of merged pairs for reporting.
-        """
-        merged_pairs = []
-        seen_keys = {}
-        items_to_remove = set()
+        """Enhanced merge_duplicates with atomic operations"""
+        with self._atomic_operation():
+            try:
+                merged_pairs = []
+                seen_keys = {}
+                items_to_remove = set()
 
-        for item in list(self.items.values()):
-            key = self._get_item_key(item.title, item.item_type, item.priority)
-            
-            if key in seen_keys:
-                original_item = seen_keys[key]
-                # Keep the older item, remove the newer one
-                if item.created_at > original_item.created_at:
-                    items_to_remove.add(item.id)
-                    merged_pairs.append((original_item, item))
-                else:
-                    items_to_remove.add(original_item.id)
-                    seen_keys[key] = item
-                    merged_pairs.append((item, original_item))
-            else:
-                seen_keys[key] = item
+                for item in list(self.items.values()):
+                    key = self._get_item_key(item.title, item.item_type, item.priority)
+                    
+                    if key in seen_keys:
+                        original_item = seen_keys[key]
+                        if item.created_at > original_item.created_at:
+                            items_to_remove.add(item.id)
+                            merged_pairs.append((original_item, item))
+                        else:
+                            items_to_remove.add(original_item.id)
+                            seen_keys[key] = item
+                            merged_pairs.append((item, original_item))
+                    else:
+                        seen_keys[key] = item
 
-        # Remove merged duplicates
-        for item_id in items_to_remove:
-            del self.items[item_id]
-
-        if merged_pairs:
-            # Update the database to reflect the changes
-            for item_id in items_to_remove:
+                # Remove merged duplicates atomically
                 with self.db.get_connection() as conn:
-                    conn.execute("DELETE FROM work_items WHERE id = ?", (item_id,))
+                    for item_id in items_to_remove:
+                        conn.execute("DELETE FROM work_items WHERE id = ?", (item_id,))
                     conn.commit()
 
-        return merged_pairs 
+                # Update cache after successful database operation
+                for item_id in items_to_remove:
+                    del self.items[item_id]
+
+                return merged_pairs
+                
+            except Exception as e:
+                print(f"Error merging duplicates: {e}")
+                self._refresh_cache()  # Ensure cache is consistent
+                raise
+
+    def get_filtered_items(self, 
+                         goal: Optional[str] = None,
+                         status: Optional[ItemStatus] = None,
+                         priority: Optional[Priority] = None,
+                         item_type: Optional[ItemType] = None) -> List[WorkItem]:
+        """Use optimized database query directly"""
+        return self.db.get_items_by_filters(
+            goal=goal,
+            status=status,
+            priority=priority,
+            item_type=item_type
+        )
+
+    def optimize_database(self):
+        """Optimize database storage"""
+        self.db.execute_vacuum() 
