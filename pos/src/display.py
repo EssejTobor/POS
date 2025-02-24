@@ -15,6 +15,7 @@ class Display:
         """
         Creates a formatted table showing:
         - Item ID
+        - Goal
         - Title
         - Type
         - Priority
@@ -28,6 +29,7 @@ class Display:
 
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("ID", style="cyan", no_wrap=True)
+        table.add_column("Goal", style="blue")
         table.add_column("Title", style="green")
         table.add_column("Type", style="yellow")
         table.add_column("Priority", justify="center")
@@ -52,6 +54,7 @@ class Display:
             
             table.add_row(
                 item.id,
+                item.goal,
                 item.title,
                 item.item_type.value,
                 f"[{priority_color}]{item.priority.name}[/{priority_color}]",
