@@ -34,7 +34,6 @@ class WorkSystemCLI(cmd.Cmd):
     - export_json: Export database to JSON format
     - migrate: Migrate data from JSON to SQLite database
     """
-    intro = "[bold green]Welcome to the Work System CLI![/bold green] Type help or ? to list commands.\n"
     prompt = "(work) "
 
     def __init__(self):
@@ -43,6 +42,9 @@ class WorkSystemCLI(cmd.Cmd):
         self.display = Display()
         self.backup_manager = BackupManager()
         self.migration_manager = MigrationManager()
+        # Display welcome message using rich
+        self.display.console.print("[bold green]Welcome to the Work System CLI![/bold green]")
+        self.display.console.print("Type [yellow]help[/yellow] or [yellow]?[/yellow] to list commands.\n")
 
     def do_add(self, arg):
         """
@@ -338,6 +340,50 @@ class WorkSystemCLI(cmd.Cmd):
         """Quit the program"""
         self.display.print_success("Goodbye!")
         return True
+
+    def do_help(self, arg):
+        """List available commands with help text."""
+        if arg:
+            # Show help for specific command
+            try:
+                func = getattr(self, 'help_' + arg)
+                func()
+            except AttributeError:
+                try:
+                    doc = getattr(self, 'do_' + arg).__doc__
+                    if doc:
+                        self.display.console.print(f"\n[yellow]Help for[/yellow] [blue]{arg}[/blue]:")
+                        self.display.console.print(f"{doc}\n")
+                    else:
+                        self.display.print_error(f"No help for {arg}")
+                except AttributeError:
+                    self.display.print_error(f"No command '{arg}'")
+        else:
+            # Show command list
+            self.display.console.print("\n[yellow]Documented commands[/yellow] (type [yellow]help[/yellow] [blue]<topic>[/blue]):")
+            self.display.console.print("=" * 40)
+            
+            cmds = []
+            for name in self.get_names():
+                if name[:3] == 'do_' and name != 'do_help':
+                    cmds.append(name[3:])
+            
+            # Format in columns
+            max_len = max(map(len, cmds))
+            cols = 4
+            col_width = max_len + 2
+            
+            # Print commands in rows
+            cmds.sort()
+            for i in range(0, len(cmds), cols):
+                row = cmds[i:i+cols]
+                line = ""
+                for cmd in row:
+                    line += f"[blue]{cmd:<{col_width}}[/blue]"
+                self.display.console.print(line)
+            
+            self.display.console.print()
+        return False  # Don't stop the command loop
 
 # Entry point for the CLI application
 def main():

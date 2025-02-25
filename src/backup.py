@@ -4,12 +4,16 @@ from pathlib import Path
 from typing import Optional, List
 import json
 import sqlite3
+import os
 
 class BackupManager:
     def __init__(self, db_path: str = "work_items.db"):
-        self.db_path = Path(db_path)
-        self.backup_dir = Path("backups")
-        self.backup_dir.mkdir(exist_ok=True)
+        # Get the absolute path of the project root directory
+        self.base_dir = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.data_dir = self.base_dir / "data"
+        self.db_path = self.data_dir / "db" / db_path
+        self.backup_dir = self.data_dir / "backups"
+        self.backup_dir.mkdir(parents=True, exist_ok=True)
 
     def create_backup(self, note: Optional[str] = None) -> Path:
         """Create a timestamped backup of the database"""

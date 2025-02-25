@@ -9,7 +9,7 @@ class Display:
     """Handles all display formatting and UI elements using Rich library"""
     
     def __init__(self):
-        self.console = Console()
+        self.console = Console(force_terminal=True)
 
     def print_items(self, items: List[WorkItem]):
         """

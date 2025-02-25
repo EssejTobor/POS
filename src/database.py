@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Dict
+import os
 
 from .models import WorkItem, ItemType, ItemStatus, Priority
 
@@ -11,7 +12,11 @@ class Database:
     
     def __init__(self, db_path: str = "work_items.db"):
         """Initialize database connection and create tables if they don't exist"""
-        self.db_path = Path(db_path)
+        # Get the absolute path of the project root directory
+        self.base_dir = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.data_dir = self.base_dir / "data" / "db"
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        self.db_path = self.data_dir / db_path
         self._create_tables()
         
     @contextmanager
