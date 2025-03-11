@@ -15,6 +15,8 @@ class AddItemInput(CommandInput):
     priority: str
     title: str = Field(..., min_length=1, max_length=100)
     description: str = Field(..., min_length=1)
+    link_to: Optional[str] = None
+    link_type: str = "references"  # Default link type
 
     @field_validator("type_")
     @classmethod
@@ -30,17 +32,47 @@ class AddItemInput(CommandInput):
             raise ValueError("Priority must be LOW, MED, or HI")
         return v.upper()
 
+    @field_validator("link_type")
+    @classmethod
+    def validate_link_type(cls, v):
+        valid_link_types = ["references", "evolves-from", "inspired-by", "parent-child"]
+        if v not in valid_link_types:
+            raise ValueError(f"Link type must be one of: {', '.join(valid_link_types)}")
+        return v
+
     @classmethod
     def parse_input(cls, input_str: str) -> "AddItemInput":
-        parts = input_str.split('-', 4)
+        # First, check if there are any optional parameters
+        main_part = input_str
+        link_to = None
+        link_type = "references"  # Default link type
+        
+        # Extract optional parameters if present
+        if " --link-to " in input_str:
+            parts = input_str.split(" --link-to ", 1)
+            main_part = parts[0]
+            
+            # Check if there's also a link type specified
+            if " --link-type " in parts[1]:
+                link_parts = parts[1].strip().split(" --link-type ", 1)
+                link_to = link_parts[0].strip()
+                link_type = link_parts[1].strip()
+            else:
+                link_to = parts[1].strip()
+        
+        # Parse the main parts as before
+        parts = main_part.split('-', 4)
         if len(parts) < 5:
-            raise ValueError("Format: goal-type-priority-title-description")
+            raise ValueError("Format: goal-type-priority-title-description [--link-to item_id] [--link-type type]")
+        
         return cls(
             goal=parts[0].strip(),
             type=parts[1].strip(),
             priority=parts[2].strip(),
             title=parts[3].strip(),
-            description=parts[4].strip()
+            description=parts[4].strip(),
+            link_to=link_to,
+            link_type=link_type
         )
 
 class UpdateItemInput(CommandInput):

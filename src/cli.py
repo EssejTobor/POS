@@ -7,7 +7,7 @@ from rich.table import Table
 from .models import ItemType, ItemStatus, Priority
 from .storage import WorkSystem
 from .display import Display
-from .schemas import AddItemInput, UpdateItemInput, AddThoughtInput
+from .schemas import AddItemInput, UpdateItemInput
 from pydantic import ValidationError
 from .backup import BackupManager
 from .migrate import MigrationManager
@@ -21,9 +21,9 @@ class WorkSystemCLI(cmd.Cmd):
     - Help system
     
     Commands:
-    - add: Create new items
-    - add_thought: Create new thought items with optional linking
+    - add: Create new items (including thoughts with optional linking)
     - list: View items with various filters
+    - list_thoughts: View all thought items
     - update: Modify existing items
     - export: Generate markdown report
     - quit: Exit the program
@@ -34,6 +34,8 @@ class WorkSystemCLI(cmd.Cmd):
     - cleanup_backups: Remove old backups, keeping the most recent ones
     - export_json: Export database to JSON format
     - migrate: Migrate data from JSON to SQLite database
+    - link: Create a link between two work items
+    - unlink: Remove a link between two work items
     """
     prompt = "(work) "
 
@@ -49,11 +51,28 @@ class WorkSystemCLI(cmd.Cmd):
 
     def do_add(self, arg):
         """
-        Adds new work items. Example usage:
+        Adds new work items, including thoughts. Example usage:
         add ProjectA-t-HI-Setup Database-Create initial schema
+        add ThinkingProcess-th-MED-Initial Concept-My first thought about the project
+        add ThinkingProcess-th-MED-Follow-up-Building on previous idea --link-to abc123
+        add ThinkingProcess-th-MED-Related-Another perspective --link-to abc123 --link-type inspired-by
         
         Format:
-        add <goal>-<type>-<priority>-<title>-<description>
+        add <goal>-<type>-<priority>-<title>-<description> [--link-to <item_id>] [--link-type <type>]
+        
+        Types: 
+        - t (task): Regular tasks - day-to-day work items
+        - l (learning): Learning-related items - educational goals
+        - r (research): Research-related items - investigation tasks
+        - th (thought): Thought items - ideas and concepts to track
+        
+        Priority: HI, MED, LOW
+        
+        Link types (when using --link-to):
+        - references (default): This item references or mentions another item
+        - evolves-from: This thought is an evolution of another item
+        - inspired-by: This thought was inspired by but may diverge from another item
+        - parent-child: Hierarchical relationship
         """
         try:
             # Validate input
@@ -67,7 +86,35 @@ class WorkSystemCLI(cmd.Cmd):
                 title=input_data.title,
                 description=input_data.description
             )
-            self.display.print_success(f"Added: {item.title} (ID: {item.id})")
+            
+            # Handle optional linking
+            if input_data.link_to:
+                # Verify the linked item exists
+                target_item = self.work_system.items.get(input_data.link_to)
+                if target_item:
+                    # Create the link with appropriate type
+                    success = self.work_system.add_link(
+                        item.id, 
+                        input_data.link_to, 
+                        input_data.link_type
+                    )
+                    if success:
+                        self.display.print_success(
+                            f"Added: {item.title} (ID: {item.id})\n"
+                            f"Linked to: {target_item.title} (ID: {target_item.id}) with type: {input_data.link_type}"
+                        )
+                    else:
+                        self.display.print_warning(
+                            f"Added: {item.title} (ID: {item.id})\n"
+                            f"Failed to create link to item (ID: {input_data.link_to})"
+                        )
+                else:
+                    self.display.print_warning(
+                        f"Added: {item.title} (ID: {item.id})\n"
+                        f"Link target not found: {input_data.link_to}"
+                    )
+            else:
+                self.display.print_success(f"Added: {item.title} (ID: {item.id})")
             
         except ValidationError as e:
             errors = []
@@ -79,78 +126,6 @@ class WorkSystemCLI(cmd.Cmd):
         except Exception as e:
             self.display.print_error(str(e))
 
-    def do_add_thought(self, arg):
-        """
-        Adds a new thought item with optional linking to an existing item. Example usage:
-        add_thought ProjectA-Brainstorm Ideas-Initial thoughts about the feature
-        
-        With parent linking:
-        add_thought ProjectA-Followup Thought-This builds on previous idea --parent abc123
-        
-        With custom link type:
-        add_thought ProjectA-Related Thought-Another perspective --parent abc123 --link inspired-by
-        
-        Format:
-        add_thought <goal>-<title>-<description> [--parent <parent_id>] [--link <link_type>]
-        
-        Link types:
-        - evolves-from (default): This thought is an evolution of the parent
-        - references: This thought references or mentions the parent
-        - inspired-by: This thought was inspired by but may diverge from the parent
-        - parent-child: Hierarchical relationship
-        """
-        try:
-            # Validate input
-            input_data = AddThoughtInput.parse_input(arg)
-            
-            # Create the thought item (always with item_type=THOUGHT)
-            thought = self.work_system.add_item(
-                goal=input_data.goal,
-                item_type=ItemType.THOUGHT,
-                priority=Priority.MED,  # Default priority for thoughts
-                title=input_data.title,
-                description=input_data.description
-            )
-            
-            # If a parent ID was provided, create the link
-            if input_data.parent_id:
-                # Verify the parent item exists
-                parent_item = self.work_system.items.get(input_data.parent_id)
-                if parent_item:
-                    # Create the link
-                    success = self.work_system.add_link(
-                        thought.id, 
-                        input_data.parent_id, 
-                        input_data.link_type
-                    )
-                    if success:
-                        self.display.print_success(
-                            f"Added thought: {thought.title} (ID: {thought.id})\n"
-                            f"Linked to: {parent_item.title} (ID: {parent_item.id}) with type: {input_data.link_type}"
-                        )
-                    else:
-                        self.display.print_warning(
-                            f"Added thought: {thought.title} (ID: {thought.id})\n"
-                            f"Failed to create link to parent item (ID: {input_data.parent_id})"
-                        )
-                else:
-                    self.display.print_warning(
-                        f"Added thought: {thought.title} (ID: {thought.id})\n"
-                        f"Parent item not found: {input_data.parent_id}"
-                    )
-            else:
-                self.display.print_success(f"Added thought: {thought.title} (ID: {thought.id})")
-            
-        except ValidationError as e:
-            errors = []
-            for error in e.errors():
-                field = error["loc"][0]
-                message = error["msg"]
-                errors.append(f"{field}: {message}")
-            self.display.print_error("\n".join(errors))
-        except Exception as e:
-            self.display.print_error(f"Error adding thought: {str(e)}")
-
     def do_list(self, arg):
         """
         Lists items with various filters. Examples:
@@ -159,6 +134,7 @@ class WorkSystemCLI(cmd.Cmd):
         - list ProjectA id       (sorted by creation)
         - list incomplete        (all incomplete items)
         - list all              (everything)
+        - list thoughts         (all thought items)
         """
         args = arg.lower().strip().split()
         
@@ -177,6 +153,14 @@ class WorkSystemCLI(cmd.Cmd):
                     items = self.work_system.get_items_by_goal(goal)
                     if items:
                         self.display.print_items(items)
+                return
+                
+            if args[0] == 'thoughts':
+                thoughts = self.work_system.get_items_by_type(ItemType.THOUGHT)
+                if thoughts:
+                    self.display.print_items(thoughts)
+                else:
+                    self.display.print_warning("No thought items found.")
                 return
 
             goal = args[0]
@@ -199,6 +183,38 @@ class WorkSystemCLI(cmd.Cmd):
 
         except Exception as e:
             self.display.print_error(str(e))
+
+    def do_list_thoughts(self, arg):
+        """
+        List all thought items, optionally filtered by goal.
+        
+        Usage:
+        - list_thoughts           (all thoughts)
+        - list_thoughts ProjectA  (thoughts for specific goal)
+        """
+        args = arg.lower().strip().split()
+        try:
+            if not args:
+                # List all thoughts
+                thoughts = self.work_system.get_items_by_type(ItemType.THOUGHT)
+                if thoughts:
+                    self.display.print_items(thoughts)
+                else:
+                    self.display.print_warning("No thought items found.")
+                return
+            
+            # Filter thoughts by goal
+            goal = args[0]
+            all_thoughts = self.work_system.get_items_by_type(ItemType.THOUGHT)
+            goal_thoughts = [t for t in all_thoughts if t.goal.lower() == goal.lower()]
+            
+            if goal_thoughts:
+                self.display.print_items(goal_thoughts)
+            else:
+                self.display.print_warning(f"No thought items found for goal: {goal}")
+                
+        except Exception as e:
+            self.display.print_error(f"Error listing thoughts: {str(e)}")
 
     def do_update(self, arg):
         """
@@ -408,6 +424,118 @@ class WorkSystemCLI(cmd.Cmd):
             
         except Exception as e:
             self.display.print_error(f"Migration failed: {str(e)}")
+
+    def do_link(self, arg):
+        """
+        Create a link between two work items.
+        
+        Usage:
+        link <source_id> <target_id> [link_type]
+        
+        Examples:
+        link abc123 def456             (creates link with default 'references' type)
+        link abc123 def456 evolves-from (creates link with 'evolves-from' type)
+        
+        Link types:
+        - references: Basic connection between items (default)
+        - evolves-from: Shows thought evolution
+        - inspired-by: Influence without direct evolution
+        - parent-child: Hierarchical relationship
+        """
+        try:
+            # Parse arguments
+            args = arg.strip().split()
+            if len(args) < 2:
+                self.display.print_error("Please provide source and target IDs. Type 'help link' for usage.")
+                return
+                
+            source_id = args[0]
+            target_id = args[1]
+            link_type = args[2] if len(args) > 2 else "references"
+            
+            # Validate IDs exist
+            if source_id not in self.work_system.items:
+                self.display.print_error(f"Source item not found: {source_id}")
+                return
+                
+            if target_id not in self.work_system.items:
+                self.display.print_error(f"Target item not found: {target_id}")
+                return
+                
+            # Validate link type
+            valid_link_types = ["references", "evolves-from", "inspired-by", "parent-child"]
+            if link_type not in valid_link_types:
+                self.display.print_error(
+                    f"Invalid link type: {link_type}\n"
+                    f"Valid types: {', '.join(valid_link_types)}"
+                )
+                return
+                
+            # Create the link
+            success = self.work_system.add_link(source_id, target_id, link_type)
+            
+            if success:
+                source_item = self.work_system.items[source_id]
+                target_item = self.work_system.items[target_id]
+                
+                self.display.print_success(
+                    f"Link created successfully:\n"
+                    f"  Source: {source_item.title} (ID: {source_id})\n"
+                    f"  Target: {target_item.title} (ID: {target_id})\n"
+                    f"  Type: {link_type}"
+                )
+            else:
+                self.display.print_error(f"Failed to create link. The link might already exist.")
+                
+        except Exception as e:
+            self.display.print_error(f"Error creating link: {str(e)}")
+
+    def do_unlink(self, arg):
+        """
+        Remove a link between two work items.
+        
+        Usage:
+        unlink <source_id> <target_id>
+        
+        Example:
+        unlink abc123 def456  (removes any link from abc123 to def456)
+        """
+        try:
+            # Parse arguments
+            args = arg.strip().split()
+            if len(args) != 2:
+                self.display.print_error("Please provide source and target IDs. Type 'help unlink' for usage.")
+                return
+                
+            source_id = args[0]
+            target_id = args[1]
+            
+            # Validate IDs exist
+            if source_id not in self.work_system.items:
+                self.display.print_error(f"Source item not found: {source_id}")
+                return
+                
+            if target_id not in self.work_system.items:
+                self.display.print_error(f"Target item not found: {target_id}")
+                return
+                
+            # Remove the link
+            success = self.work_system.remove_link(source_id, target_id)
+            
+            if success:
+                source_item = self.work_system.items[source_id]
+                target_item = self.work_system.items[target_id]
+                
+                self.display.print_success(
+                    f"Link removed successfully:\n"
+                    f"  Source: {source_item.title} (ID: {source_id})\n"
+                    f"  Target: {target_item.title} (ID: {target_id})"
+                )
+            else:
+                self.display.print_error(f"No link found between the specified items.")
+                
+        except Exception as e:
+            self.display.print_error(f"Error removing link: {str(e)}")
 
     def do_quit(self, arg):
         """Quit the program"""

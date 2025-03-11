@@ -12,21 +12,11 @@ class Display:
         self.console = Console(force_terminal=True)
 
     def print_items(self, items: List[WorkItem]):
-        """
-        Creates a formatted table showing:
-        - Item ID
-        - Goal
-        - Title
-        - Type
-        - Priority
-        - Status
-        - Creation date
-        - Description
-        """
+        """Pretty-print a list of work items as a table"""
         if not items:
-            self.console.print("[bold yellow]No items to display.[/bold yellow]")
+            self.print_warning("No items to display.")
             return
-
+            
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("ID", style="cyan", no_wrap=True)
         table.add_column("Goal", style="blue")
@@ -52,11 +42,21 @@ class Display:
                 ItemStatus.NOT_STARTED: "red"
             }.get(item.status, "white")
             
+            # Set type styling - add special highlight for thoughts
+            type_display = item.item_type.value
+            if item.item_type == ItemType.THOUGHT:
+                type_display = f"[bold cyan]{type_display}[/bold cyan]"
+            
+            # Set title styling - add special highlight for thoughts
+            title_display = item.title
+            if item.item_type == ItemType.THOUGHT:
+                title_display = f"[italic]{title_display}[/italic]"
+            
             table.add_row(
                 item.id,
                 item.goal,
-                item.title,
-                item.item_type.value,
+                title_display,
+                type_display,
                 f"[{priority_color}]{item.priority.name}[/{priority_color}]",
                 f"[{status_color}]{item.status.value}[/{status_color}]",
                 item.created_at.strftime('%Y-%m-%d %H:%M'),
@@ -81,12 +81,19 @@ class Display:
                 type_items = [item for item in goal_items if item.item_type == item_type]
                 if not type_items:
                     continue
-                    
-                type_branch = goal_branch.add(f"[bold yellow]{item_type.name}[/bold yellow]")
+                
+                # Use a special styling for THOUGHT type
+                if item_type == ItemType.THOUGHT:
+                    type_branch = goal_branch.add(f"[bold cyan]{item_type.name}[/bold cyan]")
+                else:
+                    type_branch = goal_branch.add(f"[bold yellow]{item_type.name}[/bold yellow]")
+                
+                # Sort items by priority (high to low)
+                sorted_items = sorted(type_items, key=lambda x: (x.priority.value, x.created_at), reverse=True)
                 
                 # Group by priority
                 for priority in reversed(list(Priority)):
-                    priority_items = [item for item in type_items if item.priority == priority]
+                    priority_items = [item for item in sorted_items if item.priority == priority]
                     if not priority_items:
                         continue
                         

@@ -110,11 +110,22 @@
 - Updated type validation in `schemas.py` to allow the new "th" type
 - Modified `generate_id()` to handle the two-character "th" type for ID generation
 - Added comprehensive unit tests for the thought item functionality in `tests/test_thought_item.py`
-- Added `AddThoughtInput` schema in `schemas.py` for validating thought creation input
-- Implemented `do_add_thought` command in CLI for quickly capturing thoughts
-- Added support for linking thoughts to existing items during creation with customizable link types
-- Created unit tests for the add_thought command in `tests/test_add_thought_command.py`
+- Extended the `do_list` command to support filtering thoughts with `list thoughts`
+- Added specialized `do_list_thoughts` command for listing all thoughts or filtering by goal
+- Enhanced display formatting to highlight thought items with distinct styling
+- Added special visual treatment for thoughts in the tree view
+- Created unit tests for the thought listing functionality in `tests/test_list_thoughts.py`
+- Added `do_link` command to create links between items from the CLI with support for custom link types
+- Added `do_unlink` command to remove links between items from the CLI
+- Implemented input validation for link commands to handle invalid IDs and link types
+- Created comprehensive unit tests for link/unlink commands in `tests/test_link_commands.py`
+- Added manual test script for link/unlink commands in `test_link_commands_manual.py`
 
 ### Changed
-[Document all changes here.]
+- Unified item creation by extending the `add` command to support thought items with linking
+- Enhanced `AddItemInput` schema to support optional linking parameters (`--link-to`, `--link-type`)
+- Removed separate `do_add_thought` command for a more consistent user interface
+- Updated help documentation with comprehensive examples for the extended `add` command
+- Created unit tests for the unified add command in `tests/test_unified_add_command.py`
+- Updated class docstring for `WorkSystemCLI` to document the new link and unlink commands
 
