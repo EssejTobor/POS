@@ -7,7 +7,7 @@ from rich.table import Table
 from .models import ItemType, ItemStatus, Priority
 from .storage import WorkSystem
 from .display import Display
-from .schemas import AddItemInput, UpdateItemInput
+from .schemas import AddItemInput, UpdateItemInput, AddThoughtInput
 from pydantic import ValidationError
 from .backup import BackupManager
 from .migrate import MigrationManager
@@ -22,6 +22,7 @@ class WorkSystemCLI(cmd.Cmd):
     
     Commands:
     - add: Create new items
+    - add_thought: Create new thought items with optional linking
     - list: View items with various filters
     - update: Modify existing items
     - export: Generate markdown report
@@ -77,6 +78,78 @@ class WorkSystemCLI(cmd.Cmd):
             self.display.print_error("\n".join(errors))
         except Exception as e:
             self.display.print_error(str(e))
+
+    def do_add_thought(self, arg):
+        """
+        Adds a new thought item with optional linking to an existing item. Example usage:
+        add_thought ProjectA-Brainstorm Ideas-Initial thoughts about the feature
+        
+        With parent linking:
+        add_thought ProjectA-Followup Thought-This builds on previous idea --parent abc123
+        
+        With custom link type:
+        add_thought ProjectA-Related Thought-Another perspective --parent abc123 --link inspired-by
+        
+        Format:
+        add_thought <goal>-<title>-<description> [--parent <parent_id>] [--link <link_type>]
+        
+        Link types:
+        - evolves-from (default): This thought is an evolution of the parent
+        - references: This thought references or mentions the parent
+        - inspired-by: This thought was inspired by but may diverge from the parent
+        - parent-child: Hierarchical relationship
+        """
+        try:
+            # Validate input
+            input_data = AddThoughtInput.parse_input(arg)
+            
+            # Create the thought item (always with item_type=THOUGHT)
+            thought = self.work_system.add_item(
+                goal=input_data.goal,
+                item_type=ItemType.THOUGHT,
+                priority=Priority.MED,  # Default priority for thoughts
+                title=input_data.title,
+                description=input_data.description
+            )
+            
+            # If a parent ID was provided, create the link
+            if input_data.parent_id:
+                # Verify the parent item exists
+                parent_item = self.work_system.items.get(input_data.parent_id)
+                if parent_item:
+                    # Create the link
+                    success = self.work_system.add_link(
+                        thought.id, 
+                        input_data.parent_id, 
+                        input_data.link_type
+                    )
+                    if success:
+                        self.display.print_success(
+                            f"Added thought: {thought.title} (ID: {thought.id})\n"
+                            f"Linked to: {parent_item.title} (ID: {parent_item.id}) with type: {input_data.link_type}"
+                        )
+                    else:
+                        self.display.print_warning(
+                            f"Added thought: {thought.title} (ID: {thought.id})\n"
+                            f"Failed to create link to parent item (ID: {input_data.parent_id})"
+                        )
+                else:
+                    self.display.print_warning(
+                        f"Added thought: {thought.title} (ID: {thought.id})\n"
+                        f"Parent item not found: {input_data.parent_id}"
+                    )
+            else:
+                self.display.print_success(f"Added thought: {thought.title} (ID: {thought.id})")
+            
+        except ValidationError as e:
+            errors = []
+            for error in e.errors():
+                field = error["loc"][0]
+                message = error["msg"]
+                errors.append(f"{field}: {message}")
+            self.display.print_error("\n".join(errors))
+        except Exception as e:
+            self.display.print_error(f"Error adding thought: {str(e)}")
 
     def do_list(self, arg):
         """

@@ -106,6 +106,14 @@
 - Implemented `get_links()` method to retrieve both incoming and outgoing links for an item
 - Added convenience methods in `WorkSystem` class for working with links (`add_link()`, `remove_link()`, `get_links()`)
 - Added comprehensive unit tests for the link functionality in `tests/test_item_links.py`
+- Added new `ItemType.THOUGHT` enum value with "th" value for capturing thought items
+- Updated type validation in `schemas.py` to allow the new "th" type
+- Modified `generate_id()` to handle the two-character "th" type for ID generation
+- Added comprehensive unit tests for the thought item functionality in `tests/test_thought_item.py`
+- Added `AddThoughtInput` schema in `schemas.py` for validating thought creation input
+- Implemented `do_add_thought` command in CLI for quickly capturing thoughts
+- Added support for linking thoughts to existing items during creation with customizable link types
+- Created unit tests for the add_thought command in `tests/test_add_thought_command.py`
 
 ### Changed
 [Document all changes here.]

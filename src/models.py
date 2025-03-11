@@ -8,6 +8,7 @@ class ItemType(Enum):
     TASK = "t"      # Regular tasks - day-to-day work items
     LEARNING = "l"  # Learning-related items - educational goals
     RESEARCH = "r"  # Research-related items - investigation tasks
+    THOUGHT = "th"  # Thought items - ideas and concepts to track
 
 class ItemStatus(Enum):
     """Defines the possible states of a work item"""
@@ -28,7 +29,7 @@ class WorkItem(BaseModel):
     
     Attributes:
         title: Short description of the item
-        item_type: Category of the work item (TASK/LEARNING/RESEARCH)
+        item_type: Category of the work item (TASK/LEARNING/RESEARCH/THOUGHT)
         description: Detailed description of the work item
         goal: The broader goal this item belongs to
         priority: Importance level (LOW/MED/HI)

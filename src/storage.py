@@ -31,15 +31,17 @@ class WorkSystem:
         """
         Creates a unique ID combining:
         - First letter of goal (g)
-        - Type initial (t/l/r)
+        - Type initial (t/l/r/th)
         - Priority number (1/2/3)
         - Sequential number for the goal
         - Current time
         
         Example: gt21230pm (goal-task-priority2-item1-2:30pm)
+               or gth21230pm (goal-thought-priority2-item1-2:30pm)
         """
         goal_initial = goal[0].lower()
-        type_initial = item_type.value[0].lower()
+        # For THOUGHT type, use the first two characters
+        type_initial = item_type.value.lower() if item_type == ItemType.THOUGHT else item_type.value[0].lower()
         priority_num = priority.value
         
         if goal not in self.entry_counts:

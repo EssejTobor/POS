@@ -19,8 +19,8 @@ class AddItemInput(CommandInput):
     @field_validator("type_")
     @classmethod
     def validate_type(cls, v):
-        if v not in ["t", "l", "r"]:
-            raise ValueError("Type must be 't' (task), 'l' (learning), or 'r' (research)")
+        if v not in ["t", "l", "r", "th"]:
+            raise ValueError("Type must be 't' (task), 'l' (learning), 'r' (research), or 'th' (thought)")
         return v
 
     @field_validator("priority")
@@ -67,4 +67,63 @@ class UpdateItemInput(CommandInput):
             item_id=parts[1].strip(),
             field=parts[2].strip(),
             value=parts[3].strip()
+        )
+
+class AddThoughtInput(CommandInput):
+    goal: str = Field(..., min_length=1, max_length=50)
+    title: str = Field(..., min_length=1, max_length=100)
+    description: str = Field(..., min_length=1)
+    parent_id: Optional[str] = None
+    link_type: str = "evolves-from"
+
+    @field_validator("link_type")
+    @classmethod
+    def validate_link_type(cls, v):
+        valid_link_types = ["evolves-from", "references", "inspired-by", "parent-child"]
+        if v not in valid_link_types:
+            raise ValueError(f"Link type must be one of: {', '.join(valid_link_types)}")
+        return v
+
+    @classmethod
+    def parse_input(cls, input_str: str) -> "AddThoughtInput":
+        # Split for the required parameters
+        parts = input_str.split('-', 2)
+        
+        if len(parts) < 3:
+            raise ValueError("Format: goal-title-description [--parent parent_id] [--link link_type]")
+            
+        goal = parts[0].strip()
+        title = parts[1].strip()
+        
+        # Process the description and optional parameters
+        remaining = parts[2]
+        
+        # Check for optional parameters
+        parent_id = None
+        link_type = "evolves-from"
+        
+        # Look for --parent and --link parameters
+        if " --parent " in remaining:
+            desc_parts = remaining.split(" --parent ", 1)
+            description = desc_parts[0].strip()
+            
+            # Check if there's also a link type
+            parent_parts = desc_parts[1].strip().split(" --link ", 1)
+            parent_id = parent_parts[0].strip()
+            
+            if len(parent_parts) > 1:
+                link_type = parent_parts[1].strip()
+        elif " --link " in remaining:
+            # This should not normally happen as link requires a parent
+            # But handle it gracefully
+            raise ValueError("--link parameter requires --parent to be specified first")
+        else:
+            description = remaining.strip()
+        
+        return cls(
+            goal=goal,
+            title=title,
+            description=description,
+            parent_id=parent_id,
+            link_type=link_type
         ) 
