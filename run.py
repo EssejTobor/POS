@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Entry point for the POS (Personal Organization System) application.
+Entry point for the POS (Personal Operating System) application.
 """
-from src.cli import main
+from main import main
 
 if __name__ == '__main__':
     main() 
