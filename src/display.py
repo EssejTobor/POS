@@ -129,4 +129,136 @@ class Display:
 
     def print_warning(self, message: str):
         """Print a warning message"""
-        self.console.print(f"[bold yellow]{message}[/bold yellow]") 
+        self.console.print(f"[bold yellow]{message}[/bold yellow]")
+
+    def print(self, message: str):
+        """Print a formatted message"""
+        self.console.print(message)
+
+    def print_link_tree(self, items: dict, root_id: str = None, max_depth: int = 5):
+        """
+        Display a hierarchical tree view of item relationships based on links.
+        
+        Args:
+            items: Dictionary mapping item IDs to (item, links) tuples
+            root_id: ID of item to use as root (if None, creates a tree for each unlinked item)
+            max_depth: Maximum depth to traverse to prevent infinite loops with cycles
+        """
+        # If no items, display error
+        if not items:
+            self.print_warning("No items to display in link tree.")
+            return
+            
+        # Create the main tree
+        main_tree = Tree("[bold magenta]Item Relationship Tree[/bold magenta]")
+        
+        # Track visited items to handle cycles
+        visited = set()
+        
+        # Function to recursively build the tree
+        def build_tree(tree_node, item_id, depth=0):
+            # Prevent infinite recursion due to cycles
+            if depth > max_depth or item_id in visited:
+                if item_id in visited:
+                    # Mark as a cycle reference
+                    tree_node.add(f"[dim cyan]{item_id}[/dim cyan] [dim](cycle reference)[/dim]")
+                return
+
+            # Mark as visited to handle cycles
+            visited.add(item_id)
+            
+            # Get the item and its links
+            if item_id not in items:
+                tree_node.add(f"[red]Item not found: {item_id}[/red]")
+                return
+                
+            item, links = items[item_id]
+            
+            # Define colors for different link types
+            link_type_colors = {
+                "references": "blue",
+                "evolves-from": "green",
+                "inspired-by": "yellow",
+                "parent-child": "magenta"
+            }
+            
+            # Format the item node based on its type
+            item_title = f"[cyan]{item.id}[/cyan] - "
+            
+            if item.item_type == ItemType.THOUGHT:
+                item_title += f"[bold cyan]{item.title}[/bold cyan]"
+            else:
+                item_title += f"{item.title}"
+                
+            item_title += f" ([dim]{item.item_type.value}[/dim])"
+            
+            # Create the item node
+            item_node = tree_node.add(item_title)
+            
+            # Add outgoing links if any
+            if links['outgoing']:
+                outgoing_node = item_node.add("[bold]Outgoing Links:[/bold]")
+                
+                # Group by link type
+                links_by_type = {}
+                for link in links['outgoing']:
+                    link_type = link['link_type']
+                    if link_type not in links_by_type:
+                        links_by_type[link_type] = []
+                    links_by_type[link_type].append(link)
+                
+                # Process each link type
+                for link_type, type_links in links_by_type.items():
+                    # Get color for this link type
+                    color = link_type_colors.get(link_type, "white")
+                    
+                    # Create a node for this link type
+                    type_node = outgoing_node.add(f"[{color}]{link_type}[/{color}] ({len(type_links)})")
+                    
+                    # Add each link target and recursively build its tree
+                    for link in type_links:
+                        target_id = link['target_id']
+                        if target_id in items:
+                            target_item = items[target_id][0]
+                            target_node = type_node.add(
+                                f"[cyan]{target_id}[/cyan] - {target_item.title} "
+                                f"([dim]{target_item.item_type.value}[/dim])"
+                            )
+                            # Recursively build the tree for this target (deeper level)
+                            if depth < max_depth:
+                                build_tree(target_node, target_id, depth + 1)
+                        else:
+                            type_node.add(f"[red]Target not found: {target_id}[/red]")
+            
+            # Remove from visited when backtracking
+            visited.remove(item_id)
+        
+        # If a root is specified, build tree from that item
+        if root_id:
+            if root_id in items:
+                item, _ = items[root_id]
+                build_tree(main_tree, root_id)
+            else:
+                self.print_error(f"Root item not found: {root_id}")
+                return
+        else:
+            # Find all items that don't have incoming links (potential roots)
+            root_items = []
+            for item_id, (item, links) in items.items():
+                if not links['incoming']:
+                    root_items.append(item_id)
+            
+            # If no roots found, use the first few items as roots
+            if not root_items and items:
+                root_items = list(items.keys())[:5]  # Limit to first 5 to avoid huge trees
+                
+            # Build a tree for each root item
+            for root_id in root_items:
+                item, _ = items[root_id]
+                # Skip if already visited (could happen if we're using arbitrary items as roots)
+                if root_id in visited:
+                    continue
+                build_tree(main_tree, root_id)
+                
+        # Print the tree
+        self.console.print(main_tree) 

@@ -381,8 +381,8 @@ The Thought Evolution Tracker enhancement extends POS to capture, link, and visu
    - The system fully supports thoughts, linking, and basic CLI visualization.
 
 2. **Tasks:**
-   - **Install** `textual` if not already done:  
-     ```bash
+   - **Install** `textual` if not already done remember we are on windows:  
+     ```
      pip install textual
      ```
    - **Create a new module** (e.g., `textual_ui.py`) or integrate into `cli.py` with:

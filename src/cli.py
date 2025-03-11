@@ -24,6 +24,10 @@ class WorkSystemCLI(cmd.Cmd):
     - add: Create new items (including thoughts with optional linking)
     - list: View items with various filters
     - list_thoughts: View all thought items
+    - link: Create a link between two work items
+    - unlink: Remove a link between two work items
+    - link_tree: Display a hierarchical view of item relationships
+    - tree: View items organized by goal, type, and priority
     - update: Modify existing items
     - export: Generate markdown report
     - quit: Exit the program
@@ -34,8 +38,6 @@ class WorkSystemCLI(cmd.Cmd):
     - cleanup_backups: Remove old backups, keeping the most recent ones
     - export_json: Export database to JSON format
     - migrate: Migrate data from JSON to SQLite database
-    - link: Create a link between two work items
-    - unlink: Remove a link between two work items
     """
     prompt = "(work) "
 
@@ -277,6 +279,85 @@ class WorkSystemCLI(cmd.Cmd):
             self.display.print_tree(items, goals)
         except Exception as e:
             self.display.print_error(f"Error displaying tree: {str(e)}")
+
+    def do_link_tree(self, arg):
+        """
+        Display a hierarchical tree view of item relationships.
+        Shows how items are linked to each other with color-coded relationship types.
+        
+        Usage:
+        link_tree                 (shows all items with their links)
+        link_tree <item_id>       (shows tree starting from specific item)
+        link_tree --thoughts      (focuses on thought items and their links)
+        link_tree <item_id> <max_depth>  (limits the tree depth to avoid large outputs)
+        
+        Examples:
+        link_tree abc123         (shows relationships starting from item abc123)
+        link_tree --thoughts     (shows only thoughts and their relationships)
+        link_tree abc123 3       (shows up to 3 levels of links from item abc123)
+        """
+        try:
+            # Parse arguments
+            args = arg.strip().split()
+            
+            # Default settings
+            root_id = None
+            max_depth = 5
+            only_thoughts = False
+            
+            # Process arguments
+            if args:
+                if args[0] == '--thoughts':
+                    only_thoughts = True
+                elif len(args) > 1 and args[0].startswith('--'):
+                    self.display.print_error(f"Unknown option: {args[0]}")
+                    return
+                else:
+                    root_id = args[0]
+                    
+                    # Check if max_depth is specified
+                    if len(args) > 1:
+                        try:
+                            max_depth = int(args[1])
+                            if max_depth <= 0:
+                                self.display.print_error("Maximum depth must be greater than 0")
+                                return
+                        except ValueError:
+                            self.display.print_error(f"Invalid maximum depth: {args[1]}")
+                            return
+            
+            # Get all items or filter for thoughts
+            if only_thoughts:
+                all_items = self.work_system.get_items_by_type(ItemType.THOUGHT)
+                item_ids = [item.id for item in all_items]
+            else:
+                # Get all items
+                all_items = list(self.work_system.items.values())
+                item_ids = list(self.work_system.items.keys())
+            
+            # Display a message about what we're showing
+            if root_id:
+                if root_id not in self.work_system.items:
+                    self.display.print_error(f"Item not found: {root_id}")
+                    return
+                item = self.work_system.items[root_id]
+                self.display.print_success(f"Displaying relationship tree for: {item.title} (ID: {root_id})")
+            elif only_thoughts:
+                self.display.print_success(f"Displaying relationships for {len(all_items)} thought items")
+            else:
+                self.display.print_success(f"Displaying relationships for {len(all_items)} items")
+                
+            # Get links for all items and build a dictionary of items with their links
+            items_with_links = {}
+            for item_id in item_ids:
+                links = self.work_system.get_links(item_id)
+                items_with_links[item_id] = (self.work_system.items[item_id], links)
+            
+            # Print the link tree
+            self.display.print_link_tree(items_with_links, root_id, max_depth)
+            
+        except Exception as e:
+            self.display.print_error(f"Error displaying link tree: {str(e)}")
 
     def do_dedupe(self, arg):
         """
