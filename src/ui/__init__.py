@@ -3,11 +3,26 @@ UI components package for the Personal Operating System TUI.
 Contains reusable widgets and UI components.
 """
 
-# Import UI components as they are created
-# For example:
-# from .thought_card import ThoughtCard
-# from .work_item_card import WorkItemCard
+from .thought_widgets import ThoughtNodeWidget, ThoughtForm, ThoughtBranchForm, ThoughtVisualizer, ThoughtSearchForm, Switch
+from .thought_list import ThoughtList, ThoughtFilterBar
+from .thought_dialogs import (
+    ThoughtDialog, AddThoughtDialog, EditThoughtDialog, 
+    BranchThoughtDialog, VisualizeThoughtDialog, ConfirmDeleteDialog
+)
 
 __all__ = [
-    # List UI components here as they are created
+    'ThoughtNodeWidget', 
+    'ThoughtForm', 
+    'ThoughtBranchForm', 
+    'ThoughtVisualizer',
+    'ThoughtSearchForm',
+    'Switch',
+    'ThoughtList',
+    'ThoughtFilterBar',
+    'ThoughtDialog',
+    'AddThoughtDialog',
+    'EditThoughtDialog',
+    'BranchThoughtDialog',
+    'VisualizeThoughtDialog',
+    'ConfirmDeleteDialog'
 ] 

@@ -8,13 +8,14 @@ from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.app import ComposeResult
 from textual import events
 from rich.text import Text
+from textual.message import Message
 
 from ..models import ThoughtNode, ThoughtStatus
 from .thought_widgets import ThoughtNodeWidget, ThoughtSelected
 
 logger = logging.getLogger(__name__)
 
-class FilterChanged(events.Message):
+class FilterChanged(Message):
     """Event fired when a filter is changed"""
     def __init__(self, filter_type: str, value: str):
         self.filter_type = filter_type
@@ -154,18 +155,18 @@ class ThoughtList(Container):
         """Handle button presses"""
         if event.button.id == "add-thought":
             logger.debug("Add thought button pressed")
-            self.post_message(ThoughtList.AddThought())
+            self.post_message(AddThought())
         elif event.button.id == "refresh-thoughts":
             logger.debug("Refresh thoughts button pressed")
-            self.post_message(ThoughtList.RefreshRequested())
+            self.post_message(RefreshRequested())
     
     def on_thought_selected(self, event: ThoughtSelected) -> None:
         """Handle thought selection from the list"""
         # Forward the event up
         self.post_message(event)
     
-    class AddThought(events.Message):
+    class AddThought(Message):
         """Event fired when add thought button is pressed"""
         
-    class RefreshRequested(events.Message):
+    class RefreshRequested(Message):
         """Event fired when refresh button is pressed""" 

@@ -34,7 +34,7 @@ class ThoughtScreen(Screen):
         ("escape", "back", "Back")
     ]
     
-    CSS_PATH = "../assets/thought.css"
+    CSS_PATH = "../assets/thought.tcss"
     
     def __init__(self, thought_manager: ThoughtManager, **kwargs):
         super().__init__(**kwargs)

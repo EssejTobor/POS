@@ -3,20 +3,21 @@ Dialog components for thought management.
 """
 from typing import Optional, List, Dict, Any, Callable
 import logging
-from textual.widgets import Static, Button, Label
+from textual.widgets import Static, Button, Label, Input, TextArea
 from textual.containers import Container, Horizontal, Vertical
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual import events
 from rich.syntax import Syntax
 from rich.text import Text
+from textual.message import Message
 
 from ..models import ThoughtNode, ThoughtStatus, BranchType
 from .thought_widgets import ThoughtForm, ThoughtBranchForm, ThoughtVisualizer
 
 logger = logging.getLogger(__name__)
 
-class DialogResult(events.Message):
+class DialogResult(Message):
     """Base class for dialog result messages"""
     def __init__(self, dialog_id: str, result: Dict[str, Any], action: str):
         self.dialog_id = dialog_id

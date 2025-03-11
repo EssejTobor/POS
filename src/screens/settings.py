@@ -80,13 +80,13 @@ class SettingsScreen(BaseScreen):
         # Set dark mode switch to match app's current dark mode setting
         self.query_one("#dark-mode-switch").value = self.app.dark
     
-    def on_switch_changed(self, event: events.Switch.Changed) -> None:
+    def on_switch_changed(self, event: Switch.Changed) -> None:
         """Handle switch changes"""
         if event.switch.id == "dark-mode-switch":
             self.app.dark = event.value
             logger.info(f"Dark mode set to {event.value}")
     
-    def on_button_pressed(self, event: events.Button.Pressed) -> None:
+    def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses"""
         button_id = event.button.id
         

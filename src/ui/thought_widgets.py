@@ -1,19 +1,21 @@
 """
 UI components for the Thought Evolution Tracker.
 """
-from textual.widgets import Static, Input, TextArea, Button, Label
+from textual.widgets import Static, Input, TextArea, Button, Label, Tree
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.app import ComposeResult
 from textual import events
 from rich.text import Text
 from rich.syntax import Syntax
+from textual.message import Message
+from textual.events import Click
 import logging
 
 from ..models import ThoughtStatus, BranchType, ThoughtNode
 
 logger = logging.getLogger(__name__)
 
-class ThoughtSelected(events.Message):
+class ThoughtSelected(Message):
     """Event fired when a thought is selected"""
     def __init__(self, thought_id: str):
         self.thought_id = thought_id
@@ -50,11 +52,11 @@ class ThoughtNodeWidget(Static):
             node_text.append(tag_text, style="italic dim")
         
         yield Static(node_text, id=f"thought-{self.thought_id}")
-        
-    def on_click(self) -> None:
+    
+    def on_click(self, event: Click) -> None:
         """Handle click to select this thought"""
         logger.debug(f"Thought selected: {self.thought_id}")
-        self.app.post_message(ThoughtSelected(self.thought_id))
+        self.post_message(ThoughtSelected(self.thought_id))
 
 class ThoughtForm(Container):
     """Form for adding or editing thoughts"""
@@ -217,7 +219,7 @@ class Switch(Static):
         style = "bold green" if self.value else "bold red"
         yield Static(Text(text, style=style), id=f"{self.id}-text")
         
-    def on_click(self) -> None:
+    def on_click(self, event: Click) -> None:
         """Toggle the switch when clicked"""
         self.value = not self.value
         text = "[ON]" if self.value else "[OFF]"
@@ -230,7 +232,7 @@ class Switch(Static):
         # Post a changed event
         self.post_message(Switch.Changed(self.value))
         
-    class Changed(events.Message):
+    class Changed(Message):
         """Event fired when the switch value changes"""
         def __init__(self, value: bool):
             self.value = value

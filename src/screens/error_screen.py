@@ -24,7 +24,7 @@ class ErrorScreen(Screen):
             id="error-screen"
         )
     
-    def on_button_pressed(self, event: events.Button.Pressed) -> None:
+    def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses"""
         if event.button.id == "close-error":
             logger.debug("Error screen closed")

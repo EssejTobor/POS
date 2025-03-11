@@ -74,7 +74,7 @@ class WorkItemScreen(BaseScreen):
         """Load data when screen is mounted"""
         self.load_items()
     
-    def on_button_pressed(self, event: events.Button.Pressed) -> None:
+    def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses"""
         button_id = event.button.id
         
