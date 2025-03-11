@@ -306,5 +306,67 @@ class WorkSystem:
         )
 
     def optimize_database(self):
-        """Optimize database storage"""
-        self.db.execute_vacuum() 
+        """Optimize the database by removing unused space"""
+        self.db.execute_vacuum()
+        
+    def add_link(self, source_id: str, target_id: str, link_type: str = "references") -> bool:
+        """
+        Create a link between two work items
+        
+        Args:
+            source_id: ID of the source item
+            target_id: ID of the target item
+            link_type: Type of relationship (default: "references")
+            
+        Returns:
+            bool: True if the link was added successfully, False otherwise
+        """
+        try:
+            # Verify both items exist in our cache
+            if source_id not in self.items or target_id not in self.items:
+                print(f"Error adding link: One or both items don't exist")
+                return False
+                
+            with self._atomic_operation():
+                return self.db.add_link(source_id, target_id, link_type)
+        except Exception as e:
+            print(f"Error adding link: {e}")
+            return False
+            
+    def remove_link(self, source_id: str, target_id: str) -> bool:
+        """
+        Remove a link between two work items
+        
+        Args:
+            source_id: ID of the source item
+            target_id: ID of the target item
+            
+        Returns:
+            bool: True if the link was removed successfully, False otherwise
+        """
+        try:
+            with self._atomic_operation():
+                return self.db.remove_link(source_id, target_id)
+        except Exception as e:
+            print(f"Error removing link: {e}")
+            return False
+            
+    def get_links(self, item_id: str) -> Dict[str, List[Dict]]:
+        """
+        Get all links for an item (both incoming and outgoing)
+        
+        Args:
+            item_id: ID of the item to get links for
+            
+        Returns:
+            Dictionary with 'outgoing' and 'incoming' lists of links
+        """
+        try:
+            if item_id not in self.items:
+                print(f"Error getting links: Item {item_id} doesn't exist")
+                return {'outgoing': [], 'incoming': []}
+                
+            return self.db.get_links(item_id)
+        except Exception as e:
+            print(f"Error getting links: {e}")
+            return {'outgoing': [], 'incoming': []} 

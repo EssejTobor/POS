@@ -5,10 +5,9 @@ from pydantic import BaseModel, Field
 
 class ItemType(Enum):
     """Defines the different types of work items that can be tracked"""
-    DO = "do"           # Regular tasks - day-to-day work items (formerly TASK)
-    LEARN = "learn"     # Learning-related items - educational goals (formerly LEARNING)
-    RESEARCH = "research"  # Research-related items - investigation tasks
-    THINK = "think"     # Thought items - for tracking thought evolution
+    TASK = "t"      # Regular tasks - day-to-day work items
+    LEARNING = "l"  # Learning-related items - educational goals
+    RESEARCH = "r"  # Research-related items - investigation tasks
 
 class ItemStatus(Enum):
     """Defines the possible states of a work item"""
@@ -22,18 +21,6 @@ class Priority(Enum):
     MED = 2    # Medium urgency/importance
     HI = 3     # High urgency/importance - critical items
 
-class ThoughtStatus(Enum):
-    """Defines the possible states of a thought node"""
-    DRAFT = "draft"         # Initial capture of a thought
-    EVOLVING = "evolving"   # Under active development
-    CRYSTALLIZED = "crystallized"  # Settled/established thinking
-
-class BranchType(Enum):
-    """Defines the type of branch a thought represents"""
-    EXPLORATION = "exploration"  # Exploring a new direction
-    REFINEMENT = "refinement"    # Refining an existing thought
-    CHALLENGE = "challenge"      # Challenging/questioning a thought
-
 class WorkItem(BaseModel):
     """
     Core data structure representing a single work item.
@@ -41,7 +28,7 @@ class WorkItem(BaseModel):
     
     Attributes:
         title: Short description of the item
-        item_type: Category of the work item (DO/LEARN/RESEARCH/THINK)
+        item_type: Category of the work item (TASK/LEARNING/RESEARCH)
         description: Detailed description of the work item
         goal: The broader goal this item belongs to
         priority: Importance level (LOW/MED/HI)
@@ -91,93 +78,6 @@ class WorkItem(BaseModel):
             description=data['description'],
             priority=Priority(data['priority']),
             status=ItemStatus(data['status']),
-            created_at=datetime.fromisoformat(data['created_at']),
-            updated_at=datetime.fromisoformat(data['updated_at'])
-        )
-
-class ThoughtNode(BaseModel):
-    """
-    Core data structure representing a thought node with branching capability.
-    
-    Attributes:
-        id: Unique identifier 
-        title: Short descriptive title
-        content: Main thought content
-        branch_name: Name of this thought branch
-        is_external: Flag indicating if this thought came from external source
-        parent_id: Reference to parent thought (if any)
-        status: Current thought status
-        tags: List of categorization tags
-        branch_type: Type of branch this represents
-        created_at: Timestamp of creation
-        updated_at: Timestamp of last modification
-    """
-    id: str = Field(default="")
-    title: str
-    content: str
-    branch_name: str
-    is_external: bool = False
-    parent_id: Optional[str] = None
-    status: ThoughtStatus = ThoughtStatus.DRAFT
-    tags: List[str] = Field(default_factory=list)
-    branch_type: BranchType = BranchType.EXPLORATION
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
-    
-    def evolve(self, new_content: str):
-        """Update content and mark as evolving"""
-        self.content = new_content
-        self.status = ThoughtStatus.EVOLVING
-        self.updated_at = datetime.now()
-    
-    def crystallize(self):
-        """Mark thought as crystallized (finalized)"""
-        self.status = ThoughtStatus.CRYSTALLIZED
-        self.updated_at = datetime.now()
-    
-    def add_tag(self, tag: str):
-        """Add a tag if it doesn't exist"""
-        if tag.lower() not in [t.lower() for t in self.tags]:
-            self.tags.append(tag)
-            self.updated_at = datetime.now()
-    
-    def remove_tag(self, tag: str):
-        """Remove a tag (case-insensitive)"""
-        for existing_tag in self.tags:
-            if existing_tag.lower() == tag.lower():
-                self.tags.remove(existing_tag)
-                self.updated_at = datetime.now()
-                break
-    
-    def to_dict(self) -> dict:
-        """Convert to dictionary for storage"""
-        return {
-            'id': self.id,
-            'title': self.title,
-            'content': self.content,
-            'branch_name': self.branch_name,
-            'is_external': int(self.is_external),
-            'parent_id': self.parent_id,
-            'status': self.status.value,
-            'tags': ','.join(self.tags) if self.tags else '',
-            'branch_type': self.branch_type.value,
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
-        }
-    
-    @classmethod
-    def from_dict(cls, data: dict) -> 'ThoughtNode':
-        """Create from dictionary"""
-        return cls(
-            id=data['id'],
-            title=data['title'],
-            content=data['content'],
-            branch_name=data['branch_name'],
-            is_external=bool(data['is_external']),
-            parent_id=data['parent_id'],
-            status=ThoughtStatus(data['status']),
-            tags=data['tags'].split(',') if data['tags'] else [],
-            branch_type=BranchType(data['branch_type']),
             created_at=datetime.fromisoformat(data['created_at']),
             updated_at=datetime.fromisoformat(data['updated_at'])
         ) 

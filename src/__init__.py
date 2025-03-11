@@ -1,9 +1,9 @@
 """
-Personal Operating System (POS) - A Textual-based TUI application for personal knowledge management and task tracking
+Personal Organization System (POS) - A command-line task management system
 """
 
-from .models import ItemType, ItemStatus, Priority, WorkItem, ThoughtNode, ThoughtStatus, BranchType
-from .config import Config
-from .thought_manager import ThoughtManager
+from .models import ItemType, ItemStatus, Priority, WorkItem
+from .storage import WorkSystem
+from .cli import WorkSystemCLI
 
-__version__ = "0.2.0" 
+__version__ = "0.010" 
