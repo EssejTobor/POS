@@ -187,6 +187,16 @@ class TestLinkTree(unittest.TestCase):
             
         output = captured_output.getvalue()
         self.assertNotIn("Deep Thought", output)
+
+    def test_link_tree_cycle_detection(self):
+        """Cycle references should be indicated in the output"""
+        captured_output = io.StringIO()
+
+        with redirect_stdout(captured_output):
+            self.cli.onecmd(f"link_tree {self.thought1.id}")
+
+        output = captured_output.getvalue()
+        self.assertIn("(cycle reference)", output)
         
     def test_invalid_arguments(self):
         """Test error handling with invalid arguments"""
