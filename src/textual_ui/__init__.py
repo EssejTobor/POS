@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional, Union
 
+from .widgets import CommandPalette, ModalDialog, ProgressIndicator, StatusBar
+
 try:  # pragma: no cover - Textual is optional
     from textual.app import App, ComposeResult
     from textual.binding import Binding
@@ -9,8 +11,18 @@ try:  # pragma: no cover - Textual is optional
     from textual.css.query import NoMatches
     from textual.screen import Screen
     from textual.widget import Widget
-    from textual.widgets import (Button, DataTable, Footer, Header, Input,
-                                 Label, Select, Static, TabbedContent, TabPane)
+    from textual.widgets import (
+        Button,
+        DataTable,
+        Footer,
+        Header,
+        Input,
+        Label,
+        Select,
+        Static,
+        TabbedContent,
+        TabPane,
+    )
 
     TEXTUAL_AVAILABLE = True
 except ModuleNotFoundError:  # pragma: no cover - fallback stub
@@ -361,6 +373,8 @@ class ItemListView(Container):
                 id="status-filter",
                 value=None,
             )
+            yield Select([], id="goal-filter", value=None)
+            yield Input(placeholder="Search", id="search-filter")
 
         # Table container
         with Container(id="list-container"):
@@ -379,6 +393,9 @@ class ItemListView(Container):
             # Load all items initially
             self._load_items()
 
+            # Populate goal options
+            self._update_goal_options()
+
             # Set up filter change listeners
             self.query_one("#type-filter", Select).changed.connect(
                 self._on_filter_change
@@ -389,12 +406,30 @@ class ItemListView(Container):
             self.query_one("#status-filter", Select).changed.connect(
                 self._on_filter_change
             )
+            self.query_one("#goal-filter", Select).changed.connect(
+                self._on_filter_change
+            )
+            self.query_one("#search-filter", Input).changed.connect(
+                self._on_filter_change
+            )
         except NoMatches:
             pass
 
     def _on_filter_change(self, _: Any) -> None:
         """Reload the items table when filters change."""
         self._load_items()
+
+    def _update_goal_options(self) -> None:
+        if not TEXTUAL_AVAILABLE:
+            return
+
+        try:
+            select = self.query_one("#goal-filter", Select)
+            goals = self.work_system.get_all_goals()
+            options = [(None, "All Goals")] + [(g, g) for g in goals]
+            select.options = options  # type: ignore[attr-defined]
+        except NoMatches:
+            pass
 
     def _load_items(self) -> None:
         """Load items based on current filters."""
@@ -406,11 +441,24 @@ class ItemListView(Container):
             type_filter = self.query_one("#type-filter", Select).value
             priority_filter = self.query_one("#priority-filter", Select).value
             status_filter = self.query_one("#status-filter", Select).value
+            goal_filter = self.query_one("#goal-filter", Select).value
+            search_term = self.query_one("#search-filter", Input).value.lower()
 
             # Get filtered items from the work system
             items = self.work_system.get_items_by_filters(
-                item_type=type_filter, priority=priority_filter, status=status_filter
+                item_type=type_filter,
+                priority=priority_filter,
+                status=status_filter,
+                goal=goal_filter,
             )
+
+            if search_term:
+                items = [
+                    i
+                    for i in items
+                    if search_term in i.title.lower()
+                    or search_term in i.description.lower()
+                ]
 
             # Clear existing rows
             table = self.query_one("#items-table", DataTable)
@@ -532,6 +580,71 @@ class LinkTreeView(Container):
             pass
 
 
+class ThoughtTreeWidget(Container):
+    """Expandable tree view specifically for thought relationships."""
+
+    DEFAULT_CSS = """
+    ThoughtTreeWidget {
+        width: 100%;
+        height: 100%;
+        layout: vertical;
+    }
+    """
+
+    def __init__(self, work_system: WorkSystem):
+        super().__init__()
+        self.work_system = work_system
+
+    def compose(self) -> ComposeResult:  # pragma: no cover - UI only
+        if not TEXTUAL_AVAILABLE:
+            return None
+
+        from textual.widgets import Tree
+
+        yield Tree("Thoughts", id="thought-tree")
+
+    def on_mount(self) -> None:  # pragma: no cover - UI only
+        if TEXTUAL_AVAILABLE:
+            tree = self.query_one("#thought-tree")
+            self._populate_tree(tree)
+
+    def _populate_tree(
+        self,
+        tree: Widget,
+        root_items: Optional[List[str]] = None,
+        visited: Optional[set[str]] = None,
+    ) -> None:
+        if not TEXTUAL_AVAILABLE:
+            return
+
+        if visited is None:
+            visited = set()
+
+        if root_items is None:
+            items = self.work_system.get_items_by_type(ItemType.THOUGHT)
+        else:
+            items = [
+                self.work_system.get_item(i)
+                for i in root_items
+                if self.work_system.get_item(i)
+            ]
+
+        for item in items:
+            if item.id in visited:
+                continue
+            visited.add(item.id)
+            node = tree.root.add(f"{item.id} - {item.title}")
+            links = self.work_system.get_links(item.id)["outgoing"]
+            child_ids = [
+                l["target_id"]
+                for l in links
+                if self.work_system.get_item(l["target_id"]).item_type
+                == ItemType.THOUGHT
+            ]
+            if child_ids:
+                self._populate_tree(node, child_ids, visited)
+
+
 class MainScreen(Screen):
     """Main application screen with tabbed interface."""
 
@@ -566,19 +679,24 @@ class MainScreen(Screen):
         # Header with app title
         yield Header(show_clock=True)
 
-        # Main content
-        with TabbedContent():
-            # New Item Form
-            with TabPane("New Item", id="new-item-tab"):
-                yield ItemEntryForm(self.work_system, self._on_item_submit)
+        with Horizontal():
+            with Vertical(id="sidebar"):
+                yield Button("New Item", id="nav-new")
+                yield Button("Items", id="nav-items")
+                yield Button("Thought Tree", id="nav-tree")
 
-            # Item List
-            with TabPane("Items", id="items-tab"):
-                yield ItemListView(self.work_system)
+            with Container(id="main-area"):
+                with TabbedContent(id="tabs"):
+                    with TabPane("New Item", id="new-item-tab"):
+                        yield ItemEntryForm(self.work_system, self._on_item_submit)
 
-            # Link Tree
-            with TabPane("Link Tree", id="link-tree-tab"):
-                yield LinkTreeView(self.work_system)
+                    with TabPane("Items", id="items-tab"):
+                        yield ItemListView(self.work_system)
+
+                    with TabPane("Link Tree", id="link-tree-tab"):
+                        yield ThoughtTreeWidget(self.work_system)
+
+        yield StatusBar(lambda: f"Total items: {len(self.work_system.items)}")
 
         # Message area for notifications (starts empty)
         yield Container(id="message-area")
@@ -607,7 +725,9 @@ class MainScreen(Screen):
             active_tab = tabs.active
 
             if active_tab == "items-tab":
-                self.query_one(ItemListView)._load_items()
+                view = self.query_one(ItemListView)
+                view._update_goal_options()
+                view._load_items()
                 self.add_message("Items refreshed", "info")
         except NoMatches:
             pass
@@ -620,6 +740,25 @@ class MainScreen(Screen):
         self.add_message(
             "Keys: [Q] Quit, [N] New Item, [R] Refresh, [F1] Help", "info", 10
         )
+
+    def on_button_pressed(
+        self, event: Button.Pressed
+    ) -> None:  # pragma: no cover - UI only
+        if not TEXTUAL_AVAILABLE:
+            return
+
+        target = {
+            "nav-new": "new-item-tab",
+            "nav-items": "items-tab",
+            "nav-tree": "link-tree-tab",
+        }.get(event.button.id)
+
+        if target:
+            try:
+                tabs = self.query_one(TabbedContent)
+                tabs.active = target
+            except NoMatches:
+                pass
 
     def _on_item_submit(self, form_data: Dict[str, Any]) -> None:
         """Handle form submission from the ItemEntryForm."""
@@ -696,6 +835,7 @@ class TextualApp(App):
 
     BINDINGS = [
         Binding("ctrl+q", "quit", "Quit"),
+        Binding("ctrl+p", "command_palette", "Palette"),
     ]
 
     def __init__(
@@ -713,8 +853,24 @@ class TextualApp(App):
 
         yield MainScreen(self.work_system, self.start_tab)
 
+    def action_command_palette(self) -> None:  # pragma: no cover - UI only
+        if not TEXTUAL_AVAILABLE:
+            return
+
+        cmds = {
+            "new": lambda: self.query_one(MainScreen).action_new_item(),
+            "refresh": lambda: self.query_one(MainScreen).action_refresh(),
+            "quit": self.action_quit,
+        }
+
+        palette = CommandPalette(cmds)
+        self.mount(palette)
+
     def on_mount(self) -> None:
         """Called when app is mounted."""
         if not TEXTUAL_AVAILABLE:
             self.exit()
             return
+
+
+__all__ = ["TEXTUAL_AVAILABLE", "TextualApp"]

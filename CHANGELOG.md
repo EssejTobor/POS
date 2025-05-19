@@ -146,6 +146,7 @@
 - `do_tui_list` to browse items in the TUI
 - Wired CLI launch commands to open specific TUI tabs
 - Added graceful fallbacks when the Textual library is not available
+- Introduced dashboard layout with sidebar navigation and command palette
 - Implemented proper Windows terminal compatibility
 
 ### Changed
