@@ -127,6 +127,7 @@
 - Created `print_link_tree` method in the Display class for hierarchical visualization
 - Added comprehensive unit tests for the link tree functionality in `tests/test_link_tree.py`
 - Created a detailed manual test script for link tree visualization in `test_link_tree_manual.py`
+- Extended link tree tests to verify cycle references appear in the output
 
 ### Changed
 - Unified item creation by extending the `add` command to support thought items with linking
