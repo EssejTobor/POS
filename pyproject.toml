@@ -15,3 +15,9 @@ dev = [
   "black",
   "isort"
 ]
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.isort]
+profile = "black"

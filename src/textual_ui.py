@@ -2,20 +2,25 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional
 
-
 try:  # pragma: no cover - Textual is optional
     from textual.app import App, ComposeResult  # type: ignore
     from textual.binding import Binding  # type: ignore
-    from textual.containers import (Container, Horizontal,  # type: ignore
-                                    Vertical)
+    from textual.containers import Container, Horizontal, Vertical  # type: ignore
     from textual.css.query import NoMatches  # type: ignore
     from textual.screen import Screen  # type: ignore
     from textual.widget import Widget  # type: ignore
     from textual.widgets import Footer  # type: ignore
-    from textual.widgets import (Button, DataTable, Header, Input, Label,
-                                 Select, Static, TabbedContent, TabPane)
-
-
+    from textual.widgets import (
+        Button,
+        DataTable,
+        Header,
+        Input,
+        Label,
+        Select,
+        Static,
+        TabbedContent,
+        TabPane,
+    )
 
     TEXTUAL_AVAILABLE = True
 except ModuleNotFoundError:  # pragma: no cover - fallback stub
