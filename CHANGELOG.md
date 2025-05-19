@@ -1,3 +1,7 @@
+# CHANGELOG
+
+> **Note:** For the release process and versioning guidelines, see the 'Versioning & Release Policy' section in `PROJECT_SCOPE.md`.
+
 ## **IMPORTANT: PROJECT CONTINUITY**  
 
 

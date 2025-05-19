@@ -575,3 +575,31 @@ The Thought Evolution Tracker enhancement extends POS to capture, link, and visu
 8. **Phase 8**: **Enhanced TUI Experience with Interactive Widgets** – add dashboard, advanced widgets, and intuitive navigation for efficient workflows.
 9. **Phase 9**: **SWIFT Framework Tagging System & Advanced Relationships** – implement tagging (including SWIFT elements), advanced relationship types, and tag-based visualization/filtering.
 10. **Phase 10**: **Thought Pattern Analytics** – provide analytics dashboard, visualizations, and insights into thought evolution and productivity patterns.
+
+---
+
+## Versioning & Release Policy
+
+To ensure consistent and predictable releases, this project follows [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH):
+
+- **MAJOR** version when you make incompatible API changes
+- **MINOR** version when you add functionality in a backwards-compatible manner
+- **PATCH** version when you make backwards-compatible bug fixes
+
+### Release Process
+1. **Update Version Numbers:**
+   - Bump the version in both `src/__init__.py` and `setup.py` to the new release version.
+2. **Update CHANGELOG.md:**
+   - Move all entries from the `[Unreleased]` section under a new version header (e.g., `## [1.2.0] - YYYY-MM-DD`).
+   - Add a brief summary of notable changes under the new version header.
+3. **Document Notable Changes:**
+   - Ensure all significant changes, features, and fixes are clearly described.
+4. **(Optional) Tag the Release:**
+   - After committing changes, create a git tag for the release (e.g., `git tag v1.2.0`).
+5. **Update PROJECT_SCOPE.md:**
+   - If the release includes architectural or feature changes, update this file accordingly.
+
+### Contributor Guidance
+- Always follow this process when preparing a new release.
+- If unsure about version increments, refer to [Semantic Versioning](https://semver.org/) or consult the project maintainer.
+- Consistent versioning and changelog management help all contributors and users track project evolution.
