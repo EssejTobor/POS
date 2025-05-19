@@ -1,0 +1,37 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Phase-Specific Guidelines
+
+### For Phases 1-2 (Database and Model Structure):
+- Focus on **solid foundations** that support future extensions
+- Create **well-designed database schemas** with appropriate constraints
+- Ensure **backward compatibility** with existing work item structures
+- Implement **proper indexing** for performance
+
+### For Phases 3-5 (CLI Commands and Linking):
+- Create **intuitive command interfaces** with helpful documentation
+- Follow **consistent command patterns** matching existing CLI commands
+- Provide **clear feedback** to users when operations succeed or fail
+- Implement **robust validation** to prevent data inconsistencies
+
+### For (Enhanced Visualization):
+- Develop **clear hierarchical displays** that are easy to scan
+- Use **appropriate color coding** for different relationship types
+- Handle **edge cases** like cycles and deeply nested relationships
+- Balance **information density** with **readability**
+
+### For (Textual Integration):
+- Create **responsive form interfaces** that enhance user experience
+- Implement **keyboard navigation** for efficient interaction
+- Ensure **proper thread safety** for database operations in TUI context
+- Design for **graceful fallback** to CLI when needed
+
+### For (Advanced Features):
+- Focus on **user value** when prioritizing advanced features
+- Maintain **consistency** in tagging and relationship models
+- Consider **future extensibility** in data structures
+- Implement **progressive discovery** of advanced functionality
+

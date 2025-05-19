@@ -1,0 +1,35 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Top Priority Guidelines (Must Follow)
+
+- Write **modular, maintainable code** with clear separation of concerns.
+- Follow **single responsibility principle** - each module, class, and function should do one thing well.
+- Use **type hints** throughout to improve code clarity and enable static analysis.
+- Prefer **composition over inheritance** when designing class relationships.
+- Use **contextlib** for resource management (e.g., database connections).
+- Implement **case-insensitive operations** for all user-facing data lookups, searches, and comparisons.
+- Follow the **phased implementation plan** defined in PROJECT_SCOPE.md with clear entry/exit criteria.
+- Maintain **backward compatibility** with existing functionality.
+- Ensure **clean transitions** between implementation phases.
+- Apply **thread safety** in database operations when implementing TUI components.
+
+
+## Core Development Philosophy
+
+- Provide clear technical vision with forward-thinking decisions
+- Explain key concepts during implementation
+- Optimize for speed while preventing major issues
+- Document architecture decisions, non-obvious technical choices, and future considerations
+
+
+## Future Structure Additions (Phased)
+
+As we progress through implementation phases, we'll add:
+```
+/
+├── textual_ui.py (Phase 7)
+└── [Other new files as needed]
+```
