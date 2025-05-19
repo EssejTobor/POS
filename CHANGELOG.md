@@ -136,4 +136,5 @@
 - Created unit tests for the unified add command in `tests/test_unified_add_command.py`
 - Updated class docstring for `WorkSystemCLI` to document the new link and unlink commands
 - Enhanced the Display class to support advanced tree-based relationship visualizations
+- Aligned `__version__` in `src/__init__.py` with package version `0.1.0`
 
