@@ -1,4 +1,4 @@
-# AGENTS.md – Guidance for OpenAI Codex on the POS repository
+# Contributor Guide
 
 ## Scope
 These rules apply to the entire repository unless a deeper `AGENTS.md` overrides them.
