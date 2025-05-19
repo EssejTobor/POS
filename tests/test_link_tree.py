@@ -188,6 +188,7 @@ class TestLinkTree(unittest.TestCase):
         output = captured_output.getvalue()
         self.assertNotIn("Deep Thought", output)
 
+
     def test_missing_item_cleanup(self):
         """Ensure missing items are removed from the visited set"""
         # Create an additional thought that will be removed
@@ -214,6 +215,17 @@ class TestLinkTree(unittest.TestCase):
         # The missing item should be reported for each reference and never marked as a cycle
         self.assertGreaterEqual(output.count(f"Item not found: {missing_thought.id}"), 2)
         self.assertNotIn(f"{missing_thought.id}[/dim cyan] [dim](cycle reference)", output)
+
+    def test_link_tree_cycle_detection(self):
+        """Cycle references should be indicated in the output"""
+        captured_output = io.StringIO()
+
+        with redirect_stdout(captured_output):
+            self.cli.onecmd(f"link_tree {self.thought1.id}")
+
+        output = captured_output.getvalue()
+        self.assertIn("(cycle reference)", output)
+
         
     def test_invalid_arguments(self):
         """Test error handling with invalid arguments"""
