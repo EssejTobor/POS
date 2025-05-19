@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional
 
-try:  # pragma: no cover - Textual is optional
+
     from textual.app import App, ComposeResult
     from textual.binding import Binding
     from textual.containers import Container, Horizontal, Vertical
@@ -51,6 +51,8 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub
     Input = Any
     Label = Any
     Select = Any
+    Static = Any  # noqa: F811
+
     TabPane = Any
     TabbedContent = Any
     Widget = Any

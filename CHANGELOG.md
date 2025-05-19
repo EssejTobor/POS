@@ -147,6 +147,7 @@
 - Wired CLI launch commands to open specific TUI tabs
 - Added graceful fallbacks when the Textual library is not available
 - Implemented proper Windows terminal compatibility
+- Enhanced `do_tui` command to launch the dashboard with optional `--tab` flag for starting view
 
 ### Changed
 - Unified item creation by extending the `add` command to support thought items with linking
