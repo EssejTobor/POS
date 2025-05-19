@@ -225,6 +225,8 @@ class Display:
             # Get the item and its links
             if item_id not in items:
                 tree_node.add(f"[red]Item not found: {item_id}[/red]")
+                # Remove from visited to avoid stale entries if item is missing
+                visited.discard(item_id)
                 return
                 
             item, links = items[item_id]
