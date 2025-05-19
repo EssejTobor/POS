@@ -174,10 +174,5 @@
 
 ### Fixed
 - Fixed import error with "No module named 'src.textual_ui.widgets'" by creating the missing module with required widget classes
+- Resolved circular import in textual_ui causing startup failure
 
-
-
-
-### NOT FIXED Fixed
-- circular import issue in textual_ui package by restructuring the import mechanism in __init__.py
--   
