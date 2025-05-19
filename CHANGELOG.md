@@ -133,6 +133,19 @@
 - Added comprehensive unit tests for the link tree functionality in `tests/test_link_tree.py`
 - Created a detailed manual test script for link tree visualization in `test_link_tree_manual.py`
 - Extended link tree tests to verify cycle references appear in the output
+- Implemented core Textual UI framework in `src/textual_ui.py` with the following components:
+  - `TextualApp` class with tabbed interface and keyboard shortcuts
+  - `ItemEntryForm` with fields for all item properties and linking options
+  - `ItemListView` with filtering and sortable data table
+  - `LinkTreeView` for visualizing relationship networks between items
+  - Message system for user notifications and feedback
+  - Rich styling and keyboard navigation
+- Added CLI commands to integrate with the Textual UI:
+  - `do_form` to launch the item entry form
+  - `do_tui` to launch the full TUI interface
+  - `do_tui_list` to browse items in the TUI
+- Added graceful fallbacks when the Textual library is not available
+- Implemented proper Windows terminal compatibility
 
 ### Changed
 - Unified item creation by extending the `add` command to support thought items with linking
@@ -145,4 +158,5 @@
 - Enhanced the Display class to support advanced tree-based relationship visualizations
 - Aligned `__version__` in `src/__init__.py` with package version `0.1.0`
 - Fixed lint and type issues across the codebase; added initial Textual UI stub
+- Improved `do_cleanup_backups` with better error handling and user feedback
 

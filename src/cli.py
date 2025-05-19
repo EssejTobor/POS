@@ -47,6 +47,12 @@ from .models import ItemStatus, ItemType, Priority
 from .schemas import AddItemInput, AddThoughtInput, UpdateItemInput
 from .storage import WorkSystem
 
+# Import the Textual UI (wrapped in try/except for environments where it's not available)
+try:
+    from .textual_ui import TextualApp, TEXTUAL_AVAILABLE
+except ImportError:
+    TEXTUAL_AVAILABLE = False
+
 
 class WorkSystemCLI(cmd.Cmd):
     """
@@ -66,6 +72,9 @@ class WorkSystemCLI(cmd.Cmd):
     - tree: View items organized by goal, type, and priority
     - update: Modify existing items
     - export: Generate markdown report
+    - form: Launch Textual UI form for adding items
+    - tui: Launch the full Textual UI interface
+    - tui_list: Launch Textual UI list view
     - quit: Exit the program
     - dedupe: Scan for and merge duplicate work items
     - optimize: Optimize the database storage
@@ -536,20 +545,28 @@ class WorkSystemCLI(cmd.Cmd):
             self.display.print_error(f"Error listing backups: {str(e)}")
 
     def do_cleanup_backups(self, arg):
-        """
-        Remove old backups, keeping the most recent ones
-        Usage: cleanup_backups [number_to_keep]
-        Default: keeps last 5 backups
+        """Remove old backups, keeping only the most recent ones.
+        
+        Usage: cleanup_backups [max_to_keep=5]
+        
+        Examples:
+          cleanup_backups        # Keeps the 5 most recent backups
+          cleanup_backups 10     # Keeps the 10 most recent backups
         """
         try:
-            keep = int(arg) if arg else 5
-            self.backup_manager.cleanup_old_backups(keep_last=keep)
-            self.display.print_success(f"Cleaned up old backups, kept last {keep}")
+            max_to_keep = 5  # Default value
+            if arg:
+                max_to_keep = int(arg)
+            
+            if max_to_keep < 1:
+                self.display.print_error("Max backups to keep must be at least 1")
+                return
+                
+            count = self.backup_manager.cleanup_old_backups(max_to_keep)
+            self.display.console.print(f"[green]Removed {count} old backup(s), keeping {max_to_keep} most recent.[/green]")
         except ValueError:
-            self.display.print_error("Please provide a valid number")
-        except Exception as e:
-            self.display.print_error(f"Error cleaning up backups: {e}")
-
+            self.display.print_error(f"Invalid number: {arg}")
+            
     def do_export_json(self, arg):
         """
         Export database to JSON format.
@@ -764,6 +781,68 @@ class WorkSystemCLI(cmd.Cmd):
 
             self.display.console.print()
         return False  # Don't stop the command loop
+
+    def do_form(self, arg):
+        """Launch the Textual UI form for adding new items.
+        
+        Usage: form
+        
+        This launches an interactive form for adding new work items, 
+        with a more user-friendly interface than command-line input.
+        """
+        if not TEXTUAL_AVAILABLE:
+            self.display.print_error("Textual UI is not available. Please install textual: pip install textual")
+            return
+            
+        try:
+            from .textual_ui import TextualApp
+            app = TextualApp(self.work_system)
+            app.run()
+        except Exception as e:
+            self.display.print_error(f"Error launching Textual UI: {str(e)}")
+            
+    def do_tui(self, arg):
+        """Launch the full Textual UI interface.
+        
+        Usage: tui
+        
+        This opens the complete Text User Interface with tabs for:
+        - Adding new items
+        - Browsing and filtering items
+        - Visualizing relationship trees
+        
+        The TUI provides a more intuitive way to interact with the system.
+        """
+        if not TEXTUAL_AVAILABLE:
+            self.display.print_error("Textual UI is not available. Please install textual: pip install textual")
+            return
+            
+        try:
+            from .textual_ui import TextualApp
+            app = TextualApp(self.work_system)
+            app.run()
+        except Exception as e:
+            self.display.print_error(f"Error launching Textual UI: {str(e)}")
+            
+    def do_tui_list(self, arg):
+        """Launch the Textual UI list view for browsing items.
+        
+        Usage: tui_list
+        
+        This opens the Textual UI directly to the Items tab,
+        allowing for filtering and browsing of work items.
+        """
+        if not TEXTUAL_AVAILABLE:
+            self.display.print_error("Textual UI is not available. Please install textual: pip install textual")
+            return
+            
+        try:
+            from .textual_ui import TextualApp
+            app = TextualApp(self.work_system)
+            # The app will default to the items tab
+            app.run()
+        except Exception as e:
+            self.display.print_error(f"Error launching Textual UI: {str(e)}")
 
 
 # Entry point for the CLI application

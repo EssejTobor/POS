@@ -1,6 +1,6 @@
 .cursor
 .cursorrules
-.cursor\rules
+
 project_outline.md
 # Byte-compiled / optimized / DLL files
     __pycache__/
