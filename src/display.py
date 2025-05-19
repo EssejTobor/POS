@@ -6,7 +6,8 @@ very small stub classes so that the rest of the application continues to
 function.  The stubs simply print plain text tables and trees.
 """
 
-from typing import List, Optional
+import sys
+from typing import Any, List, Optional
 
 from .models import ItemStatus, ItemType, Priority, WorkItem
 
@@ -15,9 +16,9 @@ try:  # pragma: no cover - import helper
     from rich.table import Table as RichTable  # type: ignore
     from rich.tree import Tree as RichTree  # type: ignore
 
-    Console = RichConsole
-    Table = RichTable
-    Tree = RichTree
+    Console: Any = RichConsole
+    Table: Any = RichTable
+    Tree: Any = RichTree
 except ModuleNotFoundError:  # pragma: no cover - executed only when rich missing
 
     class ConsoleStub:
@@ -74,7 +75,13 @@ class Display:
     """Handles all display formatting and UI elements using Rich library"""
 
     def __init__(self):
-        self.console = Console(force_terminal=True)
+        # Disable rich styling when running under pytest to keep output stable.
+        if "pytest" in sys.modules:
+            self.console = Console(
+                force_terminal=False, highlight=False, width=200, color_system=None
+            )
+        else:
+            self.console = Console(force_terminal=True, highlight=False)
 
     def print_items(self, items: List[WorkItem]):
         """Pretty-print a list of work items as a table"""

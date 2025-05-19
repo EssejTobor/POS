@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""
-Entry point for POS – launches the Textual UI.
-Falls back to CLI if Textual import ever fails.
-"""
+"""Entry point for the POS application."""
+
 try:
     from src.textual_ui import TextualApp
-    TextualApp().run()
-except ImportError as exc:
+except ImportError as exc:  # pragma: no cover - fallback when Textual missing
     print("??  Textual missing, dropping to CLI:", exc)
     from src.cli import main
-    main() 
+
+    main()
+else:
+    TextualApp().run()
