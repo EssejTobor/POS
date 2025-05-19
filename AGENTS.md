@@ -62,6 +62,6 @@ python src/migrate.py --dry-run
 - Title format: `[Feat]`, `[Fix]`, `[Refactor]`, or `[Docs]` + short description.
 - Commit message format: `cli: <verb-phrase>` or `db: <verb-phrase>` etc.
 - PR body must include a “Testing Done” section and link to a passing CI log.
-- All changes should be pushed via a feature branch and reviewed in PRs—**never commit directly to `main`**.
+
 
 
