@@ -141,9 +141,10 @@
   - Message system for user notifications and feedback
   - Rich styling and keyboard navigation
 - Added CLI commands to integrate with the Textual UI:
-  - `do_form` to launch the item entry form
-  - `do_tui` to launch the full TUI interface
-  - `do_tui_list` to browse items in the TUI
+- `do_form` to launch the item entry form
+- `do_tui` to launch the full TUI interface
+- `do_tui_list` to browse items in the TUI
+- Wired CLI launch commands to open specific TUI tabs
 - Added graceful fallbacks when the Textual library is not available
 - Implemented proper Windows terminal compatibility
 
