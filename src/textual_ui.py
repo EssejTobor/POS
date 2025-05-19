@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 try:  # pragma: no cover - Textual is optional
     from textual.app import App, ComposeResult
@@ -9,8 +9,18 @@ try:  # pragma: no cover - Textual is optional
     from textual.css.query import NoMatches
     from textual.screen import Screen
     from textual.widget import Widget
-    from textual.widgets import (Button, DataTable, Footer, Header, Input,
-                                 Label, Select, Static, TabbedContent, TabPane)
+    from textual.widgets import (
+        Button,
+        DataTable,
+        Footer,
+        Header,
+        Input,
+        Label,
+        Select,
+        Static,
+        TabbedContent,
+        TabPane,
+    )
 
     TEXTUAL_AVAILABLE = True
 except ModuleNotFoundError:  # pragma: no cover - fallback stub
@@ -41,7 +51,6 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub
     Input = Any
     Label = Any
     Select = Any
-    Static = Any
     TabPane = Any
     TabbedContent = Any
     Widget = Any

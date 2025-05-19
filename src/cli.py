@@ -49,7 +49,7 @@ from .storage import WorkSystem
 
 # Import the Textual UI (wrapped in try/except for environments where it's not available)
 try:
-    from .textual_ui import TEXTUAL_AVAILABLE, TextualApp
+    from .textual_ui import TEXTUAL_AVAILABLE
 except ImportError:
     TEXTUAL_AVAILABLE = False
 
