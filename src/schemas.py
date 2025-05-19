@@ -1,5 +1,8 @@
 try:  # pragma: no cover - helper for pydantic v1 compatibility
-    from pydantic import BaseModel, Field, validator, field_validator
+    from pydantic import BaseModel  # type: ignore[attr-defined]
+    from pydantic import Field  # type: ignore[attr-defined]
+    from pydantic import (field_validator,  # type: ignore[attr-defined]
+                          validator)
 except ImportError:  # pragma: no cover - pydantic<2
     from pydantic import BaseModel, Field, validator
 
@@ -8,14 +11,16 @@ except ImportError:  # pragma: no cover - pydantic<2
     # behaviour for the use cases in this project.
     field_validator = validator
 from typing import Optional
-from enum import Enum
+
 
 class CommandInput(BaseModel):
     """Base model for command input validation"""
+
     @classmethod
     def parse_input(cls, input_str: str) -> "CommandInput":
         """Parse and validate input string"""
         raise NotImplementedError
+
 
 class AddItemInput(CommandInput):
     goal: str = Field(..., min_length=1, max_length=50)
@@ -30,7 +35,9 @@ class AddItemInput(CommandInput):
     @classmethod
     def validate_type(cls, v):
         if v not in ["t", "l", "r", "th"]:
-            raise ValueError("Type must be 't' (task), 'l' (learning), 'r' (research), or 'th' (thought)")
+            raise ValueError(
+                "Type must be 't' (task), 'l' (learning), 'r' (research), or 'th' (thought)"
+            )
         return v
 
     @field_validator("priority")
@@ -54,12 +61,12 @@ class AddItemInput(CommandInput):
         main_part = input_str
         link_to = None
         link_type = "references"  # Default link type
-        
+
         # Extract optional parameters if present
         if " --link-to " in input_str:
             parts = input_str.split(" --link-to ", 1)
             main_part = parts[0]
-            
+
             # Check if there's also a link type specified
             if " --link-type " in parts[1]:
                 link_parts = parts[1].strip().split(" --link-type ", 1)
@@ -67,12 +74,14 @@ class AddItemInput(CommandInput):
                 link_type = link_parts[1].strip()
             else:
                 link_to = parts[1].strip()
-        
+
         # Parse the main parts as before
-        parts = main_part.split('-', 4)
+        parts = main_part.split("-", 4)
         if len(parts) < 5:
-            raise ValueError("Format: goal-type-priority-title-description [--link-to item_id] [--link-type type]")
-        
+            raise ValueError(
+                "Format: goal-type-priority-title-description [--link-to item_id] [--link-type type]"
+            )
+
         return cls(
             goal=parts[0].strip(),
             type=parts[1].strip(),
@@ -80,8 +89,9 @@ class AddItemInput(CommandInput):
             title=parts[3].strip(),
             description=parts[4].strip(),
             link_to=link_to,
-            link_type=link_type
+            link_type=link_type,
         )
+
 
 class UpdateItemInput(CommandInput):
     item_id: str = Field(..., min_length=1)
@@ -97,17 +107,16 @@ class UpdateItemInput(CommandInput):
 
     @classmethod
     def parse_input(cls, input_str: str) -> "UpdateItemInput":
-        parts = input_str.split('-')
+        parts = input_str.split("-")
         if len(parts) < 3:
             raise ValueError("Format: update-id-status or update-id-field-value")
-        
+
         if len(parts) == 3:
             return cls(item_id=parts[1].strip(), value=parts[2].strip())
         return cls(
-            item_id=parts[1].strip(),
-            field=parts[2].strip(),
-            value=parts[3].strip()
+            item_id=parts[1].strip(), field=parts[2].strip(), value=parts[3].strip()
         )
+
 
 class AddThoughtInput(CommandInput):
     goal: str = Field(..., min_length=1, max_length=50)
@@ -127,30 +136,32 @@ class AddThoughtInput(CommandInput):
     @classmethod
     def parse_input(cls, input_str: str) -> "AddThoughtInput":
         # Split for the required parameters
-        parts = input_str.split('-', 2)
-        
+        parts = input_str.split("-", 2)
+
         if len(parts) < 3:
-            raise ValueError("Format: goal-title-description [--parent parent_id] [--link link_type]")
-            
+            raise ValueError(
+                "Format: goal-title-description [--parent parent_id] [--link link_type]"
+            )
+
         goal = parts[0].strip()
         title = parts[1].strip()
-        
+
         # Process the description and optional parameters
         remaining = parts[2]
-        
+
         # Check for optional parameters
         parent_id = None
         link_type = "evolves-from"
-        
+
         # Look for --parent and --link parameters
         if " --parent " in remaining:
             desc_parts = remaining.split(" --parent ", 1)
             description = desc_parts[0].strip()
-            
+
             # Check if there's also a link type
             parent_parts = desc_parts[1].strip().split(" --link ", 1)
             parent_id = parent_parts[0].strip()
-            
+
             if len(parent_parts) > 1:
                 link_type = parent_parts[1].strip()
         elif " --link " in remaining:
@@ -159,11 +170,11 @@ class AddThoughtInput(CommandInput):
             raise ValueError("--link parameter requires --parent to be specified first")
         else:
             description = remaining.strip()
-        
+
         return cls(
             goal=goal,
             title=title,
             description=description,
             parent_id=parent_id,
-            link_type=link_type
-        ) 
+            link_type=link_type,
+        )
