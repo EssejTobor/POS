@@ -395,26 +395,38 @@ The Thought Evolution Tracker enhancement extends POS to capture, link, and visu
      - Add commands to launch Textual UI components (`do_form`, `do_tui_list`)
      - Ensure smooth transition between CLI and TUI modes
      - Preserve state when switching between modes
+   - **Make Textual a first-class dependency:**
+     - Add Textual to runtime dependencies in pyproject.toml
+     - Create dedicated launcher for Textual UI
+     - Update main entry point to start Textual UI by default
 
 3. **Files Modified:**
    - **New file:** `src/textual_ui.py` - Core Textual components
+   - **New file:** `src/launcher.py` - Direct entry point for Textual UI
    - **Modify:** `src/cli.py` - Add launch commands for TUI
    - **Modify:** `src/display.py` - Add TUI compatibility methods
+   - **Modify:** `run.py` - Update to launch Textual UI by default
+   - **Modify:** `pyproject.toml` - Add Textual as runtime dependency
 
 4. **Potential Challenges:**
    - **Windows Terminal Compatibility:** Test with both PowerShell and CMD
    - **State Management:** Ensuring data consistency between CLI and TUI
    - **Event Handling:** Properly managing Textual events and focus flow
+   - **Dependency Management:** Ensuring Textual is properly installed in all environments
 
 5. **Verification:**
    - **Interaction Tests:** Verify forms accept input and navigation works
    - **Integration Tests:** Confirm data created in TUI appears correctly in CLI views
    - **Performance:** Ensure TUI responses are fluid on target hardware
+   - **Startup Tests:** Verify application launches directly into TUI when Textual is available
+   - **Fallback Tests:** Confirm graceful fallback to CLI when Textual is unavailable
 
 **Exit Criteria:**  
 - User can add and view items through interactive TUI components
 - Navigation between different TUI views works smoothly
 - Data created in TUI is properly saved and accessible through CLI
+- Application starts directly in Textual UI by default
+- CLI remains accessible as a fallback
 
 ### **Phase 8: Enhanced TUI Experience with Interactive Widgets**
 

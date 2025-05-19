@@ -148,6 +148,9 @@
 - Added graceful fallbacks when the Textual library is not available
 - Implemented proper Windows terminal compatibility
 - Enhanced `do_tui` command to launch the dashboard with optional `--tab` flag for starting view
+- Added Textual as a first-class runtime dependency in `pyproject.toml`
+- Created `src/launcher.py` to provide a direct entry point to launch the Textual UI
+- Updated `run.py` to directly launch the Textual UI with fallback to CLI if import fails
 
 ### Changed
 - Unified item creation by extending the `add` command to support thought items with linking
@@ -164,4 +167,5 @@
 - Fixed NameError when `rich` is installed by correctly assigning fallback classes in `display.py`
 - Resolved mypy errors in `textual_ui.py`
 - Enhanced Textual UI; install `textual` and launch it with the `tui` command
+- Changed application startup to launch Textual UI by default, with automatic fallback to CLI if Textual is unavailable
 

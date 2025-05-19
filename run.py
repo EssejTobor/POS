@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """
-Entry point for the POS (Personal Organization System) application.
+Entry point for POS – launches the Textual UI.
+Falls back to CLI if Textual import ever fails.
 """
-from src.cli import main
-
-if __name__ == '__main__':
+try:
+    from src.textual_ui import TextualApp
+    TextualApp().run()
+except ImportError as exc:
+    print("??  Textual missing, dropping to CLI:", exc)
+    from src.cli import main
     main() 
