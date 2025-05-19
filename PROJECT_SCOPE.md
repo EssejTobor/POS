@@ -373,87 +373,205 @@ The Thought Evolution Tracker enhancement extends POS to capture, link, and visu
 
 ---
 
-### **Phase 7: Textual Integration for Form-Based Thought Entry**
+### **Phase 7: Core Textual UI Framework Integration**
 
-**Goal:** Reduce friction by using a Textual-based form for capturing new thoughts (and optionally editing them), rather than pure command-line syntax.
-
-1. **Entry Criteria:**
-   - The system fully supports thoughts, linking, and basic CLI visualization.
-
-2. **Tasks:**
-   - **Install** `textual` if not already done remember we are on windows:  
-     ```
-     pip install textual
-     ```
-   - **Create a new module** (e.g., `textual_ui.py`) or integrate into `cli.py` with:
-     - A Textual `App` that shows a form with fields: `Goal`, `Title`, `Description`, `[Optional] Parent ID`.
-     - On "Submit," it calls your existing `add_thought` logic.
-   - Integrate a new CLI command, e.g., `do_add_thought_form`, which launches the Textual UI in the terminal.
-
-3. **Files Modified (Approximate):**
-   1. **New file** `textual_ui.py` (or similarly named) – houses the Textual application  
-   2. `cli.py` – A new command that spawns the Textual app from within the CLI.  
-
-   (If you prefer placing everything in `cli.py`, that's also possible, but splitting it out can keep your code organized.)
-
-4. **Potential Challenges / Edge Cases:**
-   - **Terminal Compatibility**: Textual might behave differently on Windows vs. Unix-based terminals. 
-   - **User Flow**: Exiting the Textual form gracefully to return to the main CLI loop.
-
-5. **Verification / Testing:**
-   - **Functional Tests**: 
-     - Launch the form, fill it out, confirm a new thought is created. 
-   - **Manual**:
-     - Start the POS CLI, run `add_thought_form`, fill in details, and check `list thoughts`.
-
-**Exit Criteria:**  
-- Users can optionally run a Textual-based form to input new thoughts with minimal command syntax.
-
----
-
-### **Phase 8: Tagging & Evolution-Specific Links (Optional Enhancement)**
-
-**Goal:** Provide an optional advanced feature: structured relationships ("parent-child," "evolves-from"), plus tagging for more nuanced classification.
+**Goal:** Establish the foundation for a more intuitive TUI (Text User Interface) by implementing Textual's core components and creating the essential interactive forms.
 
 1. **Entry Criteria:**
-   - All the previous capabilities are in place: THOUGHT items, linking, listing, and basic textual UI.
+   - Basic thought/item functionality works through CLI commands
+   - Textual library is installed and operational in Windows environment
 
 2. **Tasks:**
-   - **Relationship Types**: Expand `link_type` usage, e.g.:
-     - `parent-child`
-     - `evolves-from`
-     - `inspired-by`
-   - **Tagging**: Add a field in `work_items` or create a new `item_tags` table. 
-   - **CLI / Textual**: Provide commands or UI elements to manage these relationships/tags.
+   - **Create `src/textual_ui.py` framework:**
+     - Implement `TextualApp` base class with command routing
+     - Create `ItemEntryForm` with fields for all item types (task, thought, etc.)
+     - Add validation, tab navigation, and keyboard shortcuts
+     - Implement form submission that integrates with existing item creation logic
+   - **Add basic interactive views:**
+     - Create `ItemListView` using Textual's `DataTable` for sortable, scrollable item lists
+     - Build `LinkTreeView` for browsable relationship visualization
+     - Implement navigation between views
+   - **Integrate with CLI:**
+     - Add commands to launch Textual UI components (`do_form`, `do_tui_list`)
+     - Ensure smooth transition between CLI and TUI modes
+     - Preserve state when switching between modes
 
-3. **Files Modified (Approximate):**
-   1. `database.py` – Possibly add `item_tags` table.  
-   2. `cli.py` – Add commands to tag thoughts, or specify link type on creation.  
-   3. `textual_ui.py` (or relevant file) – Provide fields to add tags or pick a link type.
+3. **Files Modified:**
+   - **New file:** `src/textual_ui.py` - Core Textual components
+   - **Modify:** `src/cli.py` - Add launch commands for TUI
+   - **Modify:** `src/display.py` - Add TUI compatibility methods
 
-4. **Potential Challenges / Edge Cases:**
-   - **Migration**: If you introduce a new table for tagging, handle schema changes carefully. 
-   - **Complex UIs**: The more fields in the form, the more user support you'll need (e.g., validation).
+4. **Potential Challenges:**
+   - **Windows Terminal Compatibility:** Test with both PowerShell and CMD
+   - **State Management:** Ensuring data consistency between CLI and TUI
+   - **Event Handling:** Properly managing Textual events and focus flow
 
-5. **Verification / Testing:**
-   - **Integration Tests**:
-     - Add a few tags to a thought, verify they are stored and displayed.  
-     - Link two thoughts with `link_type="evolves-from"` and confirm the difference in tree display.
-   - **Manual**:
-     - Create complex structures with tags or custom link types, confirm they appear in `do_tree` or `list`.
+5. **Verification:**
+   - **Interaction Tests:** Verify forms accept input and navigation works
+   - **Integration Tests:** Confirm data created in TUI appears correctly in CLI views
+   - **Performance:** Ensure TUI responses are fluid on target hardware
 
 **Exit Criteria:**  
-- The system supports advanced relationships and/or tagging, providing deeper insight into the thought-evolution journey.
+- User can add and view items through interactive TUI components
+- Navigation between different TUI views works smoothly
+- Data created in TUI is properly saved and accessible through CLI
+
+### **Phase 8: Enhanced TUI Experience with Interactive Widgets**
+
+**Goal:** Extend the Textual UI with advanced widgets that dramatically simplify user workflows and make the application more intuitive and engaging.
+
+1. **Entry Criteria:**
+   - Core Textual framework is operational
+   - Basic forms and views are working
+
+2. **Tasks:**
+   - **Create a dashboard interface:**
+     - Implement tabbed navigation between "Items," "Thoughts," and "Link Tree" views
+     - Add sidebar for quick access to common functions
+     - Create status bar showing system information
+   - **Add interactive widgets:**
+     - Implement command palette for quick access to all functions
+     - Create search/filter input for real-time filtering of items
+     - Add dropdown selectors for status and priority updates
+     - Implement modal confirmation dialogs for destructive actions
+     - Create progress indicators for long-running operations
+   - **Specialized thought evolution widgets:**
+     - Build interactive thought tree with expand/collapse functionality
+     - Implement visual indicators for thought relationships
+     - Add tagging interface for SWIFT framework elements
+
+3. **Files Modified:**
+   - **Extend:** `src/textual_ui.py` with new widgets and views
+   - **Modify:** `src/cli.py` to integrate with new TUI capabilities
+   - **Add:** `src/textual_ui/widgets.py` for custom widget implementations
+
+4. **Potential Challenges:**
+   - **Layout Management:** Ensuring responsive layouts that work in different terminal sizes
+   - **Widget Interactions:** Managing complex widget relationships and state
+   - **Performance:** Handling large datasets in interactive widgets
+
+5. **Verification:**
+   - **Usability Testing:** Verify the TUI improves workflow efficiency
+   - **Edge Cases:** Test with varying terminal sizes and configurations
+   - **Performance:** Ensure responsiveness with large datasets
+
+**Exit Criteria:**  
+- Users can perform all core functions through intuitive TUI widgets
+- Workflow is significantly more efficient than CLI-only operation
+- Dashboard provides clear overview of items and relationships
+- Interactive thought trees make exploring relationships intuitive
+
+### **Phase 9: SWIFT Framework Tagging System & Advanced Relationships**
+
+**Goal:** Implement a comprehensive tagging system that integrates the SWIFT framework and enhances thought evolution tracking with specialized relationship types.
+
+1. **Entry Criteria:**
+   - Enhanced Textual UI framework is fully operational
+   - Basic thought linking and visualization are working
+
+2. **Tasks:**
+   - **Database Enhancement:**
+     - Create `item_tags` table with appropriate indexes and constraints
+     - Add API methods for tag management (add, remove, search)
+     - Extend relationship types with semantic meanings (`evolves-from`, `inspired-by`, etc.)
+   
+   - **SWIFT Framework Integration:**
+     - Implement special tag categories for SWIFT elements:
+       - Speed (velocity of learning)
+       - Wonder (curiosity-driven paths)
+       - Intrinsic (authentically motivating ideas)
+       - Factful (perspective updates based on evidence)
+       - Test (experimental thinking pathways)
+     - Add tag visualization that highlights SWIFT attributes in thought trees
+   
+   - **TUI Enhancements:**
+     - Create dedicated tag management widget with SWIFT framework presets
+     - Add color-coding for different relationship types in visualization
+     - Implement tag cloud view for exploring thought clusters
+     - Add relationship type selector in link creation workflow
+     - Create filtering by tag or relationship type in list views
+
+3. **Files Modified:**
+   - `src/database.py` - Add `item_tags` table and related methods
+   - `src/storage.py` - Add tag management logic
+   - `src/textual_ui.py` - Extend with tag-specific widgets
+   - `src/cli.py` - Add tag-related commands
+   - `src/display.py` - Update visualization for tags and relationship types
+
+4. **Potential Challenges:**
+   - **Semantic Clarity:** Ensuring relationship types have clear, distinct meanings
+   - **UI Integration:** Making tag selection intuitive without cluttering the interface
+   - **Performance:** Efficient filtering and visualization with tag dimensions added
+
+5. **Verification:**
+   - **SWIFT Workflow Test:** Verify the complete SWIFT framework cycle can be tracked
+   - **Visualization Check:** Confirm relationship types are visually distinct
+   - **Search/Filter Test:** Verify thoughts can be filtered by tags and relationship types
+
+**Exit Criteria:**  
+- Users can tag thoughts with SWIFT framework elements and custom tags
+- Advanced relationship types clearly indicate thought evolution patterns
+- Tag-based filtering and visualization enhance understanding of thought networks
+- TUI provides intuitive interfaces for managing tags and relationships
+
+### **Phase 10: Thought Pattern Analytics**
+
+**Goal:** Implement analytics capabilities that help users identify patterns in their thinking, highlighting productive pathways and growth over time.
+
+1. **Entry Criteria:**
+   - Tagging system and advanced relationships are implemented
+   - Enhanced TUI visualization is working
+
+2. **Tasks:**
+   - **Implement Analytics Dashboard:**
+     - Create thought activity timeline showing creation and evolution patterns
+     - Add SWIFT framework balance visualization (e.g., radar chart in terminal)
+     - Implement "insight detection" to highlight productive thought patterns
+     - Add productivity metrics and growth indicators
+   
+   - **Temporal Analysis:**
+     - Track thought evolution speed and branching patterns over time
+     - Identify "breakthrough moments" where multiple thoughts converge
+     - Visualize thinking velocity with heat-map style displays
+   
+   - **TUI Integration:**
+     - Add analytics tab to the dashboard
+     - Implement interactive time-based filtering
+     - Create exportable analytics reports
+     - Add insight notification system
+
+3. **Files Modified:**
+   - **New file:** `src/analytics.py` - Core analytics logic
+   - **Extend:** `src/textual_ui.py` with analytics widgets
+   - **Modify:** `src/storage.py` to support analytics queries
+
+4. **Potential Challenges:**
+   - **Terminal Graphics:** Implementing rich visualizations within terminal constraints
+   - **Performance:** Computing analytics efficiently with large datasets
+   - **Meaningful Metrics:** Ensuring analytics provide genuine value, not just eye candy
+
+5. **Verification:**
+   - **Value Test:** Confirm analytics reveal meaningful patterns
+   - **Performance:** Verify speed with large thought collections
+   - **Usability:** Test that insights are clear and actionable
+
+**Exit Criteria:**  
+- Users can gain meaningful insights into their thought patterns
+- Analytics provides clear visualization of SWIFT framework application
+- System identifies productive thought evolution patterns
+- TUI presents analytics in an intuitive, actionable format
 
 ---
 
 ## **Implementation Summary**
 
-1. **Phase 1**: **Create `item_links` table** – foundational relationship logic.  
-2. **Phase 2**: **Add `THOUGHT` item type** to the existing model.  
-3. **Phase 3**: **New CLI command** `do_add_thought` for capturing thoughts (optionally referencing a parent).  
-4. **Phase 4**: **Thought listing** (`do_list_thoughts` or a filter) so users can view `THOUGHT` items.  
-5. **Phase 5**: **`do_link` / `do_unlink`** commands for linking/unlinking existing items.  
-6. **Phase 6**: **Enhanced CLI display** that shows linked items as a tree/graph.  
-7. **Phase 7**: **Textual-based form** for low-friction thought capture.  
-8. **Phase 8** (Optional): **Tagging / advanced link types** for deeper thought evolution tracking.
+1. **Phase 1**: **Create `item_links` table** – foundational relationship logic.
+2. **Phase 2**: **Add `THOUGHT` item type** to the existing model.
+3. **Phase 3**: **New CLI command** `do_add_thought` for capturing thoughts (optionally referencing a parent).
+4. **Phase 4**: **Thought listing** (`do_list_thoughts` or a filter) so users can view `THOUGHT` items.
+5. **Phase 5**: **`do_link` / `do_unlink`** commands for linking/unlinking existing items.
+6. **Phase 6**: **Enhanced CLI display** that shows linked items as a tree/graph.
+7. **Phase 7**: **Core Textual UI Framework Integration** – implement interactive forms and views for item entry and browsing using Textual.
+8. **Phase 8**: **Enhanced TUI Experience with Interactive Widgets** – add dashboard, advanced widgets, and intuitive navigation for efficient workflows.
+9. **Phase 9**: **SWIFT Framework Tagging System & Advanced Relationships** – implement tagging (including SWIFT elements), advanced relationship types, and tag-based visualization/filtering.
+10. **Phase 10**: **Thought Pattern Analytics** – provide analytics dashboard, visualizations, and insights into thought evolution and productivity patterns.
