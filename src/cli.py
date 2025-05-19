@@ -38,7 +38,20 @@ else:
     Prompt = RichPrompt  # type: ignore
     Table = RichTable  # type: ignore
 
-from pydantic import ValidationError
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover - only for type checkers
+    from pydantic import ValidationError
+else:
+    try:
+        from pydantic import ValidationError  # type: ignore[attr-defined]
+    except Exception:  # pragma: no cover - allow running without pydantic
+
+        class ValidationError(Exception):
+            """Fallback when ``pydantic`` is not installed."""
+
+            pass
+
 
 from .backup import BackupManager
 from .display import Display

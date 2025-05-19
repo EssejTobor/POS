@@ -1,7 +1,64 @@
 from datetime import datetime
 from enum import Enum
+from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, Field
+if TYPE_CHECKING:  # pragma: no cover - only for type checkers
+    from pydantic import BaseModel, Field
+else:
+    try:
+        from pydantic import BaseModel, Field  # type: ignore[attr-defined]
+    except Exception:  # pragma: no cover - allow running without pydantic
+
+        class BaseModelMeta(type):
+            def __new__(
+                mcls, name: str, bases: tuple[type, ...], ns: dict
+            ) -> "BaseModelMeta":
+                annotations = ns.get("__annotations__", {})
+                fields: dict[str, dict[str, object]] = {}
+                for attr in annotations:
+                    value = ns.get(attr, None)
+                    if isinstance(value, dict) and "_field_info" in value:
+                        fields[attr] = value["_field_info"]
+                        ns[attr] = None
+                    else:
+                        fields[attr] = {"default": value, "default_factory": None}
+                ns["_fields_info"] = fields
+                return super().__new__(mcls, name, bases, ns)
+
+        class BaseModel(metaclass=BaseModelMeta):
+            _fields_info: dict[str, dict[str, object]]
+
+            def __init__(self, **data: object) -> None:
+                for name, info in self._fields_info.items():
+                    alias = info.get("alias")
+                    if alias and alias in data:
+                        value = data[alias]
+                    elif name in data:
+                        value = data[name]
+                    else:
+                        factory = info.get("default_factory")
+                        if factory is not None:
+                            value = factory()
+                        else:
+                            value = info.get("default")
+                    setattr(self, name, value)
+
+        from typing import Callable
+
+        def Field(
+            default: object = None,
+            *,
+            default_factory: Callable[[], object] | None = None,
+            alias: str | None = None,
+            **_: object,
+        ) -> object:
+            return {
+                "_field_info": {
+                    "default": default,
+                    "default_factory": default_factory,
+                    "alias": alias,
+                }
+            }
 
 
 class ItemType(Enum):

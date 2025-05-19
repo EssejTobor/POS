@@ -314,7 +314,7 @@ class Display:
                                 )
                                 build_tree(target_node, target_id, depth + 1)
                         else:
-                            type_node.add(f"[red]Target not found: {target_id}[/red]")
+                            type_node.add(f"[red]Item not found: {target_id}[/red]")
 
             # Remove from visited when backtracking
             visited.remove(item_id)

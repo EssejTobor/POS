@@ -167,5 +167,7 @@
 - Fixed NameError when `rich` is installed by correctly assigning fallback classes in `display.py`
 - Resolved mypy errors in `textual_ui.py`
 - Enhanced Textual UI; install `textual` and launch it with the `tui` command
+- Added lightweight fallbacks for `pydantic` to enable tests without external
+  dependencies; improved missing item messages in link tree view
 - Changed application startup to launch Textual UI by default, with automatic fallback to CLI if Textual is unavailable
 
