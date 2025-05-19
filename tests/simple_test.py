@@ -1,6 +1,7 @@
 """
 A simple script to verify Python environment
 """
+
 import os
 import sys
 
@@ -10,6 +11,7 @@ print("Directory contents:", os.listdir())
 
 try:
     from src.models import ItemType
-    print("Successfully imported ItemType from src.models")
+
+    print(f"Successfully imported {ItemType.__name__} from src.models")
 except ImportError as e:
-    print("Error importing from src.models:", str(e)) 
+    print("Error importing from src.models:", str(e))
