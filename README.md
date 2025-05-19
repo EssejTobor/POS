@@ -44,6 +44,21 @@ Or run it directly using:
 python run.py
 ```
 
+### Textual UI
+
+Install the optional [Textual](https://textual.textualize.io) library to use the
+interactive TUI:
+
+```bash
+pip install textual
+```
+
+Launch the interface with:
+
+```bash
+tui
+```
+
 ## Project Structure
 
 ```
