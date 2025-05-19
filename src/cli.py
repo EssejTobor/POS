@@ -1,13 +1,42 @@
 import cmd
-from rich.prompt import Prompt
 from pathlib import Path
 from datetime import datetime
-from rich.table import Table
+
+# The CLI uses the ``rich`` library for nicer output. However, the
+# execution environment for the unit tests might not have ``rich``
+# installed.  To make the CLI usable (and importable) without the
+# optional dependency we fall back to very small stub implementations
+# when ``rich`` is unavailable.
+try:  # pragma: no cover - small import helper
+    from rich.prompt import Prompt
+    from rich.table import Table
+except ModuleNotFoundError:  # pragma: no cover - executed only on minimal envs
+    class Prompt:  # minimal replacement used in tests
+        @staticmethod
+        def ask(text: str) -> str:
+            return input(text)
+
+    class Table:
+        def __init__(self, *_, **__):
+            self.headers = []
+            self.rows = []
+
+        def add_column(self, name: str, **__):
+            self.headers.append(name)
+
+        def add_row(self, *values: str):
+            self.rows.append(values)
+
+        def __str__(self) -> str:  # simple textual representation
+            lines = [" | ".join(self.headers)]
+            for row in self.rows:
+                lines.append(" | ".join(row))
+            return "\n".join(lines)
 
 from .models import ItemType, ItemStatus, Priority
 from .storage import WorkSystem
 from .display import Display
-from .schemas import AddItemInput, UpdateItemInput
+from .schemas import AddItemInput, UpdateItemInput, AddThoughtInput
 from pydantic import ValidationError
 from .backup import BackupManager
 from .migrate import MigrationManager
@@ -118,6 +147,34 @@ class WorkSystemCLI(cmd.Cmd):
             else:
                 self.display.print_success(f"Added: {item.title} (ID: {item.id})")
             
+        except ValidationError as e:
+            errors = []
+            for error in e.errors():
+                field = error["loc"][0]
+                message = error["msg"]
+                errors.append(f"{field}: {message}")
+            self.display.print_error("\n".join(errors))
+        except Exception as e:
+            self.display.print_error(str(e))
+
+    def do_add_thought(self, arg):
+        """Add a thought item with optional parent linking."""
+        try:
+            input_data = AddThoughtInput.parse_input(arg)
+
+            item = self.work_system.add_item(
+                goal=input_data.goal,
+                item_type=ItemType.THOUGHT,
+                priority=Priority.MED,
+                title=input_data.title,
+                description=input_data.description,
+            )
+
+            if input_data.parent_id:
+                self.work_system.add_link(item.id, input_data.parent_id, input_data.link_type)
+
+            self.display.print_success(f"Added: {item.title} (ID: {item.id})")
+
         except ValidationError as e:
             errors = []
             for error in e.errors():
@@ -309,7 +366,7 @@ class WorkSystemCLI(cmd.Cmd):
             if args:
                 if args[0] == '--thoughts':
                     only_thoughts = True
-                elif len(args) > 1 and args[0].startswith('--'):
+                elif args[0].startswith('--'):
                     self.display.print_error(f"Unknown option: {args[0]}")
                     return
                 else:

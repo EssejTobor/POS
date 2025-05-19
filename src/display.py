@@ -1,7 +1,62 @@
-from rich.console import Console
-from rich.table import Table
-from rich.tree import Tree
+"""Utilities for displaying information to the user.
+
+This module primarily relies on the :mod:`rich` package.  When ``rich`` is
+not available (for example in minimal test environments) we fall back to
+very small stub classes so that the rest of the application continues to
+function.  The stubs simply print plain text tables and trees.
+"""
+
 from typing import List
+
+try:  # pragma: no cover - import helper
+    from rich.console import Console
+    from rich.table import Table
+    from rich.tree import Tree
+except ModuleNotFoundError:  # pragma: no cover - executed only when rich missing
+    class Console:
+        def __init__(self, *_, **__):
+            pass
+
+        def print(self, *args, **kwargs):
+            print(*args)
+
+    class Table:
+        def __init__(self, *_, **__):
+            self.headers = []
+            self.rows = []
+
+        def add_column(self, name: str, **__):
+            self.headers.append(name)
+
+        def add_row(self, *values: str):
+            self.rows.append(values)
+
+        def __str__(self) -> str:
+            lines = [" | ".join(self.headers)]
+            for row in self.rows:
+                lines.append(" | ".join(row))
+            return "\n".join(lines)
+
+    class Tree:
+        def __init__(self, label: str):
+            self.label = label
+            self.children: List["Tree"] = []
+
+        def add(self, label: str):
+            child = Tree(label)
+            self.children.append(child)
+            return child
+
+        def __str__(self) -> str:
+            lines: List[str] = []
+
+            def _walk(node: "Tree", prefix: str = ""):
+                lines.append(prefix + node.label)
+                for child in node.children:
+                    _walk(child, prefix + "  ")
+
+            _walk(self)
+            return "\n".join(lines)
 
 from .models import WorkItem, ItemType, Priority, ItemStatus
 
@@ -219,13 +274,12 @@ class Display:
                     for link in type_links:
                         target_id = link['target_id']
                         if target_id in items:
-                            target_item = items[target_id][0]
-                            target_node = type_node.add(
-                                f"[cyan]{target_id}[/cyan] - {target_item.title} "
-                                f"([dim]{target_item.item_type.value}[/dim])"
-                            )
-                            # Recursively build the tree for this target (deeper level)
                             if depth < max_depth:
+                                target_item = items[target_id][0]
+                                target_node = type_node.add(
+                                    f"[cyan]{target_id}[/cyan] - {target_item.title} "
+                                    f"([dim]{target_item.item_type.value}[/dim])"
+                                )
                                 build_tree(target_node, target_id, depth + 1)
                         else:
                             type_node.add(f"[red]Target not found: {target_id}[/red]")
