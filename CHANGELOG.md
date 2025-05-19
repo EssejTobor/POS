@@ -159,4 +159,5 @@
 - Aligned `__version__` in `src/__init__.py` with package version `0.1.0`
 - Fixed lint and type issues across the codebase; added initial Textual UI stub
 - Improved `do_cleanup_backups` with better error handling and user feedback
+- Fixed NameError when `rich` is installed by correctly assigning fallback classes in `display.py`
 
