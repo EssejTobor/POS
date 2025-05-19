@@ -47,9 +47,10 @@ from .models import ItemStatus, ItemType, Priority
 from .schemas import AddItemInput, AddThoughtInput, UpdateItemInput
 from .storage import WorkSystem
 
-# Import the Textual UI (wrapped in try/except for environments where it's not available)
+# Import availability flag for the Textual UI.  ``TextualApp`` itself is
+# imported lazily within methods so ruff does not flag unused imports.
 try:
-    from .textual_ui import TEXTUAL_AVAILABLE, TextualApp
+    from .textual_ui import TEXTUAL_AVAILABLE
 except ImportError:
     TEXTUAL_AVAILABLE = False
 
@@ -73,7 +74,7 @@ class WorkSystemCLI(cmd.Cmd):
     - update: Modify existing items
     - export: Generate markdown report
     - form: Launch Textual UI form for adding items
-    - tui: Launch the full Textual UI interface
+    - tui: Launch the Textual dashboard (use ``--tab`` to select a starting tab)
     - tui_list: Launch Textual UI list view
     - quit: Exit the program
     - dedupe: Scan for and merge duplicate work items
@@ -807,16 +808,13 @@ class WorkSystemCLI(cmd.Cmd):
             self.display.print_error(f"Error launching Textual UI: {str(e)}")
 
     def do_tui(self, arg):
-        """Launch the full Textual UI interface.
+        """Launch the enhanced Textual dashboard.
 
-        Usage: tui
+        Usage: tui [--tab <new-item|items|link-tree>]
 
-        This opens the complete Text User Interface with tabs for:
-        - Adding new items
-        - Browsing and filtering items
-        - Visualizing relationship trees
-
-        The TUI provides a more intuitive way to interact with the system.
+        Opens the dashboard with tabs for adding items, browsing the item list,
+        and viewing the link tree.  Use the optional ``--tab`` flag to jump
+        directly to a specific tab when the interface starts.
         """
         if not TEXTUAL_AVAILABLE:
             self.display.print_error(
@@ -827,7 +825,30 @@ class WorkSystemCLI(cmd.Cmd):
         try:
             from .textual_ui import TextualApp
 
-            app = TextualApp(self.work_system)
+            args = arg.strip().split()
+            start_tab = None
+            if args:
+                if args[0] in {"--tab", "-t"} and len(args) > 1:
+                    tab_arg = args[1].lower()
+                else:
+                    tab_arg = args[0].lower()
+                tab_map = {
+                    "new-item": "new-item-tab",
+                    "new": "new-item-tab",
+                    "items": "items-tab",
+                    "list": "items-tab",
+                    "link-tree": "link-tree-tab",
+                    "tree": "link-tree-tab",
+                }
+                start_tab = tab_map.get(tab_arg)
+                if args[0] in {"--tab", "-t"} and len(args) == 1:
+                    self.display.print_error("Please specify a tab after --tab")
+                    return
+                if args[0] not in {"--tab", "-t"} and start_tab is None:
+                    self.display.print_error(f"Unknown option: {args[0]}")
+                    return
+
+            app = TextualApp(self.work_system, start_tab=start_tab)
             app.run()
         except Exception as e:
             self.display.print_error(f"Error launching Textual UI: {str(e)}")
@@ -837,8 +858,8 @@ class WorkSystemCLI(cmd.Cmd):
 
         Usage: tui_list
 
-        This opens the Textual UI directly to the Items tab,
-        allowing for filtering and browsing of work items.
+        Opens the dashboard directly to the Items tab, allowing for
+        filtering and browsing of work items.
         """
         if not TEXTUAL_AVAILABLE:
             self.display.print_error(
