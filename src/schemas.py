@@ -1,4 +1,12 @@
-from pydantic import BaseModel, Field, validator, field_validator
+try:  # pragma: no cover - helper for pydantic v1 compatibility
+    from pydantic import BaseModel, Field, validator, field_validator
+except ImportError:  # pragma: no cover - pydantic<2
+    from pydantic import BaseModel, Field, validator
+
+    # ``field_validator`` was introduced in pydantic v2.  When running with
+    # pydantic v1 we simply alias it to ``validator`` which provides similar
+    # behaviour for the use cases in this project.
+    field_validator = validator
 from typing import Optional
 from enum import Enum
 

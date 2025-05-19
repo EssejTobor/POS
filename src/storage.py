@@ -39,9 +39,15 @@ class WorkSystem:
         Example: gt21230pm (goal-task-priority2-item1-2:30pm)
                or gth21230pm (goal-thought-priority2-item1-2:30pm)
         """
-        goal_initial = goal[0].lower()
-        # For THOUGHT type, use the first two characters
-        type_initial = item_type.value.lower() if item_type == ItemType.THOUGHT else item_type.value[0].lower()
+        # Use up to the first two characters of the goal to avoid collisions
+        # when different goals start with the same letter.
+        goal_initial = goal[:2].lower()
+
+        # For THOUGHT type, use the full ``th`` abbreviation.  For all other
+        # types we only take the first character.
+        type_initial = (
+            item_type.value.lower() if item_type == ItemType.THOUGHT else item_type.value[0].lower()
+        )
         priority_num = priority.value
         
         if goal not in self.entry_counts:
@@ -50,7 +56,9 @@ class WorkSystem:
         entry_num = self.entry_counts[goal]
         
         now = datetime.now()
-        time_str = str(int(now.strftime("%I"))) + now.strftime("%M%p").lower()
+        # Include seconds and microseconds to guarantee uniqueness even when
+        # multiple items are created in the same minute.
+        time_str = now.strftime("%H%M%S%f")
         
         self.db.update_entry_count(goal, self.entry_counts[goal])
         return f"{goal_initial}{type_initial}{priority_num}{entry_num}{time_str}"
