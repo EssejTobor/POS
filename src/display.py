@@ -11,9 +11,13 @@ from typing import List, Optional
 from .models import ItemStatus, ItemType, Priority, WorkItem
 
 try:  # pragma: no cover - import helper
-    from rich.console import Console  # type: ignore
-    from rich.table import Table  # type: ignore
-    from rich.tree import Tree  # type: ignore
+    from rich.console import Console as RichConsole  # type: ignore
+    from rich.table import Table as RichTable  # type: ignore
+    from rich.tree import Tree as RichTree  # type: ignore
+
+    Console = RichConsole
+    Table = RichTable
+    Tree = RichTree
 except ModuleNotFoundError:  # pragma: no cover - executed only when rich missing
 
     class ConsoleStub:
@@ -43,7 +47,7 @@ except ModuleNotFoundError:  # pragma: no cover - executed only when rich missin
     class TreeStub:
         def __init__(self, label: str):
             self.label = label
-            self.children: List["Tree"] = []
+            self.children: List["TreeStub"] = []
 
         def add(self, label: str):
             child = TreeStub(label)
@@ -53,7 +57,7 @@ except ModuleNotFoundError:  # pragma: no cover - executed only when rich missin
         def __str__(self) -> str:
             lines: List[str] = []
 
-            def _walk(node: "Tree", prefix: str = ""):
+            def _walk(node: "TreeStub", prefix: str = ""):
                 lines.append(prefix + node.label)
                 for child in node.children:
                     _walk(child, prefix + "  ")
@@ -61,10 +65,9 @@ except ModuleNotFoundError:  # pragma: no cover - executed only when rich missin
             _walk(self)
             return "\n".join(lines)
 
-
-Console = ConsoleStub
-Table = TableStub
-Tree = TreeStub
+    Console = ConsoleStub
+    Table = TableStub
+    Tree = TreeStub
 
 
 class Display:
