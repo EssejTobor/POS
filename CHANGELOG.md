@@ -151,6 +151,7 @@
 - Added Textual as a first-class runtime dependency in `pyproject.toml`
 - Created `src/launcher.py` to provide a direct entry point to launch the Textual UI
 - Updated `run.py` to directly launch the Textual UI with fallback to CLI if import fails
+- Created `src/textual_ui/widgets.py` with implementation stubs for all required widget classes
 
 ### Changed
 - Unified item creation by extending the `add` command to support thought items with linking
@@ -171,3 +172,21 @@
   dependencies; improved missing item messages in link tree view
 - Changed application startup to launch Textual UI by default, with automatic fallback to CLI if Textual is unavailable
 
+### Fixed
+- Fixed import error with "No module named 'src.textual_ui.widgets'" by creating the missing module with required widget classes
+
+
+
+
+### NOT FIXED Fixed
+- circular import issue in textual_ui package by restructuring the import mechanism in __init__.py
+-   File "C:\Programming\POS\run.py", line 7, in <module>
+    from src.textual_ui import TextualApp
+  File "C:\Programming\POS\src\__init__.py", line 5, in <module>
+    from .cli import WorkSystemCLI
+  File "C:\Programming\POS\src\cli.py", line 66, in <module>
+    from .textual_ui import TEXTUAL_AVAILABLE
+  File "C:\Programming\POS\src\textual_ui\__init__.py", line 26, in <module>
+    TextualApp = textual_ui.TextualApp
+                 ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: partially initialized module 'src.textual_ui' from 'C:\Programming\POS\src\textual_ui\__init__.py' has no attribute 'TextualApp' (most likely due to a circular import). Did you mean: 'textual_ui'?

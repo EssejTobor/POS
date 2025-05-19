@@ -4,12 +4,7 @@ Custom widgets and components for the Textual UI for Personal Operating System (
 This module contains specialized widgets that enhance the user experience in the TUI.
 """
 
-from importlib import import_module
-
-# Re-export the ``TEXTUAL_AVAILABLE`` flag and ``TextualApp`` class from the
-# sibling module ``textual_ui.py``.  Having a package and a module with the same
-# name can lead to confusion when importing; explicitly re-exporting here
-# ensures ``from src.textual_ui import TEXTUAL_AVAILABLE`` works as intended.
+# Import the widgets from the local package
 from .widgets import (
     CommandPalette,
     ConfirmationDialog,
@@ -18,11 +13,25 @@ from .widgets import (
     SearchInput,
     Sidebar,
     StatusBar,
+    TEXTUAL_AVAILABLE,
 )
 
-_mod = import_module("src.textual_ui")
-TEXTUAL_AVAILABLE = _mod.TEXTUAL_AVAILABLE
-TextualApp = _mod.TextualApp
+# Import TextualApp directly from the parent module to avoid circular imports
+import sys
+import importlib.util
+
+if importlib.util.find_spec("textual") is not None:
+    # If textual is installed, import the app from the parent module
+    from .. import textual_ui
+    TextualApp = textual_ui.TextualApp
+else:
+    # Define a stub if textual is not available
+    class TextualApp:
+        def __init__(self, *args, **kwargs):
+            pass
+        
+        def run(self):
+            print("Textual UI is not available. Please install textual: pip install textual")
 
 __all__ = [
     "CommandPalette",
