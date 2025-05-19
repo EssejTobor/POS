@@ -1,15 +1,81 @@
-try:  # pragma: no cover - helper for pydantic v1 compatibility
-    from pydantic import BaseModel  # type: ignore[attr-defined]
-    from pydantic import Field  # type: ignore[attr-defined]
-    from pydantic import (field_validator,  # type: ignore[attr-defined]
-                          validator)
-except ImportError:  # pragma: no cover - pydantic<2
-    from pydantic import BaseModel, Field, validator
+from typing import TYPE_CHECKING, Any, Callable
 
-    # ``field_validator`` was introduced in pydantic v2.  When running with
-    # pydantic v1 we simply alias it to ``validator`` which provides similar
-    # behaviour for the use cases in this project.
-    field_validator = validator
+if TYPE_CHECKING:  # pragma: no cover - only for type checkers
+    from pydantic import BaseModel, Field, field_validator, validator
+else:  # pragma: no cover - runtime fallback
+    try:
+        from pydantic import (  # type: ignore[attr-defined]
+            BaseModel,
+            Field,
+            field_validator,
+            validator,
+        )
+    except Exception:  # pragma: no cover - pydantic is unavailable
+
+        class BaseModelMeta(type):
+            def __new__(
+                mcls, name: str, bases: tuple[type, ...], ns: dict
+            ) -> "BaseModelMeta":
+                annotations = ns.get("__annotations__", {})
+                fields: dict[str, dict[str, Any]] = {}
+                for attr in annotations:
+                    value = ns.get(attr, None)
+                    if isinstance(value, dict) and "_field_info" in value:
+                        fields[attr] = value["_field_info"]
+                        ns[attr] = None
+                    else:
+                        fields[attr] = {"default": value, "default_factory": None}
+                ns["_fields_info"] = fields
+                return super().__new__(mcls, name, bases, ns)
+
+        class BaseModel(metaclass=BaseModelMeta):
+            """Very small subset of :class:`pydantic.BaseModel`."""
+
+            _fields_info: dict[str, dict[str, Any]]
+
+            def __init__(self, **data: Any) -> None:
+                for name, info in self._fields_info.items():
+                    alias = info.get("alias")
+                    if alias and alias in data:
+                        value = data[alias]
+                    elif name in data:
+                        value = data[name]
+                    else:
+                        factory = info.get("default_factory")
+                        if factory is not None:
+                            value = factory()
+                        else:
+                            value = info.get("default")
+                    setattr(self, name, value)
+
+        def Field(
+            default: Any = None,
+            *,
+            default_factory: Callable[[], Any] | None = None,
+            alias: str | None = None,
+            **_: Any,
+        ) -> Any:
+            return {
+                "_field_info": {
+                    "default": default,
+                    "default_factory": default_factory,
+                    "alias": alias,
+                }
+            }
+
+        def validator(
+            *_: str, **__: Any
+        ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+            def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+                return func
+
+            return decorator
+
+        # ``field_validator`` was introduced in pydantic v2. When running with
+        # pydantic v1 or when pydantic is entirely unavailable we simply alias it
+        # to ``validator`` which provides similar behaviour for the use cases in
+        # this project.
+        field_validator = validator
 from typing import Optional
 
 
@@ -82,7 +148,7 @@ class AddItemInput(CommandInput):
                 "Format: goal-type-priority-title-description [--link-to item_id] [--link-type type]"
             )
 
-        return cls(
+        obj = cls(
             goal=parts[0].strip(),
             type=parts[1].strip(),
             priority=parts[2].strip(),
@@ -91,6 +157,12 @@ class AddItemInput(CommandInput):
             link_to=link_to,
             link_type=link_type,
         )
+
+        # Manual validation when ``pydantic`` is unavailable
+        obj.type_ = cls.validate_type(obj.type_)
+        obj.priority = cls.validate_priority(obj.priority)
+        obj.link_type = cls.validate_link_type(obj.link_type)
+        return obj
 
 
 class UpdateItemInput(CommandInput):
@@ -171,10 +243,13 @@ class AddThoughtInput(CommandInput):
         else:
             description = remaining.strip()
 
-        return cls(
+        obj = cls(
             goal=goal,
             title=title,
             description=description,
             parent_id=parent_id,
             link_type=link_type,
         )
+
+        obj.link_type = cls.validate_link_type(obj.link_type)
+        return obj
