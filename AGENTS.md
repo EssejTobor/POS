@@ -5,6 +5,12 @@ These rules apply to the entire repository unless a deeper `AGENTS.md` overrides
 
 ---
 
+## 0. Environment Setup
+- Run `uv pip install -e .[dev]` to install the project and its development dependencies.
+- Target Python 3.12 (`python --version` should return 3.12.*).
+- Internet access is disabled once the container starts; make all dependencies local.
+
+---
 
 ## 1. Code Style
 - Format code using `black .` and `isort .`.
@@ -25,10 +31,8 @@ These rules apply to the entire repository unless a deeper `AGENTS.md` overrides
 - If architecture or behavior changes, update `PROJECT_SCOPE.md`.
 - Use this log format:
 
-
 Updated CHANGELOG.md: <one-line summary>
 Updated PROJECT\_SCOPE.md: <one-line summary> (if applicable)
-
 
 
 ---
@@ -38,6 +42,7 @@ Updated PROJECT\_SCOPE.md: <one-line summary> (if applicable)
 
 
 python -m src.backup create\_backup "pre\_schema\_change"
+
 
 - Validate migrations with:
 
@@ -62,6 +67,44 @@ python src/migrate.py --dry-run
 - Title format: `[Feat]`, `[Fix]`, `[Refactor]`, or `[Docs]` + short description.
 - Commit message format: `cli: <verb-phrase>` or `db: <verb-phrase>` etc.
 - PR body must include a “Testing Done” section and link to a passing CI log.
+- All changes should be pushed via a feature branch and reviewed in PRs—**never commit directly to `main`**.
+
+---
+
+## 7. Approved Shell Commands
+Allowed:
+- `uv`
+- `pytest`
+- `ruff`
+- `black`
+- `mypy`
+- `sqlite3`
+- `bash` (read-only ops only)
+
+Disallowed:
+- Docker (`docker`), even though not available in sandbox
+- Any command requiring outbound network access
+- Package managers other than `uv`
+- `git push --force`
+
+---
+
+## 8. Interaction Policy
+- Use *ask-before-exec* mode for any command that writes outside the following folders:
+- `src/`
+- `tests/`
+- `docs/`
+
+---
+
+## 9. Pre-commit Hooks
+- If `.pre-commit-config.yaml` exists, run:
+
+
+pre-commit run --all-files
+
+
+before committing changes.
 
 
 
