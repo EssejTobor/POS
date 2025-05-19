@@ -180,13 +180,4 @@
 
 ### NOT FIXED Fixed
 - circular import issue in textual_ui package by restructuring the import mechanism in __init__.py
--   File "C:\Programming\POS\run.py", line 7, in <module>
-    from src.textual_ui import TextualApp
-  File "C:\Programming\POS\src\__init__.py", line 5, in <module>
-    from .cli import WorkSystemCLI
-  File "C:\Programming\POS\src\cli.py", line 66, in <module>
-    from .textual_ui import TEXTUAL_AVAILABLE
-  File "C:\Programming\POS\src\textual_ui\__init__.py", line 26, in <module>
-    TextualApp = textual_ui.TextualApp
-                 ^^^^^^^^^^^^^^^^^^^^^
-AttributeError: partially initialized module 'src.textual_ui' from 'C:\Programming\POS\src\textual_ui\__init__.py' has no attribute 'TextualApp' (most likely due to a circular import). Did you mean: 'textual_ui'?
+-   
