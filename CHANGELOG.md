@@ -162,5 +162,6 @@
 - Fixed lint and type issues across the codebase; added initial Textual UI stub
 - Improved `do_cleanup_backups` with better error handling and user feedback
 - Fixed NameError when `rich` is installed by correctly assigning fallback classes in `display.py`
+- Resolved mypy errors in `textual_ui.py`
 - Enhanced Textual UI; install `textual` and launch it with the `tui` command
 
