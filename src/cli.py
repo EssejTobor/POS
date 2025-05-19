@@ -32,6 +32,7 @@ class WorkSystemCLI(cmd.Cmd):
     - export: Generate markdown report
     - quit: Exit the program
     - dedupe: Scan for and merge duplicate work items
+    - optimize: Optimize the database storage
     - backup: Create a backup of the database
     - restore: Restore database from a backup file
     - list_backups: List all available backups
