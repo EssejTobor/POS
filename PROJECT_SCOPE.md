@@ -405,7 +405,7 @@ The Thought Evolution Tracker enhancement extends POS to capture, link, and visu
    - **New file:** `src/launcher.py` - Direct entry point for Textual UI
    - **Modify:** `src/cli.py` - Add launch commands for TUI
    - **Modify:** `src/display.py` - Add TUI compatibility methods
-   - **Modify:** `run.py` - Update to launch Textual UI by default
+   - **Modify:** `main.py` - Unified entry point launching Textual UI by default
    - **Modify:** `pyproject.toml` - Add Textual as runtime dependency
 
 4. **Potential Challenges:**

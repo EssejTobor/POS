@@ -41,7 +41,7 @@ pos
 Or run it directly using:
 
 ```bash
-python run.py
+python main.py
 ```
 
 ### Textual UI
@@ -69,8 +69,11 @@ pos/                      # Root project directory
 │   ├── database.py     # Database operations
 │   ├── display.py      # Display formatting
 │   └── ...
-├── tests/              # Test directory
+├── tests/              # Automated test suite
 │   ├── __init__.py
+│   └── ...
+├── manual_scripts/     # Interactive testing scripts
+│   ├── debug_test.py
 │   └── ...
 ├── data/              # Data directory
 │   ├── db/           # Database files
@@ -81,7 +84,7 @@ pos/                      # Root project directory
 ├── README.md
 ├── requirements.txt
 ├── setup.py         # Package configuration
-└── run.py          # Main entry point
+└── main.py         # Main entry point
 ```
 
 ## Development
