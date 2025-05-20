@@ -171,6 +171,8 @@
 - Added lightweight fallbacks for `pydantic` to enable tests without external
   dependencies; improved missing item messages in link tree view
 - Changed application startup to launch Textual UI by default, with automatic fallback to CLI if Textual is unavailable
+- Unified runtime dependencies in `pyproject.toml` and `setup.py`; removed unused
+  `prompt_toolkit`
 
 ### Fixed
 - Fixed import error with "No module named 'src.textual_ui.widgets'" by creating the missing module with required widget classes

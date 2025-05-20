@@ -5,8 +5,8 @@ setup(
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
-        "rich>=10.0.0",
-        "prompt_toolkit>=3.0.0",
+        "textual>=2.1.2",
+        "rich>=13.9.4",
     ],
     entry_points={
         "console_scripts": [
@@ -29,5 +29,5 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.12",
 )
