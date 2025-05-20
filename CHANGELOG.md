@@ -178,6 +178,8 @@
 - Replaced debug `print` statements for `ItemType` and `Priority` with logging
 - Removed leftover debug prints from `ItemEntryForm.compose` and added a unit
   test ensuring no output during form creation
+- `cleanup_backups` now returns the number of files removed and the CLI reports
+  this value
 
 ### Fixed
 - Fixed import error with "No module named 'src.textual_ui.widgets'" by creating the missing module with required widget classes

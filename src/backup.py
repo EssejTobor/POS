@@ -51,11 +51,14 @@ class BackupManager:
             reverse=True,
         )
 
-    def cleanup_old_backups(self, keep_last: int = 5) -> None:
-        """Remove old backups, keeping the specified number"""
+    def cleanup_old_backups(self, keep_last: int = 5) -> int:
+        """Remove old backups, keeping the specified number and return count."""
         backups = self.list_backups()
+        removed = 0
         for backup in backups[keep_last:]:
             backup.unlink()
+            removed += 1
+        return removed
 
     def export_to_json(self, output_path: Optional[Path] = None) -> Path:
         """Export database content to JSON for external backup"""
