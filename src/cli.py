@@ -316,6 +316,25 @@ class WorkSystemCLI(cmd.Cmd):
         except Exception as e:
             self.display.print_error(f"Error listing thoughts: {str(e)}")
 
+    def do_search_thoughts(self, arg):
+        """Search thought items by keyword. Usage: search_thoughts <text> [goal]"""
+        args = arg.strip().split()
+        if not args:
+            self.display.print_error("Please provide search text")
+            return
+
+        search_text = args[0]
+        goal = args[1] if len(args) > 1 else None
+
+        try:
+            thoughts = self.work_system.search_thoughts(search_text, goal=goal)
+            if thoughts:
+                self.display.print_items(thoughts)
+            else:
+                self.display.print_warning("No thought items found.")
+        except Exception as e:
+            self.display.print_error(f"Error searching thoughts: {str(e)}")
+
     def do_update(self, arg):
         """
         Handles status updates for existing items.
