@@ -103,6 +103,7 @@
 ## [Unreleased]
 
 ### Added
+- Added missing newline at end of README.md
 - Created `item_links` table for storing relationships between work items
 - Added foreign key constraints and appropriate indexes for the `item_links` table
 - Implemented `add_link()` method to create relationships between items with error handling
