@@ -312,6 +312,7 @@ class WorkSystem:
         priority: Optional[Priority] = None,
         item_type: Optional[ItemType] = None,
         tag: Optional[str] = None,
+        search_text: Optional[str] = None,
     ) -> List[WorkItem]:
         """Use optimized database query directly"""
         return self.db.get_items_by_filters(
@@ -320,6 +321,17 @@ class WorkSystem:
             priority=priority,
             item_type=item_type,
             tag=tag,
+            search_text=search_text,
+        )
+
+    def search_thoughts(
+        self, search_text: str, goal: Optional[str] = None
+    ) -> List[WorkItem]:
+        """Search thought items by keyword with optional goal filter."""
+        return self.get_filtered_items(
+            goal=goal,
+            item_type=ItemType.THOUGHT,
+            search_text=search_text,
         )
 
     def optimize_database(self):
