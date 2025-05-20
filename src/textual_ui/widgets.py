@@ -50,13 +50,6 @@ else:  # pragma: no cover - runtime import with fallback
                 pass
 
 
-class CommandPalette(Widget):
-    """A command palette widget for quick access to functionality."""
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-
-
 class ConfirmationDialog(Container):
     """A dialog for confirming potentially destructive actions."""
 

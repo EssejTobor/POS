@@ -229,6 +229,56 @@ class WorkSystem:
                 print(f"Error updating priority: {e}")
                 raise
 
+    def update_item(self, item_id: str, **field_values):
+        """
+        Update specific fields of a work item.
+        
+        Args:
+            item_id: The ID of the item to update
+            **field_values: Field-value pairs to update
+        """
+        with self._atomic_operation():
+            try:
+                if item_id not in self.items:
+                    raise ValueError(f"Item {item_id} not found")
+
+                item = self.items[item_id]
+                
+                # Store original values for potential rollback
+                original_values = {}
+                
+                # Update each field
+                for field, value in field_values.items():
+                    if hasattr(item, field):
+                        original_values[field] = getattr(item, field)
+                        
+                        # Handle enum conversions
+                        if field == 'status' and not isinstance(value, ItemStatus):
+                            value = ItemStatus(value)
+                        elif field == 'priority' and not isinstance(value, Priority):
+                            value = Priority(value)
+                        elif field == 'item_type' and not isinstance(value, ItemType):
+                            value = ItemType(value)
+                            
+                        setattr(item, field, value)
+                    else:
+                        raise ValueError(f"Invalid field: {field}")
+                
+                # Update timestamp
+                item.updated_at = datetime.now()
+                
+                try:
+                    self.db.update_item(item)
+                except Exception as e:
+                    # Rollback in-memory changes
+                    for field, value in original_values.items():
+                        setattr(item, field, value)
+                    raise RuntimeError(f"Failed to update item: {str(e)}")
+
+            except Exception as e:
+                print(f"Error updating item: {e}")
+                raise
+
     def export_markdown(self, output_path: str = "work_items.md"):
         with open(output_path, "w") as f:
             f.write("# Work Items\n\n")
@@ -429,5 +479,33 @@ class WorkSystem:
         return self.db.get_items_by_tag(tag)
 
     def get_all_tags(self) -> List[str]:
-        """Return list of all tags in the system."""
-        return self.db.get_all_tags()
+        """Get all unique tags in the system"""
+        tags = set()
+        for item_id, item_tags in self.tags.items():
+            tags.update(item_tags)
+        return sorted(list(tags))
+
+    def suggest_link_targets(self, goal: str | None = None, limit: int = 50) -> List[str]:
+        """
+        Get a list of item suggestions for linking.
+        
+        Args:
+            goal: If provided, filter suggestions by goal
+            limit: Maximum number of suggestions to return
+            
+        Returns:
+            List of formatted strings with item ID and title
+        """
+        # Get filtered items
+        if goal:
+            items = self.get_items_by_goal(goal)
+        else:
+            # Use the most recently added/updated items
+            items = sorted(
+                self.items.values(), 
+                key=lambda x: x.updated_at,
+                reverse=True
+            )[:limit]
+            
+        # Format for display: "ID - Title"
+        return [f"{item.id} - {item.title[:40]}" for item in items]

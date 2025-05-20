@@ -1,13 +1,23 @@
 from __future__ import annotations
+from src.models import ItemStatus, ItemType, Priority
+from src.storage import WorkSystem
 
-from typing import Any, Callable, Dict, List, Optional
+
+
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+# Define fallback types for type checking at the top level
+ComposeResult = Any
+NoMatches = Exception
+Coordinate = Tuple[int, int]
 
 try:  # pragma: no cover - Textual is optional
     from textual.app import App, ComposeResult  # type: ignore
     from textual.binding import Binding  # type: ignore
     from textual.containers import Container, Horizontal, Vertical  # type: ignore
     from textual.css.query import NoMatches  # type: ignore
-    from textual.screen import Screen  # type: ignore
+    from textual.coordinate import Coordinate  # type: ignore
+    from textual.screen import ModalScreen, Screen  # type: ignore
     from textual.widget import Widget  # type: ignore
     from textual.widgets import Footer  # type: ignore
     from textual.widgets import (
@@ -22,10 +32,29 @@ try:  # pragma: no cover - Textual is optional
         TabPane,
         Tree,
     )
+    from textual.command import command  # type: ignore
+    from textual.suggester import SuggestFromList  # type: ignore
 
     TEXTUAL_AVAILABLE = True
 except ModuleNotFoundError:  # pragma: no cover - fallback stub
     TEXTUAL_AVAILABLE = False
+    
+    class SuggestFromList:  # type: ignore
+        def __init__(self, suggestions=None, case_sensitive=True):
+            self.suggestions = suggestions or []
+            self.case_sensitive = case_sensitive
+    
+    class ModalScreen:  # type: ignore
+        def __init__(self, *_, **__):
+            pass
+            
+        def dismiss(self):
+            pass
+
+    class Coordinate:  # type: ignore
+        def __init__(self, row: int = 0, column: int = 0):
+            self.row = row
+            self.column = column
 
     class App:  # type: ignore
         def __init__(self, *_, **__):
@@ -33,6 +62,15 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub
 
         def run(self, *_, **__):
             print("Textual not available")
+            
+        def exit(self):
+            print("Exiting Textual application")
+            
+        def push_screen(self, screen):
+            pass
+            
+        def pop_screen(self):
+            pass
 
     class Static:  # type: ignore
         def __init__(self, *_, **__):
@@ -42,9 +80,9 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub
         def __init__(self, *_, **__):
             pass
 
-    class Container:  # type: ignore
+    class Container(Widget):  # type: ignore
         def __init__(self, *_, **__):
-            pass
+            super().__init__(*_, **__)
 
     class Horizontal(Container):
         pass
@@ -55,47 +93,128 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub
     class Screen:  # type: ignore
         def __init__(self, *_, **__):
             pass
+            
+        def query_one(self, selector, selector_type=None):
+            return None
 
     class Widget:  # type: ignore
         def __init__(self, *_, **__):
+            self.app = None  # Will be set by the app when mounted
+            
+        def query_one(self, selector, selector_type=None):
+            return None
+            
+        def add_class(self, class_name):
+            pass
+            
+        def set_timer(self, delay, callback):
+            pass
+            
+        def remove(self):
+            pass
+            
+        def watch(self, widget, attribute, callback):
+            pass
+            
+        def mount(self, widget):
             pass
 
     class Button(Widget):
-        pass
+        class Pressed:
+            def __init__(self, button=None):
+                self.button = button
 
     class DataTable(Widget):
-        pass
+        class CellSelected:
+            def __init__(self, value="", coordinate=None):
+                self.value = value
+                self.coordinate = coordinate or Coordinate(0, 0)
+            
+        def __init__(self, *_, **__):
+            super().__init__(*_, **__)
+            self.clear_called = False
+            self.columns = []
+            
+        def add_columns(self, *columns):
+            self.columns = [Column(label) for label in columns]
+            
+        def clear(self):
+            self.clear_called = True
+            
+        def add_row(self, *values):
+            pass
+            
+        def update_cell_at(self, coordinate, value):
+            pass
+            
+        def get_cell_at(self, coordinate):
+            return "ITEM-001"  # Fallback dummy value
+            
+    class Column:
+        def __init__(self, label):
+            self.label = label
 
     class Footer(Widget):
         pass
 
     class Header(Widget):
-        pass
-
-    class Input(Widget):
-        pass
-
-    class Select(Widget):
         def __init__(self, *_, **kwargs):
             super().__init__(*_, **kwargs)
+            self.show_clock = kwargs.get("show_clock", False)
+
+    class Input(Widget):
+        def __init__(self, *_, **kwargs):
+            super().__init__(*_, **kwargs)
+            self.value = kwargs.get("value", "")
+            self.placeholder = kwargs.get("placeholder", "")
+
+    class Label(Widget):
+        def __init__(self, text="", **kwargs):
+            super().__init__(**kwargs)
+            self.text = text
+
+    class Select(Widget):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
             # Add value attribute for compatibility
             self.value = kwargs.get("value", None)
+            self.options = args[0] if args else []
 
     class TabPane(Widget):
-        pass
+        def __init__(self, title="", **kwargs):
+            super().__init__(**kwargs)
+            self.title = title
 
     class TabbedContent(Widget):
-        pass
+        def __init__(self, *_, **__):
+            super().__init__(*_, **__)
+            self.active = ""
 
     class Tree(Widget):
-        pass
+        def __init__(self, label="", **kwargs):
+            super().__init__(**kwargs)
+            self.root = TreeNode(label)
+            
+        def expand_all(self):
+            pass
 
-    # Define fallback types for type checking
-    ComposeResult = Any
-    NoMatches = Exception
+    class TreeNode:
+        def __init__(self, label=""):
+            self.label = label
+            self.children = []
+            
+        def add(self, label):
+            node = TreeNode(label)
+            self.children.append(node)
+            return node
+            
+        def clear(self):
+            self.children = []
 
-from src.models import ItemStatus, ItemType, Priority
-from src.storage import WorkSystem
+    # These are already defined at the top of the file
+    # ComposeResult = Any
+    # NoMatches = Exception
+
 
 
 class Message(Static):
@@ -207,7 +326,7 @@ class ItemEntryForm(Container):
     def compose(self) -> ComposeResult:
         """Create child widgets."""
         if not TEXTUAL_AVAILABLE:
-            return None
+            return ComposeResult()
 
         yield Label("Add New Item", id="form-title")
 
@@ -267,6 +386,44 @@ class ItemEntryForm(Container):
         with Horizontal(id="buttons"):
             yield Button("Submit", variant="primary", id="submit")
             yield Button("Clear", variant="default", id="clear")
+
+    def on_mount(self) -> None:
+        """Set up dynamic components after the form is mounted."""
+        if not TEXTUAL_AVAILABLE:
+            return
+            
+        try:
+            # Set up link suggester
+            link_input = self.query_one("#link_to", Input)
+            link_input.suggester = SuggestFromList(
+                self.work_system.suggest_link_targets(), 
+                case_sensitive=False
+            )
+            
+            # Set up goal input to refresh link suggester when changed
+            goal_input = self.query_one("#goal", Input)
+            self.watch(goal_input, "value", self._refresh_link_suggestions)
+            
+        except NoMatches:
+            pass
+            
+    def _refresh_link_suggestions(self, value: str = "") -> None:
+        """Update link suggestions when goal changes."""
+        if not TEXTUAL_AVAILABLE:
+            return
+            
+        try:
+            # Get current goal value
+            goal = self.query_one("#goal", Input).value
+            
+            # Update suggester with filtered suggestions
+            link_input = self.query_one("#link_to", Input)
+            link_input.suggester = SuggestFromList(
+                self.work_system.suggest_link_targets(goal=goal if goal else None),
+                case_sensitive=False
+            )
+        except NoMatches:
+            pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
@@ -376,7 +533,7 @@ class ItemListView(Container):
     def compose(self) -> ComposeResult:
         """Create child widgets."""
         if not TEXTUAL_AVAILABLE:
-            return None
+            return ComposeResult()
 
         # Filters
         with Horizontal(id="filters"):
@@ -509,6 +666,30 @@ class ItemListView(Container):
         except NoMatches:
             pass
 
+    def on_data_table_cell_selected(self, event: DataTable.CellSelected) -> None:
+        """Handle cell selection in the data table."""
+        if not TEXTUAL_AVAILABLE:
+            return
+        
+        # Don't allow editing the ID column
+        if event.coordinate.column == 0:
+            return
+        
+        # Get the column name and ID of the selected item
+        table = self.query_one("#items-table", DataTable)
+        column_name = table.columns[event.coordinate.column].label
+        item_id = table.get_cell_at((event.coordinate.row, 0))
+        
+        # Open the edit cell modal
+        self.app.push_screen(
+            EditCellScreen(
+                coord=event.coordinate,
+                column_name=column_name,
+                current_value=event.value,
+                item_id=item_id
+            )
+        )
+
 
 class LinkTreeView(Container):
     """Widget to display relationship trees between items."""
@@ -545,7 +726,7 @@ class LinkTreeView(Container):
     def compose(self) -> ComposeResult:
         """Create child widgets."""
         if not TEXTUAL_AVAILABLE:
-            return None
+            return ComposeResult()
 
         # Item selector
         with Container(id="item-selector"):
@@ -679,7 +860,7 @@ class MainScreen(Screen):
     def compose(self) -> ComposeResult:
         """Create child widgets."""
         if not TEXTUAL_AVAILABLE:
-            return None
+            return ComposeResult()
 
         # Header with app title
         yield Header(show_clock=True)
@@ -791,6 +972,153 @@ class MainScreen(Screen):
             pass
 
 
+class EditCellScreen(ModalScreen):
+    """Modal screen for editing a DataTable cell."""
+
+    DEFAULT_CSS = """
+    EditCellScreen {
+        align: center middle;
+    }
+
+    .edit-container {
+        width: 40;
+        height: auto;
+        border: thick $primary;
+        background: $surface;
+        padding: 1 2;
+    }
+
+    .edit-container #title {
+        width: 100%;
+        content-align: center middle;
+        text-style: bold;
+        margin-bottom: 1;
+    }
+
+    .edit-container Input, .edit-container Select {
+        width: 100%;
+        margin-bottom: 1;
+    }
+
+    .edit-container #buttons {
+        width: 100%;
+        height: 3;
+        align: center middle;
+    }
+
+    .edit-container Button {
+        margin: 0 1;
+    }
+    """
+
+    def __init__(self, coord: Coordinate, column_name: str, current_value: str, item_id: str):
+        super().__init__()
+        self.coord = coord
+        self.column_name = column_name
+        self.current_value = current_value
+        self.item_id = item_id
+        self.field_widgets = {}
+
+    def compose(self) -> ComposeResult:
+        """Create child widgets."""
+        if not TEXTUAL_AVAILABLE:
+            return ComposeResult()
+
+        with Vertical(classes="edit-container"):
+            yield Label(f"Edit {self.column_name}", id="title")
+            
+            if self.column_name == "Status":
+                self.field_widgets["status"] = Select(
+                    [
+                        (ItemStatus.NOT_STARTED.name, ItemStatus.NOT_STARTED.value),
+                        (ItemStatus.IN_PROGRESS.name, ItemStatus.IN_PROGRESS.value),
+                        (ItemStatus.COMPLETED.name, ItemStatus.COMPLETED.value),
+                    ],
+                    value=self.current_value,
+                    id="value-input"
+                )
+                yield self.field_widgets["status"]
+            elif self.column_name == "Priority":
+                self.field_widgets["priority"] = Select(
+                    [
+                        (Priority.HI.name, Priority.HI.value),
+                        (Priority.MED.name, Priority.MED.value),
+                        (Priority.LOW.name, Priority.LOW.value),
+                    ],
+                    value=self.current_value,
+                    id="value-input"
+                )
+                yield self.field_widgets["priority"]
+            elif self.column_name == "Type":
+                self.field_widgets["item_type"] = Select(
+                    [
+                        (ItemType.TASK.name, ItemType.TASK.value),
+                        (ItemType.THOUGHT.name, ItemType.THOUGHT.value),
+                        (ItemType.LEARNING.name, ItemType.LEARNING.value),
+                        (ItemType.RESEARCH.name, ItemType.RESEARCH.value),
+                    ],
+                    value=self.current_value,
+                    id="value-input"
+                )
+                yield self.field_widgets["item_type"]
+            else:
+                # Default to text input for other fields
+                self.field_widgets["text"] = Input(
+                    value=self.current_value,
+                    id="value-input"
+                )
+                yield self.field_widgets["text"]
+            
+            with Horizontal(id="buttons"):
+                yield Button("Save", variant="primary", id="save")
+                yield Button("Cancel", variant="default", id="cancel")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button presses."""
+        if event.button.id == "save":
+            self._save_changes()
+        elif event.button.id == "cancel":
+            self.dismiss()
+
+    def _save_changes(self) -> None:
+        """Save the changes to the database and update the table."""
+        if not TEXTUAL_AVAILABLE:
+            return
+
+        try:
+            # Get the new value from the appropriate widget
+            widget = self.query_one("#value-input")
+            new_value = widget.value
+            
+            # Get the field name from the column name
+            field = self.column_name.lower()
+            
+            # Get the work system and update the item
+            app = self.app
+            work_system = app.work_system
+            
+            # Form the update kwargs
+            update_kwargs = {field: new_value}
+            
+            # Update the item
+            work_system.update_item(self.item_id, **update_kwargs)
+            
+            # Get the table and update the cell
+            main_screen = app.query_one(MainScreen)
+            table = main_screen.query_one(ItemListView).query_one(DataTable)
+            table.update_cell_at(self.coord, new_value)
+            
+            # Show success message
+            main_screen.add_message(f"Updated {self.column_name} for item {self.item_id}", "success")
+            
+            # Dismiss the modal
+            self.dismiss()
+        except Exception as e:
+            # Show error message but don't dismiss
+            main_screen = self.app.query_one(MainScreen)
+            main_screen.add_message(f"Error updating {self.column_name}: {str(e)}", "error")
+
+
 class TextualApp(App):
     """
     Textual-based UI for the Personal Operating System (POS).
@@ -827,7 +1155,7 @@ class TextualApp(App):
         """Create child widgets for the app."""
         if not TEXTUAL_AVAILABLE:
             yield Static("POS Textual UI - Textual library not available")
-            return
+            return ComposeResult()
 
         yield MainScreen(self.work_system, self.start_tab)
 
@@ -836,3 +1164,53 @@ class TextualApp(App):
         if not TEXTUAL_AVAILABLE:
             self.exit()
             return
+            
+    @command
+    def add_new_item(self) -> None:
+        """Create a new work item."""
+        if not TEXTUAL_AVAILABLE:
+            return
+            
+        try:
+            main_screen = self.query_one(MainScreen)
+            main_screen.action_new_item()
+        except NoMatches:
+            pass
+            
+    @command
+    def view_items(self) -> None:
+        """View and filter work items."""
+        if not TEXTUAL_AVAILABLE:
+            return
+            
+        try:
+            main_screen = self.query_one(MainScreen)
+            tabs = main_screen.query_one(TabbedContent)
+            tabs.active = "items-tab"
+        except NoMatches:
+            pass
+            
+    @command
+    def view_link_tree(self) -> None:
+        """View item relationships as a tree."""
+        if not TEXTUAL_AVAILABLE:
+            return
+            
+        try:
+            main_screen = self.query_one(MainScreen)
+            tabs = main_screen.query_one(TabbedContent)
+            tabs.active = "link-tree-tab"
+        except NoMatches:
+            pass
+            
+    @command
+    def refresh_data(self) -> None:
+        """Refresh the current view."""
+        if not TEXTUAL_AVAILABLE:
+            return
+            
+        try:
+            main_screen = self.query_one(MainScreen)
+            main_screen.action_refresh()
+        except NoMatches:
+            pass
