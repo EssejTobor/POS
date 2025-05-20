@@ -174,21 +174,12 @@ class ItemEntryForm(Container):
         if not TEXTUAL_AVAILABLE:
             return None
 
-        # Debug: Print ItemType values
-        print(
-            f"ItemType values: TASK={ItemType.TASK.value}, LEARNING={ItemType.LEARNING.value}, RESEARCH={ItemType.RESEARCH.value}, THOUGHT={ItemType.THOUGHT.value}"
-        )
-
         yield Label("Add New Item", id="form-title")
 
         yield Label("Goal:")
         yield Input(placeholder="Project or goal name", id="goal")
 
         yield Label("Item Type:")
-        # Debug item type values for troubleshooting
-        print(
-            f"ItemType values: TASK={ItemType.TASK.value}, LEARNING={ItemType.LEARNING.value}, RESEARCH={ItemType.RESEARCH.value}, THOUGHT={ItemType.THOUGHT.value}"
-        )
 
         yield Select(
             [
@@ -202,10 +193,6 @@ class ItemEntryForm(Container):
         )
 
         yield Label("Priority:")
-        # Debug priority values
-        print(
-            f"Priority values: HI={Priority.HI.value}, MED={Priority.MED.value}, LOW={Priority.LOW.value}"
-        )
 
         yield Select(
             [
