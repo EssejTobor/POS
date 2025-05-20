@@ -173,8 +173,10 @@ class ItemEntryForm(Container):
             return None
 
         # Debug: Print ItemType values
-        print(f"ItemType values: TASK={ItemType.TASK.value}, LEARNING={ItemType.LEARNING.value}, RESEARCH={ItemType.RESEARCH.value}, THOUGHT={ItemType.THOUGHT.value}")
-            
+        print(
+            f"ItemType values: TASK={ItemType.TASK.value}, LEARNING={ItemType.LEARNING.value}, RESEARCH={ItemType.RESEARCH.value}, THOUGHT={ItemType.THOUGHT.value}"
+        )
+
         yield Label("Add New Item", id="form-title")
 
         yield Label("Goal:")
@@ -182,35 +184,35 @@ class ItemEntryForm(Container):
 
         yield Label("Item Type:")
         # Debug item type values for troubleshooting
-        print(f"ItemType values: TASK={ItemType.TASK.value}, LEARNING={ItemType.LEARNING.value}, RESEARCH={ItemType.RESEARCH.value}, THOUGHT={ItemType.THOUGHT.value}")
-        
-        # Get the item type values as strings
-        task_val = str(ItemType.TASK.value)
-        learning_val = str(ItemType.LEARNING.value)
-        research_val = str(ItemType.RESEARCH.value)
-        thought_val = str(ItemType.THOUGHT.value)
-        
-        # Use from_values for the select widget
-        yield Select.from_values(
-            [task_val, learning_val, research_val, thought_val],
+        print(
+            f"ItemType values: TASK={ItemType.TASK.value}, LEARNING={ItemType.LEARNING.value}, RESEARCH={ItemType.RESEARCH.value}, THOUGHT={ItemType.THOUGHT.value}"
+        )
+
+        yield Select(
+            [
+                ("Task", ItemType.TASK.value),
+                ("Learning", ItemType.LEARNING.value),
+                ("Research", ItemType.RESEARCH.value),
+                ("Thought", ItemType.THOUGHT.value),
+            ],
             id="item_type",
-            value=task_val,
+            value=ItemType.TASK.value,
         )
 
         yield Label("Priority:")
         # Debug priority values
-        print(f"Priority values: HI={Priority.HI.value}, MED={Priority.MED.value}, LOW={Priority.LOW.value}")
-        
-        # Get the priority values as strings
-        hi_val = str(Priority.HI.value)
-        med_val = str(Priority.MED.value)
-        low_val = str(Priority.LOW.value)
-        
-        # Use from_values for the select widget
-        yield Select.from_values(
-            [hi_val, med_val, low_val],
+        print(
+            f"Priority values: HI={Priority.HI.value}, MED={Priority.MED.value}, LOW={Priority.LOW.value}"
+        )
+
+        yield Select(
+            [
+                ("High", Priority.HI.value),
+                ("Medium", Priority.MED.value),
+                ("Low", Priority.LOW.value),
+            ],
             id="priority",
-            value=med_val,
+            value=Priority.MED.value,
         )
 
         yield Label("Title:")
@@ -226,9 +228,13 @@ class ItemEntryForm(Container):
         )
 
         yield Label("Link Type (Optional):")
-        # Use Select.from_values for the link type
-        yield Select.from_values(
-            ["references", "evolves-from", "parent-child", "inspired-by"],
+        yield Select(
+            [
+                ("References", "references"),
+                ("Evolves From", "evolves-from"),
+                ("Parent-Child", "parent-child"),
+                ("Inspired By", "inspired-by"),
+            ],
             id="link_type",
             value="references",
         )
@@ -270,7 +276,10 @@ class ItemEntryForm(Container):
                 self.app.add_message("Goal and title are required", "error")
                 return
 
-            # Call the callback with the form data
+            # Convert values to enums before submitting
+            form_data["item_type"] = ItemType(form_data["item_type"])
+            form_data["priority"] = Priority(form_data["priority"])
+            # Call the callback with the converted form data
             self.on_submit(form_data)
 
             # Clear the form
@@ -350,31 +359,31 @@ class ItemListView(Container):
             yield Label("Filter by:")
             yield Select(
                 [
-                    (None, "All Types"),
-                    (ItemType.TASK.value, "Tasks"),
-                    (ItemType.THOUGHT.value, "Thoughts"),
-                    (ItemType.LEARNING.value, "Learning"),
-                    (ItemType.RESEARCH.value, "Research"),
+                    ("All Types", None),
+                    ("Tasks", ItemType.TASK.value),
+                    ("Thoughts", ItemType.THOUGHT.value),
+                    ("Learning", ItemType.LEARNING.value),
+                    ("Research", ItemType.RESEARCH.value),
                 ],
                 id="type-filter",
                 value=None,
             )
             yield Select(
                 [
-                    (None, "All Priorities"),
-                    (Priority.HI.value, "High"),
-                    (Priority.MED.value, "Medium"),
-                    (Priority.LOW.value, "Low"),
+                    ("All Priorities", None),
+                    ("High", Priority.HI.value),
+                    ("Medium", Priority.MED.value),
+                    ("Low", Priority.LOW.value),
                 ],
                 id="priority-filter",
                 value=None,
             )
             yield Select(
                 [
-                    (None, "All Statuses"),
-                    (ItemStatus.NOT_STARTED.value, "Not Started"),
-                    (ItemStatus.IN_PROGRESS.value, "In Progress"),
-                    (ItemStatus.COMPLETED.value, "Completed"),
+                    ("All Statuses", None),
+                    ("Not Started", ItemStatus.NOT_STARTED.value),
+                    ("In Progress", ItemStatus.IN_PROGRESS.value),
+                    ("Completed", ItemStatus.COMPLETED.value),
                 ],
                 id="status-filter",
                 value=None,
@@ -425,9 +434,14 @@ class ItemListView(Container):
             priority_filter = self.query_one("#priority-filter", Select).value
             status_filter = self.query_one("#status-filter", Select).value
 
+            # Convert filter values to enums
+            item_type = ItemType(type_filter) if type_filter else None
+            priority = Priority(priority_filter) if priority_filter else None
+            status = ItemStatus(status_filter) if status_filter else None
+
             # Get filtered items from the work system
             items = self.work_system.get_filtered_items(
-                item_type=type_filter, priority=priority_filter, status=status_filter
+                item_type=item_type, priority=priority, status=status
             )
 
             # Clear existing rows
