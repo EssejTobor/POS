@@ -139,6 +139,7 @@
   - `ItemEntryForm` with fields for all item properties and linking options
   - `ItemListView` with filtering and sortable data table
   - `LinkTreeView` for visualizing relationship networks between items
+  - Implemented graphical link tree visualization using Textual's Tree widget
   - Message system for user notifications and feedback
   - Rich styling and keyboard navigation
 - Added CLI commands to integrate with the Textual UI:
