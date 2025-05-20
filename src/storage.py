@@ -232,7 +232,7 @@ class WorkSystem:
     def update_item(self, item_id: str, **field_values):
         """
         Update specific fields of a work item.
-        
+
         Args:
             item_id: The ID of the item to update
             **field_values: Field-value pairs to update
@@ -243,30 +243,30 @@ class WorkSystem:
                     raise ValueError(f"Item {item_id} not found")
 
                 item = self.items[item_id]
-                
+
                 # Store original values for potential rollback
                 original_values = {}
-                
+
                 # Update each field
                 for field, value in field_values.items():
                     if hasattr(item, field):
                         original_values[field] = getattr(item, field)
-                        
+
                         # Handle enum conversions
-                        if field == 'status' and not isinstance(value, ItemStatus):
+                        if field == "status" and not isinstance(value, ItemStatus):
                             value = ItemStatus(value)
-                        elif field == 'priority' and not isinstance(value, Priority):
+                        elif field == "priority" and not isinstance(value, Priority):
                             value = Priority(value)
-                        elif field == 'item_type' and not isinstance(value, ItemType):
+                        elif field == "item_type" and not isinstance(value, ItemType):
                             value = ItemType(value)
-                            
+
                         setattr(item, field, value)
                     else:
                         raise ValueError(f"Invalid field: {field}")
-                
+
                 # Update timestamp
                 item.updated_at = datetime.now()
-                
+
                 try:
                     self.db.update_item(item)
                 except Exception as e:
@@ -480,19 +480,18 @@ class WorkSystem:
 
     def get_all_tags(self) -> List[str]:
         """Get all unique tags in the system"""
-        tags = set()
-        for item_id, item_tags in self.tags.items():
-            tags.update(item_tags)
-        return sorted(list(tags))
+        return sorted(self.db.get_all_tags())
 
-    def suggest_link_targets(self, goal: str | None = None, limit: int = 50) -> List[str]:
+    def suggest_link_targets(
+        self, goal: str | None = None, limit: int = 50
+    ) -> List[str]:
         """
         Get a list of item suggestions for linking.
-        
+
         Args:
             goal: If provided, filter suggestions by goal
             limit: Maximum number of suggestions to return
-            
+
         Returns:
             List of formatted strings with item ID and title
         """
@@ -502,10 +501,8 @@ class WorkSystem:
         else:
             # Use the most recently added/updated items
             items = sorted(
-                self.items.values(), 
-                key=lambda x: x.updated_at,
-                reverse=True
+                self.items.values(), key=lambda x: x.updated_at, reverse=True
             )[:limit]
-            
+
         # Format for display: "ID - Title"
         return [f"{item.id} - {item.title[:40]}" for item in items]

@@ -2,6 +2,16 @@ import cmd
 from datetime import datetime
 from pathlib import Path
 
+# Detect if the optional Textual dependency is available.  The CLI should
+# remain functional even when Textual isn't installed (e.g. in minimal test
+# environments).
+try:  # pragma: no cover - optional dependency check
+    import textual  # type: ignore
+
+    TEXTUAL_AVAILABLE = True
+except Exception:  # pragma: no cover - executed when Textual isn't installed
+    TEXTUAL_AVAILABLE = False
+
 # The CLI uses the ``rich`` library for nicer output. However, the
 # execution environment for the unit tests might not have ``rich``
 # installed.  To make the CLI usable (and importable) without the
@@ -59,8 +69,6 @@ from .migrate import MigrationManager
 from .models import ItemStatus, ItemType, Priority
 from .schemas import AddItemInput, AddThoughtInput, UpdateItemInput
 from .storage import WorkSystem
-
-
 
 
 class WorkSystemCLI(cmd.Cmd):
