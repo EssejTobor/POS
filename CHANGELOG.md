@@ -147,3 +147,6 @@
 
 ### Deprecated
 - CLI-based commands and interfaces in favor of Textual TUI
+
+### Fixed
+- Guarded CLI Textual features when the ``textual`` package is missing

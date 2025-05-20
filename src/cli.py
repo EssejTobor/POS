@@ -2,6 +2,18 @@ import cmd
 from datetime import datetime
 from pathlib import Path
 
+# Attempt to import ``textual`` to determine availability for optional
+# TUI commands.  Some environments (like CI) may not have the package
+# installed, so we guard any usage behind this flag.
+try:  # pragma: no cover - small import helper
+    import importlib
+
+    importlib.import_module("textual")
+except ModuleNotFoundError:  # pragma: no cover - executed only on minimal envs
+    TEXTUAL_AVAILABLE = False
+else:  # pragma: no cover - executed when ``textual`` is installed
+    TEXTUAL_AVAILABLE = True
+
 # The CLI uses the ``rich`` library for nicer output. However, the
 # execution environment for the unit tests might not have ``rich``
 # installed.  To make the CLI usable (and importable) without the
@@ -59,8 +71,6 @@ from .migrate import MigrationManager
 from .models import ItemStatus, ItemType, Priority
 from .schemas import AddItemInput, AddThoughtInput, UpdateItemInput
 from .storage import WorkSystem
-
-
 
 
 class WorkSystemCLI(cmd.Cmd):
