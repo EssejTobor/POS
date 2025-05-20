@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:  # pragma: no cover - for type checking only
     from textual.containers import Container
     from textual.widget import Widget
-    from textual.widgets import Button, Input, Static, Tree
+    from textual.widgets import Button, Input, Select, Static, Tree
 
     TEXTUAL_AVAILABLE = True
 else:  # pragma: no cover - runtime import with fallback
     try:
         from textual.containers import Container  # type: ignore
         from textual.widget import Widget  # type: ignore
-        from textual.widgets import Button, Input, Static, Tree  # type: ignore
+        from textual.widgets import Button, Input, Select, Static, Tree  # type: ignore
 
         TEXTUAL_AVAILABLE = True
     except Exception:
@@ -31,6 +31,11 @@ else:  # pragma: no cover - runtime import with fallback
         class Button:
             def __init__(self, *args, **kwargs) -> None:
                 pass
+
+        class Select:
+            def __init__(self, *args, **kwargs) -> None:
+                # Add value attribute for compatibility
+                self.value = kwargs.get("value", None)
 
         class Tree:
             def __init__(self, *args, **kwargs) -> None:

@@ -19,8 +19,7 @@ dev = [
   "isort"
 ]
 
-[tool.mypy]
-ignore_missing_imports = true
+test = [
+  "pytest"
+]
 
-[tool.isort]
-profile = "black"

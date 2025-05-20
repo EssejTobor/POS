@@ -26,8 +26,10 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
 3. Install the package in development mode:
+Use [uv](https://github.com/astral-sh/uv) as the universal package manager:
+
 ```bash
-pip install -e .
+uv pip install --system -e ".[dev]"
 ```
 
 ## Usage

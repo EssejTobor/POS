@@ -75,11 +75,11 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub
     class Input(Widget):
         pass
 
-    class Label(Widget):
-        pass
-
     class Select(Widget):
-        pass
+        def __init__(self, *_, **kwargs):
+            super().__init__(*_, **kwargs)
+            # Add value attribute for compatibility
+            self.value = kwargs.get("value", None)
 
     class TabPane(Widget):
         pass
@@ -445,18 +445,19 @@ class ItemListView(Container):
             self._load_items()
 
             # Set up filter change listeners
-            self.query_one("#type-filter", Select).changed.connect(
-                self._on_filter_change
-            )
-            self.query_one("#priority-filter", Select).changed.connect(
-                self._on_filter_change
-            )
-            self.query_one("#status-filter", Select).changed.connect(
-                self._on_filter_change
-            )
-            self.query_one("#tag-filter", Select).changed.connect(
-                self._on_filter_change
-            )
+            # Check if the Select widget has 'changed' attribute (newer Textual versions)
+            # or fall back to 'on_select_changed' (older versions)
+            for filter_id in ["#type-filter", "#priority-filter", "#status-filter", "#tag-filter"]:
+                select_widget = self.query_one(filter_id, Select)
+                
+                # Try to use the changed event if available (newer Textual versions)
+                if hasattr(select_widget, "changed"):
+                    select_widget.changed.connect(self._on_filter_change)
+                # Otherwise use watch API or direct binding as fallback
+                else:
+                    # Direct approach for older Textual versions
+                    self.watch(select_widget, "value", self._on_filter_change)
+                    
         except NoMatches:
             pass
 
