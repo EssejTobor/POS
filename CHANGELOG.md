@@ -180,4 +180,5 @@
 - Fixed import error with "No module named 'src.textual_ui.widgets'" by creating the missing module with required widget classes
 - Resolved circular import in textual_ui causing startup failure
 - Fixed incorrect value handling in Textual Select widgets
+- Fixed startup script so Textual UI launches by default with CLI fallback
 
