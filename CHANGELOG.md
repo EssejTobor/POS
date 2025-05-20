@@ -184,5 +184,6 @@
 - Resolved circular import in textual_ui causing startup failure
 - Fixed incorrect value handling in Textual Select widgets
 - Fixed startup script so Textual UI launches by default with CLI fallback
+- Corrected restore command to load backups from `data/backups`
 
 
