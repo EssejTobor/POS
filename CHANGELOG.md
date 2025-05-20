@@ -176,6 +176,8 @@
   dependencies; improved missing item messages in link tree view
 - Changed application startup to launch Textual UI by default, with automatic fallback to CLI if Textual is unavailable
 - Replaced debug `print` statements for `ItemType` and `Priority` with logging
+- Removed leftover debug prints from `ItemEntryForm.compose` and added a unit
+  test ensuring no output during form creation
 
 ### Fixed
 - Fixed import error with "No module named 'src.textual_ui.widgets'" by creating the missing module with required widget classes
