@@ -38,25 +38,60 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub
         def __init__(self, *_, **__):
             pass
 
-    # Define empty classes for type checking
+    class Binding:  # type: ignore
+        def __init__(self, *_, **__):
+            pass
+
+    class Container:  # type: ignore
+        def __init__(self, *_, **__):
+            pass
+
+    class Horizontal(Container):
+        pass
+
+    class Vertical(Container):
+        pass
+
+    class Screen:  # type: ignore
+        def __init__(self, *_, **__):
+            pass
+
+    class Widget:  # type: ignore
+        def __init__(self, *_, **__):
+            pass
+
+    class Button(Widget):
+        pass
+
+    class DataTable(Widget):
+        pass
+
+    class Footer(Widget):
+        pass
+
+    class Header(Widget):
+        pass
+
+    class Input(Widget):
+        pass
+
+    class Label(Widget):
+        pass
+
+    class Select(Widget):
+        pass
+
+    class TabPane(Widget):
+        pass
+
+    class TabbedContent(Widget):
+        pass
+
+    class Tree(Widget):
+        pass
+
+    # Define fallback types for type checking
     ComposeResult = Any
-    Binding = Any
-    Container = Any
-    Horizontal = Any
-    Vertical = Any
-    Screen = Any
-    Button = Any
-    DataTable = Any
-    Footer = Any
-    Header = Any
-    Input = Any
-    Label = Any
-    Select = Any
-    Static = Any  # noqa: F811
-    TabPane = Any
-    TabbedContent = Any
-    Tree = Any
-    Widget = Any
     NoMatches = Exception
 
 from src.models import ItemStatus, ItemType, Priority
