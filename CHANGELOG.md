@@ -152,7 +152,7 @@
 - Enhanced `do_tui` command to launch the dashboard with optional `--tab` flag for starting view
 - Added Textual as a first-class runtime dependency in `pyproject.toml`
 - Created `src/launcher.py` to provide a direct entry point to launch the Textual UI
-- Updated `run.py` to directly launch the Textual UI with fallback to CLI if import fails
+- Updated `main.py` to directly launch the Textual UI with fallback to CLI if import fails
 - Created `src/textual_ui/widgets.py` with implementation stubs for all required widget classes
 - Added `item_tags` table with CLI commands and tag filtering support
 - Added search and filtering for thought items via `search_thoughts`
@@ -180,6 +180,8 @@
   test ensuring no output during form creation
 - `cleanup_backups` now returns the number of files removed and the CLI reports
   this value
+- Relocated manual testing scripts to `manual_scripts/` and removed duplicate
+  `run.py` in favor of `main.py`
 
 ### Fixed
 - Fixed import error with "No module named 'src.textual_ui.widgets'" by creating the missing module with required widget classes
