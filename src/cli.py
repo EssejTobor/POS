@@ -98,6 +98,9 @@ class WorkSystemCLI(cmd.Cmd):
     - cleanup_backups: Remove old backups, keeping the most recent ones
     - export_json: Export database to JSON format
     - migrate: Migrate data from JSON to SQLite database
+    - tag: Add a tag to an item
+    - untag: Remove a tag from an item
+    - list_by_tag: List items that share a tag
     """
 
     prompt = "(work) "
@@ -744,6 +747,48 @@ class WorkSystemCLI(cmd.Cmd):
 
         except Exception as e:
             self.display.print_error(f"Error removing link: {str(e)}")
+
+    def do_tag(self, arg):
+        """Add a tag to an item. Usage: tag <item_id> <tag>"""
+        parts = arg.strip().split()
+        if len(parts) != 2:
+            self.display.print_error("Usage: tag <item_id> <tag>")
+            return
+        item_id, tag = parts
+        if item_id not in self.work_system.items:
+            self.display.print_error(f"Item not found: {item_id}")
+            return
+        if self.work_system.add_tag_to_item(item_id, tag):
+            self.display.print_success(f"Tag '{tag}' added to {item_id}")
+        else:
+            self.display.print_error("Failed to add tag (maybe duplicate)")
+
+    def do_untag(self, arg):
+        """Remove a tag from an item. Usage: untag <item_id> <tag>"""
+        parts = arg.strip().split()
+        if len(parts) != 2:
+            self.display.print_error("Usage: untag <item_id> <tag>")
+            return
+        item_id, tag = parts
+        if item_id not in self.work_system.items:
+            self.display.print_error(f"Item not found: {item_id}")
+            return
+        if self.work_system.remove_tag_from_item(item_id, tag):
+            self.display.print_success(f"Tag '{tag}' removed from {item_id}")
+        else:
+            self.display.print_error("Tag not found")
+
+    def do_list_by_tag(self, arg):
+        """List items that have a specific tag. Usage: list_by_tag <tag>"""
+        tag = arg.strip()
+        if not tag:
+            self.display.print_error("Usage: list_by_tag <tag>")
+            return
+        items = self.work_system.get_items_by_tag(tag)
+        if items:
+            self.display.print_items(items)
+        else:
+            self.display.print_warning(f"No items found with tag: {tag}")
 
     def do_quit(self, arg):
         """Quit the program"""

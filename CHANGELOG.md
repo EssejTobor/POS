@@ -103,6 +103,7 @@
 ## [Unreleased]
 
 ### Added
+- Added missing newline at end of README.md
 - Created `item_links` table for storing relationships between work items
 - Added foreign key constraints and appropriate indexes for the `item_links` table
 - Implemented `add_link()` method to create relationships between items with error handling
@@ -152,6 +153,7 @@
 - Created `src/launcher.py` to provide a direct entry point to launch the Textual UI
 - Updated `run.py` to directly launch the Textual UI with fallback to CLI if import fails
 - Created `src/textual_ui/widgets.py` with implementation stubs for all required widget classes
+- Added `item_tags` table with CLI commands and tag filtering support
 
 ### Changed
 - Unified item creation by extending the `add` command to support thought items with linking
@@ -171,6 +173,7 @@
 - Added lightweight fallbacks for `pydantic` to enable tests without external
   dependencies; improved missing item messages in link tree view
 - Changed application startup to launch Textual UI by default, with automatic fallback to CLI if Textual is unavailable
+- Replaced debug `print` statements for `ItemType` and `Priority` with logging
 
 ### Fixed
 - Fixed import error with "No module named 'src.textual_ui.widgets'" by creating the missing module with required widget classes
