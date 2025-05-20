@@ -3,12 +3,16 @@ Manual test script for Phase 4.5 implementation.
 Tests the unified add command with linking functionality.
 """
 
+import logging
 import os
 from typing import Optional
 
 from src.models import ItemType
 from src.schemas import AddItemInput
 from src.storage import WorkSystem
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def clear_screen():
@@ -34,8 +38,8 @@ def test_add_item_input_parsing():
         input_data = AddItemInput.parse_input(cmd)
         print("✓ Basic command parsing:")
         print(f"  Goal: {input_data.goal}")
-        print(f"  Type: {input_data.type_}")
-        print(f"  Priority: {input_data.priority}")
+        logger.info("  Type: %s", input_data.type_)
+        logger.info("  Priority: %s", input_data.priority)
         print(f"  Title: {input_data.title}")
         print(f"  Description: {input_data.description}")
         print(f"  Link to: {input_data.link_to}")
@@ -46,7 +50,7 @@ def test_add_item_input_parsing():
         input_data = AddItemInput.parse_input(cmd)
         print("\n✓ Command with link_to parsing:")
         print(f"  Goal: {input_data.goal}")
-        print(f"  Type: {input_data.type_}")
+        logger.info("  Type: %s", input_data.type_)
         print(f"  Title: {input_data.title}")
         print(f"  Link to: {input_data.link_to}")
         print(f"  Link type: {input_data.link_type}")
@@ -56,7 +60,7 @@ def test_add_item_input_parsing():
         input_data = AddItemInput.parse_input(cmd)
         print("\n✓ Command with link_to and link_type parsing:")
         print(f"  Goal: {input_data.goal}")
-        print(f"  Type: {input_data.type_}")
+        logger.info("  Type: %s", input_data.type_)
         print(f"  Title: {input_data.title}")
         print(f"  Link to: {input_data.link_to}")
         print(f"  Link type: {input_data.link_type}")
@@ -113,7 +117,7 @@ def test_add_item_with_links():
         print("✓ Added task item:")
         print(f"  ID: {task.id}")
         print(f"  Title: {task.title}")
-        print(f"  Type: {task.item_type}")
+        logger.info("  Type: %s", task.item_type)
 
         # Add a thought item with a link to the task
         thought = work_system.add_item(
@@ -125,7 +129,7 @@ def test_add_item_with_links():
         print("\n✓ Added thought item:")
         print(f"  ID: {thought.id}")
         print(f"  Title: {thought.title}")
-        print(f"  Type: {thought.item_type}")
+        logger.info("  Type: %s", thought.item_type)
 
         # Create a link between the thought and the task
         link_success = work_system.add_link(thought.id, task.id, "evolves-from")
