@@ -20,6 +20,7 @@ try:  # pragma: no cover - Textual is optional
         Static,
         TabbedContent,
         TabPane,
+        Tree,
     )
 
     TEXTUAL_AVAILABLE = True
@@ -54,6 +55,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub
     Static = Any  # noqa: F811
     TabPane = Any
     TabbedContent = Any
+    Tree = Any
     Widget = Any
     NoMatches = Exception
 
@@ -530,7 +532,7 @@ class LinkTreeView(Container):
 
         # Tree display
         with Container(id="tree-container"):
-            yield Static(
+            yield Tree(
                 "Select an item to view its relationship tree", id="tree-display"
             )
 
@@ -562,26 +564,64 @@ class LinkTreeView(Container):
                 self.app.add_message(f"Item {item_id} not found", "error")
                 return
 
-            # Get links for the item
-            links = self.work_system.get_links(item_id)
+            tree = self.query_one("#tree-display", Tree)
 
-            # Build a simple text tree for now
-            # In a real implementation, this would be a more sophisticated tree visualization
-            tree_text = f"[b]{item.id} - {item.title}[/b]\n\n"
+            # Reset the tree with the selected item as the root
+            tree.root.label = f"[b]{item.id} - {item.title}[/b]"
+            tree.root.clear()
 
-            if links["outgoing"]:
-                tree_text += "[u]Outgoing Links:[/u]\n"
-                for link in links["outgoing"]:
-                    tree_text += f"  → {link['target_id']} - {link['title']} (Type: {link['link_type']})\n"
-                tree_text += "\n"
+            link_type_colors = {
+                "references": "blue",
+                "evolves-from": "green",
+                "inspired-by": "yellow",
+                "parent-child": "magenta",
+            }
 
-            if links["incoming"]:
-                tree_text += "[u]Incoming Links:[/u]\n"
-                for link in links["incoming"]:
-                    tree_text += f"  ← {link['source_id']} - {link['title']} (Type: {link['link_type']})\n"
+            visited: set[str] = set()
 
-            # Update the tree display
-            self.query_one("#tree-display", Static).update(tree_text)
+            def build(node: Any, current_id: str, depth: int = 0) -> None:
+                if depth > 5 or current_id in visited:
+                    if current_id in visited:
+                        node.add(f"[dim]{current_id}[/dim] (cycle reference)")
+                    return
+
+                visited.add(current_id)
+                links = self.work_system.get_links(current_id)
+
+                if links["outgoing"]:
+                    out_node = node.add("[b]Outgoing Links[/b]")
+                    for link in links["outgoing"]:
+                        color = link_type_colors.get(link["link_type"], "white")
+                        target_id = link["target_id"]
+                        target_item = self.work_system.db.get_item(target_id)
+                        if target_item:
+                            label = (
+                                f"[{color}]{link['link_type']}[/{color}] → "
+                                f"{target_id} - {target_item.title}"
+                            )
+                            build(out_node.add(label), target_id, depth + 1)
+                        else:
+                            out_node.add(f"[red]Item not found: {target_id}[/red]")
+
+                if links["incoming"]:
+                    in_node = node.add("[b]Incoming Links[/b]")
+                    for link in links["incoming"]:
+                        color = link_type_colors.get(link["link_type"], "white")
+                        source_id = link["source_id"]
+                        source_item = self.work_system.db.get_item(source_id)
+                        if source_item:
+                            label = (
+                                f"[{color}]{link['link_type']}[/{color}] ← "
+                                f"{source_id} - {source_item.title}"
+                            )
+                            build(in_node.add(label), source_id, depth + 1)
+                        else:
+                            in_node.add(f"[red]Item not found: {source_id}[/red]")
+
+                visited.remove(current_id)
+
+            build(tree.root, item_id)
+            tree.expand_all()
 
         except NoMatches:
             pass

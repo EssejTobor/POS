@@ -139,6 +139,7 @@
   - `ItemEntryForm` with fields for all item properties and linking options
   - `ItemListView` with filtering and sortable data table
   - `LinkTreeView` for visualizing relationship networks between items
+  - Implemented graphical link tree visualization using Textual's Tree widget
   - Message system for user notifications and feedback
   - Rich styling and keyboard navigation
 - Added CLI commands to integrate with the Textual UI:
@@ -180,4 +181,5 @@
 - Fixed import error with "No module named 'src.textual_ui.widgets'" by creating the missing module with required widget classes
 - Resolved circular import in textual_ui causing startup failure
 - Fixed incorrect value handling in Textual Select widgets
+- Fixed startup script so Textual UI launches by default with CLI fallback
 
