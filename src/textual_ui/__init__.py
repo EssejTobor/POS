@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from importlib import util as importlib_util
 from pathlib import Path
+import sys
 
 from .widgets import (
     TEXTUAL_AVAILABLE,
@@ -21,16 +22,25 @@ from .widgets import (
     StatusBar,
 )
 
-# Lazily load ``TextualApp`` from the sibling module ``textual_ui.py``.  Using
-# ``spec_from_file_location`` avoids importing this package again during
-# initialisation, which previously triggered a circular import error.
+# Lazily load ``TextualApp`` from the sibling module ``textual_ui.py``.
 _mod_path = Path(__file__).resolve().parents[1] / "textual_ui.py"
 
 if _mod_path.exists():
-    spec = importlib_util.spec_from_file_location("_textual_ui", _mod_path)
+    # Create a module spec from the file location
+    spec = importlib_util.spec_from_file_location("src.textual_ui_module", _mod_path)
     assert spec and spec.loader  # for mypy
+    
+    # Create module from spec and set the package explicitly
     _module = importlib_util.module_from_spec(spec)
+    _module.__package__ = "src"  # Set the package name explicitly to resolve relative imports
+    
+    # Add the module to sys.modules to make relative imports work
+    sys.modules[spec.name] = _module
+    
+    # Execute the module
     spec.loader.exec_module(_module)
+    
+    # Get the TextualApp class
     TextualApp = _module.TextualApp
     TEXTUAL_AVAILABLE = _module.TEXTUAL_AVAILABLE
 else:  # pragma: no cover - defensive fallback

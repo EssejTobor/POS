@@ -57,8 +57,8 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub
     Widget = Any
     NoMatches = Exception
 
-from .models import ItemStatus, ItemType, Priority
-from .storage import WorkSystem
+from src.models import ItemStatus, ItemType, Priority
+from src.storage import WorkSystem
 
 
 class Message(Static):
@@ -172,32 +172,45 @@ class ItemEntryForm(Container):
         if not TEXTUAL_AVAILABLE:
             return None
 
+        # Debug: Print ItemType values
+        print(f"ItemType values: TASK={ItemType.TASK.value}, LEARNING={ItemType.LEARNING.value}, RESEARCH={ItemType.RESEARCH.value}, THOUGHT={ItemType.THOUGHT.value}")
+            
         yield Label("Add New Item", id="form-title")
 
         yield Label("Goal:")
         yield Input(placeholder="Project or goal name", id="goal")
 
         yield Label("Item Type:")
-        yield Select(
-            (
-                (ItemType.TASK.value, "Task"),
-                (ItemType.LEARNING.value, "Learning"),
-                (ItemType.RESEARCH.value, "Research"),
-                (ItemType.THOUGHT.value, "Thought"),
-            ),
+        # Debug item type values for troubleshooting
+        print(f"ItemType values: TASK={ItemType.TASK.value}, LEARNING={ItemType.LEARNING.value}, RESEARCH={ItemType.RESEARCH.value}, THOUGHT={ItemType.THOUGHT.value}")
+        
+        # Get the item type values as strings
+        task_val = str(ItemType.TASK.value)
+        learning_val = str(ItemType.LEARNING.value)
+        research_val = str(ItemType.RESEARCH.value)
+        thought_val = str(ItemType.THOUGHT.value)
+        
+        # Use from_values for the select widget
+        yield Select.from_values(
+            [task_val, learning_val, research_val, thought_val],
             id="item_type",
-            value=ItemType.TASK.value,
+            value=task_val,
         )
 
         yield Label("Priority:")
-        yield Select(
-            (
-                (Priority.HI.value, "High"),
-                (Priority.MED.value, "Medium"),
-                (Priority.LOW.value, "Low"),
-            ),
+        # Debug priority values
+        print(f"Priority values: HI={Priority.HI.value}, MED={Priority.MED.value}, LOW={Priority.LOW.value}")
+        
+        # Get the priority values as strings
+        hi_val = str(Priority.HI.value)
+        med_val = str(Priority.MED.value)
+        low_val = str(Priority.LOW.value)
+        
+        # Use from_values for the select widget
+        yield Select.from_values(
+            [hi_val, med_val, low_val],
             id="priority",
-            value=Priority.MED.value,
+            value=med_val,
         )
 
         yield Label("Title:")
@@ -213,13 +226,9 @@ class ItemEntryForm(Container):
         )
 
         yield Label("Link Type (Optional):")
-        yield Select(
-            (
-                ("references", "References"),
-                ("evolves-from", "Evolves From"),
-                ("parent-child", "Parent-Child"),
-                ("inspired-by", "Inspired By"),
-            ),
+        # Use Select.from_values for the link type
+        yield Select.from_values(
+            ["references", "evolves-from", "parent-child", "inspired-by"],
             id="link_type",
             value="references",
         )
