@@ -60,12 +60,7 @@ from .models import ItemStatus, ItemType, Priority
 from .schemas import AddItemInput, AddThoughtInput, UpdateItemInput
 from .storage import WorkSystem
 
-# Import availability flag for the Textual UI.  ``TextualApp`` itself is
-# imported lazily within methods so ruff does not flag unused imports.
-try:
-    from .textual_ui import TEXTUAL_AVAILABLE
-except ImportError:
-    TEXTUAL_AVAILABLE = False
+
 
 
 class WorkSystemCLI(cmd.Cmd):
