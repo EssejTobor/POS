@@ -154,6 +154,7 @@
 - Updated `run.py` to directly launch the Textual UI with fallback to CLI if import fails
 - Created `src/textual_ui/widgets.py` with implementation stubs for all required widget classes
 - Added `item_tags` table with CLI commands and tag filtering support
+- Added search and filtering for thought items via `search_thoughts`
 
 ### Changed
 - Unified item creation by extending the `add` command to support thought items with linking

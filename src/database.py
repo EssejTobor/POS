@@ -218,6 +218,7 @@ class Database:
         priority: Optional[Priority] = None,
         item_type: Optional[ItemType] = None,
         tag: Optional[str] = None,
+        search_text: Optional[str] = None,
     ) -> List[WorkItem]:
         """Flexible query with multiple optional filters"""
         query = ["SELECT wi.* FROM work_items wi"]
@@ -261,6 +262,19 @@ class Database:
                 else query.append("AND it.tag = ?")
             )
             params.append(tag.lower())
+
+        if search_text:
+            (
+                query.append(
+                    "WHERE (LOWER(wi.title) LIKE ? OR LOWER(wi.description) LIKE ?)"
+                )
+                if len(query) == 1
+                else query.append(
+                    "AND (LOWER(wi.title) LIKE ? OR LOWER(wi.description) LIKE ?)"
+                )
+            )
+            term = f"%{search_text.lower()}%"
+            params.extend([term, term])
 
         query.append("ORDER BY wi.priority DESC, wi.created_at DESC")
 
