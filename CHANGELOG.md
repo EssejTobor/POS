@@ -128,3 +128,14 @@
 - Added manual test script for link/unlink commands in `test_link_commands_manual.py`
 - Added `do_link_tree` command to visualize hierarchical relationships between items
 - Implemented color-coding for different relationship types (references, evolves-from, inspired-by, parent-child)
+
+### Changed
+- **Major architectural shift**: Transitioned from CLI-first to Textual-first approach (v0.2.0)
+- Updated PROJECT_SCOPE.md with the new Textual-first architecture and migration plan
+- Moved previous CLI-focused documentation to docs/archived/PROJECT_SCOPE_CLI.md
+- Updated README.md to reflect the Textual-first approach
+- Updated .cursor rules to prioritize Textual UI development over CLI commands
+- Marked CLI interface as deprecated with plans for full removal
+
+### Deprecated
+- CLI-based commands and interfaces in favor of Textual TUI

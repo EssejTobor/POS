@@ -1,10 +1,11 @@
 """
-Personal Organization System (POS) - A command-line task management system
+Personal Organization System (POS) - A terminal-based task management system
 """
 
 from .cli import WorkSystemCLI
 from .models import ItemStatus, ItemType, Priority, WorkItem
 from .storage import WorkSystem
+from .textual_ui import POSTUI
 
 __all__ = [
     "ItemType",
@@ -13,6 +14,7 @@ __all__ = [
     "WorkItem",
     "WorkSystem",
     "WorkSystemCLI",
+    "POSTUI",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
