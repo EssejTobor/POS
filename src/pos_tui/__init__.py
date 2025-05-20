@@ -8,4 +8,4 @@ interacting with the POS functionality.
 
 from .app import POSTUI
 
-__all__ = ["POSTUI"] 
+__all__ = ["POSTUI"]
