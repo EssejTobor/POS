@@ -544,7 +544,7 @@ class WorkSystemCLI(cmd.Cmd):
             return
 
         try:
-            backup_path = Path("backups") / arg.strip()
+            backup_path = self.work_system.backup_manager.backup_dir / arg.strip()
             self.work_system.backup_manager.restore_backup(backup_path)
             self.work_system._refresh_cache()  # Refresh cache after restore
             self.display.print_success("Database restored successfully")
