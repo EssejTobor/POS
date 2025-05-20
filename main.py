@@ -30,7 +30,7 @@ def main(argv: Optional[List[str]] = None) -> None:
         else:
             # Preferred Textual UI mode
             try:
-                from src.textual_ui import main as tui_main
+                from src.pos_tui.app import main as tui_main
                 tui_main()
             except ImportError as e:
                 print(f"Error loading Textual UI: {e}")

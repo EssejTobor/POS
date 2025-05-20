@@ -11,28 +11,32 @@ alwaysApply: false
 - Ensure **backward compatibility** with existing work item structures
 - Implement **proper indexing** for performance
 
-##  (CLI Commands and Linking):
-- Create **intuitive command interfaces** with helpful documentation
-- Follow **consistent command patterns** matching existing CLI commands
-- Provide **clear feedback** to users when operations succeed or fail
-- Implement **robust validation** to prevent data inconsistencies
+## (Textual Integration - PRIMARY INTERFACE):
+- Use **Textual framework** as the primary user interface for all functionality
+- Create **responsive form interfaces** that enhance user experience
+- Implement **keyboard navigation** for efficient interaction
+- Ensure **proper thread safety** for database operations in TUI context
+- Structure application with **POSTUI** (`TextualApp` subclass) as the main entry point
+- Develop **widget-based components** for forms, tables, trees, and modals
+- Use **Command Palette** for enhanced discoverability
 
 ## For (Enhanced Visualization):
 - Develop **clear hierarchical displays** that are easy to scan
 - Use **appropriate color coding** for different relationship types
 - Handle **edge cases** like cycles and deeply nested relationships
 - Balance **information density** with **readability**
+- Implement **tree-based visualization** of thought relationships
 
-## For (Textual Integration):
-- 
-- Create **responsive form interfaces** that enhance user experience
-- Implement **keyboard navigation** for efficient interaction
-- Ensure **proper thread safety** for database operations in TUI context
-
+## For (Legacy CLI - DEPRECATED):
+- Archive CLI code in `legacy_cli/` directory
+- Remove CLI functionality from active codebase
+- Ensure all CLI commands have Textual equivalents
+- Document migration path for users familiar with CLI interface
 
 ### For (Advanced Features):
 - Focus on **user value** when prioritizing advanced features
 - Maintain **consistency** in tagging and relationship models
 - Consider **future extensibility** in data structures
 - Implement **progressive discovery** of advanced functionality
+- Design with **large knowledge graphs** in mind for performance
 

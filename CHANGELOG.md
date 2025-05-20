@@ -128,6 +128,12 @@
 - Added manual test script for link/unlink commands in `test_link_commands_manual.py`
 - Added `do_link_tree` command to visualize hierarchical relationships between items
 - Implemented color-coding for different relationship types (references, evolves-from, inspired-by, parent-child)
+- Created organized directory structure for Textual UI components (`src/pos_tui/`)
+- Added modular package structure with screens, widgets, and styles directories
+- Implemented basic Textual UI application structure with tabbed interface
+- Created stub implementation for Dashboard, New Item, and Link Tree screens
+- Added command-line argument support for selecting between TUI and CLI modes
+- Created legacy_cli documentation to guide users through the transition
 
 ### Changed
 - **Major architectural shift**: Transitioned from CLI-first to Textual-first approach (v0.2.0)
@@ -136,6 +142,8 @@
 - Updated README.md to reflect the Textual-first approach
 - Updated .cursor rules to prioritize Textual UI development over CLI commands
 - Marked CLI interface as deprecated with plans for full removal
+- Modified main.py to launch Textual UI by default with fallback to CLI
+- Updated version number to 0.2.0 in src/__init__.py to reflect the architectural change
 
 ### Deprecated
 - CLI-based commands and interfaces in favor of Textual TUI
