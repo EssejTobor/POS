@@ -152,6 +152,7 @@
 - Created `src/launcher.py` to provide a direct entry point to launch the Textual UI
 - Updated `run.py` to directly launch the Textual UI with fallback to CLI if import fails
 - Created `src/textual_ui/widgets.py` with implementation stubs for all required widget classes
+- Added `item_tags` table with CLI commands and tag filtering support
 
 ### Changed
 - Unified item creation by extending the `add` command to support thought items with linking

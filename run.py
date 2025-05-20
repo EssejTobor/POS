@@ -3,6 +3,7 @@
 
 # Due to import issues with Textual UI, use CLI for now
 from src.cli import main
+
 main()
 
 # Commented out until Textual UI issues are resolved

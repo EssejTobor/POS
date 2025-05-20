@@ -388,6 +388,12 @@ class ItemListView(Container):
                 id="status-filter",
                 value=None,
             )
+            yield Select(
+                [("All Tags", None)]
+                + [(t, t) for t in self.work_system.get_all_tags()],
+                id="tag-filter",
+                value=None,
+            )
 
         # Table container
         with Container(id="list-container"):
@@ -401,7 +407,15 @@ class ItemListView(Container):
         try:
             # Set up columns
             table = self.query_one("#items-table", DataTable)
-            table.add_columns("ID", "Goal", "Type", "Priority", "Status", "Title")
+            table.add_columns(
+                "ID",
+                "Goal",
+                "Type",
+                "Priority",
+                "Status",
+                "Title",
+                "Tags",
+            )
 
             # Load all items initially
             self._load_items()
@@ -414,6 +428,9 @@ class ItemListView(Container):
                 self._on_filter_change
             )
             self.query_one("#status-filter", Select).changed.connect(
+                self._on_filter_change
+            )
+            self.query_one("#tag-filter", Select).changed.connect(
                 self._on_filter_change
             )
         except NoMatches:
@@ -433,6 +450,7 @@ class ItemListView(Container):
             type_filter = self.query_one("#type-filter", Select).value
             priority_filter = self.query_one("#priority-filter", Select).value
             status_filter = self.query_one("#status-filter", Select).value
+            tag_filter = self.query_one("#tag-filter", Select).value
 
             # Convert filter values to enums
             item_type = ItemType(type_filter) if type_filter else None
@@ -441,7 +459,10 @@ class ItemListView(Container):
 
             # Get filtered items from the work system
             items = self.work_system.get_filtered_items(
-                item_type=item_type, priority=priority, status=status
+                item_type=item_type,
+                priority=priority,
+                status=status,
+                tag=tag_filter,
             )
 
             # Clear existing rows
@@ -450,6 +471,7 @@ class ItemListView(Container):
 
             # Add rows for each item
             for item in items:
+                tags = ", ".join(self.work_system.get_tags_for_item(item.id))
                 table.add_row(
                     item.id,
                     item.goal,
@@ -457,6 +479,7 @@ class ItemListView(Container):
                     item.priority,
                     item.status,
                     item.title,
+                    tags,
                 )
         except NoMatches:
             pass

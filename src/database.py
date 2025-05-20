@@ -90,8 +90,19 @@ class Database:
                 CREATE INDEX IF NOT EXISTS idx_item_links_target 
                 ON item_links(target_id);
                 
-                CREATE INDEX IF NOT EXISTS idx_item_links_type 
+                CREATE INDEX IF NOT EXISTS idx_item_links_type
                 ON item_links(link_type);
+
+                -- Table for tagging items
+                CREATE TABLE IF NOT EXISTS item_tags (
+                    item_id TEXT NOT NULL,
+                    tag TEXT NOT NULL,
+                    PRIMARY KEY (item_id, tag),
+                    FOREIGN KEY (item_id) REFERENCES work_items(id)
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_item_tags_tag
+                ON item_tags(tag);
             """
             )
 
@@ -206,25 +217,52 @@ class Database:
         status: Optional[ItemStatus] = None,
         priority: Optional[Priority] = None,
         item_type: Optional[ItemType] = None,
+        tag: Optional[str] = None,
     ) -> List[WorkItem]:
         """Flexible query with multiple optional filters"""
-        query = ["SELECT * FROM work_items WHERE 1=1"]
+        query = ["SELECT wi.* FROM work_items wi"]
         params: list[str | int] = []
 
+        if tag:
+            query.append("JOIN item_tags it ON wi.id = it.item_id")
+
         if goal:
-            query.append("AND LOWER(goal) = LOWER(?)")
+            (
+                query.append("WHERE LOWER(wi.goal) = LOWER(?)")
+                if len(query) == 1
+                else query.append("AND LOWER(wi.goal) = LOWER(?)")
+            )
             params.append(goal)
         if status:
-            query.append("AND status = ?")
+            (
+                query.append("WHERE status = ?")
+                if len(query) == 1
+                else query.append("AND status = ?")
+            )
             params.append(status.value)
         if priority:
-            query.append("AND priority = ?")
+            (
+                query.append("WHERE priority = ?")
+                if len(query) == 1
+                else query.append("AND priority = ?")
+            )
             params.append(priority.value)
         if item_type:
-            query.append("AND item_type = ?")
+            (
+                query.append("WHERE item_type = ?")
+                if len(query) == 1
+                else query.append("AND item_type = ?")
+            )
             params.append(item_type.value)
+        if tag:
+            (
+                query.append("WHERE it.tag = ?")
+                if len(query) == 1
+                else query.append("AND it.tag = ?")
+            )
+            params.append(tag.lower())
 
-        query.append("ORDER BY priority DESC, created_at DESC")
+        query.append("ORDER BY wi.priority DESC, wi.created_at DESC")
 
         with self.get_connection() as conn:
             cursor = conn.execute(" ".join(query), params)
@@ -310,6 +348,62 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.execute("SELECT * FROM entry_counts")
             return {row["goal"]: row["count"] for row in cursor.fetchall()}
+
+    # ------------------------------------------------------------------
+    # Tag management methods
+    # ------------------------------------------------------------------
+
+    def add_tag(self, item_id: str, tag: str) -> bool:
+        """Add a tag to an item."""
+        try:
+            with self.get_connection() as conn:
+                conn.execute(
+                    "INSERT INTO item_tags (item_id, tag) VALUES (?, ?)",
+                    (item_id, tag.lower()),
+                )
+                conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            return False
+
+    def remove_tag(self, item_id: str, tag: str) -> bool:
+        """Remove a tag from an item."""
+        with self.get_connection() as conn:
+            cursor = conn.execute(
+                "DELETE FROM item_tags WHERE item_id = ? AND tag = ?",
+                (item_id, tag.lower()),
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def get_tags(self, item_id: str) -> List[str]:
+        """Get all tags for a given item."""
+        with self.get_connection() as conn:
+            cursor = conn.execute(
+                "SELECT tag FROM item_tags WHERE item_id = ?",
+                (item_id,),
+            )
+            return [row["tag"] for row in cursor.fetchall()]
+
+    def get_items_by_tag(self, tag: str) -> List[WorkItem]:
+        """Get all items that have a given tag."""
+        with self.get_connection() as conn:
+            cursor = conn.execute(
+                """
+                SELECT wi.* FROM work_items wi
+                JOIN item_tags it ON wi.id = it.item_id
+                WHERE it.tag = ?
+                ORDER BY wi.priority DESC, wi.created_at DESC
+                """,
+                (tag.lower(),),
+            )
+            return [WorkItem.from_dict(dict(row)) for row in cursor.fetchall()]
+
+    def get_all_tags(self) -> List[str]:
+        """Return a list of all distinct tags."""
+        with self.get_connection() as conn:
+            cursor = conn.execute("SELECT DISTINCT tag FROM item_tags")
+            return [row[0] for row in cursor.fetchall()]
 
     def add_link(
         self, source_id: str, target_id: str, link_type: str = "references"
