@@ -499,9 +499,10 @@ The Thought Evolution Tracker enhancement extends POS to capture, link, and visu
    - **TUI Enhancements:**
      - Create dedicated tag management widget with SWIFT framework presets
      - Add color-coding for different relationship types in visualization
-     - Implement tag cloud view for exploring thought clusters
-     - Add relationship type selector in link creation workflow
-     - Create filtering by tag or relationship type in list views
+    - Implement tag cloud view for exploring thought clusters
+    - Add relationship type selector in link creation workflow
+    - Create filtering by tag or relationship type in list views
+    - Basic tag CRUD via CLI commands and database table
 
 3. **Files Modified:**
    - `src/database.py` - Add `item_tags` table and related methods

@@ -311,10 +311,15 @@ class WorkSystem:
         status: Optional[ItemStatus] = None,
         priority: Optional[Priority] = None,
         item_type: Optional[ItemType] = None,
+        tag: Optional[str] = None,
     ) -> List[WorkItem]:
         """Use optimized database query directly"""
         return self.db.get_items_by_filters(
-            goal=goal, status=status, priority=priority, item_type=item_type
+            goal=goal,
+            status=status,
+            priority=priority,
+            item_type=item_type,
+            tag=tag,
         )
 
     def optimize_database(self):
@@ -384,3 +389,33 @@ class WorkSystem:
         except Exception as e:
             print(f"Error getting links: {e}")
             return {"outgoing": [], "incoming": []}
+
+    # ------------------------------------------------------------------
+    # Tag management
+    # ------------------------------------------------------------------
+
+    def add_tag_to_item(self, item_id: str, tag: str) -> bool:
+        """Add a tag to an item."""
+        if item_id not in self.items:
+            print(f"Error adding tag: Item {item_id} doesn't exist")
+            return False
+        return self.db.add_tag(item_id, tag)
+
+    def remove_tag_from_item(self, item_id: str, tag: str) -> bool:
+        """Remove a tag from an item."""
+        if item_id not in self.items:
+            print(f"Error removing tag: Item {item_id} doesn't exist")
+            return False
+        return self.db.remove_tag(item_id, tag)
+
+    def get_tags_for_item(self, item_id: str) -> List[str]:
+        """Return tags associated with an item."""
+        return self.db.get_tags(item_id)
+
+    def get_items_by_tag(self, tag: str) -> List[WorkItem]:
+        """Return items that have a given tag."""
+        return self.db.get_items_by_tag(tag)
+
+    def get_all_tags(self) -> List[str]:
+        """Return list of all tags in the system."""
+        return self.db.get_all_tags()
