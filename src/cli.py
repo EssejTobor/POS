@@ -60,7 +60,12 @@ from .models import ItemStatus, ItemType, Priority
 from .schemas import AddItemInput, AddThoughtInput, UpdateItemInput
 from .storage import WorkSystem
 
-
+try:
+    import textual  # noqa: F401
+except Exception:  # pragma: no cover - textual not installed
+    TEXTUAL_AVAILABLE = False
+else:  # pragma: no cover - textual installed
+    TEXTUAL_AVAILABLE = True
 
 
 class WorkSystemCLI(cmd.Cmd):
