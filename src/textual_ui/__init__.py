@@ -13,7 +13,7 @@ from pathlib import Path
 
 from .widgets import (
     TEXTUAL_AVAILABLE,
-    CommandPalette,
+
     ConfirmationDialog,
     ExpandableThoughtTree,
     ProgressIndicator,
