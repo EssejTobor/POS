@@ -372,6 +372,7 @@ class ItemListView(Container):
     def __init__(self, work_system: WorkSystem):
         super().__init__()
         self.work_system = work_system
+        self._drag_source: str | None = None
 
     def compose(self) -> ComposeResult:
         """Create child widgets."""
@@ -504,9 +505,38 @@ class ItemListView(Container):
                     item.status,
                     item.title,
                     tags,
+                    key=item.id,
                 )
         except NoMatches:
             pass
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        """Create a link when a row is dragged onto another."""
+        if not TEXTUAL_AVAILABLE:
+            return
+
+        row_id = str(event.row_key)
+        if self._drag_source is None:
+            self._drag_source = row_id
+            self.screen.add_message(
+                f"Selected {row_id} as link source. Choose target to link.",
+                "info",
+            )
+        else:
+            target_id = row_id
+            if target_id == self._drag_source:
+                self.screen.add_message("Cannot link item to itself", "error")
+            else:
+                success = self.work_system.add_link(
+                    self._drag_source, target_id, "references"
+                )
+                if success:
+                    self.screen.add_message(
+                        f"Linked {self._drag_source} → {target_id}", "success"
+                    )
+                else:
+                    self.screen.add_message("Failed to create link", "error")
+            self._drag_source = None
 
 
 class LinkTreeView(Container):
