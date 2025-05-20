@@ -57,6 +57,25 @@ class TestItemTags(unittest.TestCase):
         ids = {i.id for i in items}
         self.assertEqual(ids, {self.item.id, other.id})
 
+    def test_get_items_by_filters_tag_only(self) -> None:
+        other = WorkItem(
+            id="TEST-3",
+            title="Other",
+            goal="TestGoal",
+            item_type=ItemType.TASK,
+            description="Desc",
+            priority=Priority.LOW,
+            status=ItemStatus.NOT_STARTED,
+        )
+        self.db.add_item(other)
+
+        self.db.add_tag(self.item.id, "special")
+        self.db.add_tag(other.id, "special")
+
+        items = self.db.get_items_by_filters(tag="special")
+        ids = {i.id for i in items}
+        self.assertEqual(ids, {self.item.id, other.id})
+
 
 if __name__ == "__main__":
     unittest.main()

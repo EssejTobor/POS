@@ -223,56 +223,35 @@ class Database:
         """Flexible query with multiple optional filters"""
         query = ["SELECT wi.* FROM work_items wi"]
         params: list[str | int] = []
+        where_added = False
 
         if tag:
             query.append("JOIN item_tags it ON wi.id = it.item_id")
 
+        def add_condition(clause: str) -> None:
+            nonlocal where_added
+            prefix = "WHERE" if not where_added else "AND"
+            query.append(f"{prefix} {clause}")
+            where_added = True
+
         if goal:
-            (
-                query.append("WHERE LOWER(wi.goal) = LOWER(?)")
-                if len(query) == 1
-                else query.append("AND LOWER(wi.goal) = LOWER(?)")
-            )
+            add_condition("LOWER(wi.goal) = LOWER(?)")
             params.append(goal)
         if status:
-            (
-                query.append("WHERE status = ?")
-                if len(query) == 1
-                else query.append("AND status = ?")
-            )
+            add_condition("status = ?")
             params.append(status.value)
         if priority:
-            (
-                query.append("WHERE priority = ?")
-                if len(query) == 1
-                else query.append("AND priority = ?")
-            )
+            add_condition("priority = ?")
             params.append(priority.value)
         if item_type:
-            (
-                query.append("WHERE item_type = ?")
-                if len(query) == 1
-                else query.append("AND item_type = ?")
-            )
+            add_condition("item_type = ?")
             params.append(item_type.value)
         if tag:
-            (
-                query.append("WHERE it.tag = ?")
-                if len(query) == 1
-                else query.append("AND it.tag = ?")
-            )
+            add_condition("it.tag = ?")
             params.append(tag.lower())
 
         if search_text:
-            (
-                query.append(
-                    "WHERE (LOWER(wi.title) LIKE ? OR LOWER(wi.description) LIKE ?)"
-                )
-                if len(query) == 1
-                else query.append(
-                    "AND (LOWER(wi.title) LIKE ? OR LOWER(wi.description) LIKE ?)"
-                )
-            )
+            add_condition("(LOWER(wi.title) LIKE ? OR LOWER(wi.description) LIKE ?)")
             term = f"%{search_text.lower()}%"
             params.extend([term, term])
 

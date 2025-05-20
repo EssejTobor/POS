@@ -182,4 +182,5 @@
 - Resolved circular import in textual_ui causing startup failure
 - Fixed incorrect value handling in Textual Select widgets
 - Fixed startup script so Textual UI launches by default with CLI fallback
+- Fixed WHERE clause logic in `get_items_by_filters` to handle tag-only queries
 
