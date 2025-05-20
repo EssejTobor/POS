@@ -7,7 +7,7 @@ These rules apply to the entire repository unless a deeper `AGENTS.md` overrides
 
 ## 0. Environment Setup
 - Run `uv pip install -e .[dev]` to install the project and its development dependencies.
-- Target Python 3.12 (`python --version` should return 3.13.*).
+- Target Python 3.12 (`python --version` should return 3.12.*).
 - Internet access is disabled once the container starts; make all dependencies local.
 - See .cursor directory for more guides
 ---
