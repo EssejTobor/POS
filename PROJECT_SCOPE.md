@@ -444,8 +444,9 @@ The Thought Evolution Tracker enhancement extends POS to capture, link, and visu
    - **Add interactive widgets:**
      - Implement command palette for quick access to all functions
      - Create search/filter input for real-time filtering of items
-     - Add dropdown selectors for status and priority updates
-     - Implement modal confirmation dialogs for destructive actions
+    - Add dropdown selectors for status and priority updates
+    - Enable drag-and-drop linking between items
+    - Implement modal confirmation dialogs for destructive actions
      - Create progress indicators for long-running operations
    - **Specialized thought evolution widgets:**
      - Build interactive thought tree with expand/collapse functionality
