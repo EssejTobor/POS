@@ -1,10 +1,13 @@
 from textual.app import ComposeResult
 from textual.containers import Container
 from textual.widgets import Button, DataTable, LoadingIndicator, Static
-
+from ..widgets import (DashboardStatus, FilterBar, ItemDetailsModal,
+                       ItemFormModal, ItemTable)
 from ...models import ItemStatus, WorkItem
 from ..widgets import FilterBar, ItemDetailsModal, ItemFormModal, ItemTable
+from ..workers import ItemFetchWorker
 from ..workers.db import ItemFetchWorker
+
 
 
 class DashboardScreen(Container):
@@ -24,6 +27,7 @@ class DashboardScreen(Container):
         yield FilterBar(id="filter_bar")
         yield LoadingIndicator(id="loading")
         yield ItemTable(id="dashboard_table")
+        yield DashboardStatus(id="dashboard_status")
         with Container(id="dashboard_footer"):
             yield Static("", id="status_bar")
 
@@ -44,8 +48,22 @@ class DashboardScreen(Container):
         """Fetch items from the database asynchronously."""
         loading = self.query_one(LoadingIndicator)
         table = self.query_one(ItemTable)
+        filters = self.query_one(FilterBar)
         table.display = False
         loading.display = True
+        worker = ItemFetchWorker(
+            self.app,
+            self.app.work_system,
+            item_type=filters.item_type,
+            status=filters.status,
+            search_text=filters.search_text,
+            sort_key=table.sort_key,
+            sort_reverse=table.sort_reverse,
+            page=table.current_page,
+            page_size=table.page_size,
+            callback=self._apply_items,
+        )
+        self.run_worker(worker, thread=True)
         query = (
             "SELECT * FROM work_items WHERE status != ? "
             "ORDER BY priority DESC, created_at DESC"
@@ -70,6 +88,10 @@ class DashboardScreen(Container):
         loading.display = False
         table.display = True
         self._update_status_bar(items)
+
+        status = self.query_one(DashboardStatus)
+        total = len(self.app.work_system.items)
+        status.set_counts(incomplete=len(items), total=total)
 
     def on_filter_bar_filter_changed(
         self, event: FilterBar.FilterChanged

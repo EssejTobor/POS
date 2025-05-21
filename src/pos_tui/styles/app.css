@@ -75,3 +75,9 @@ Footer {
     layout: vertical;
     dock: top;
 }
+
+#dashboard_status {
+    height: auto;
+    padding: 0 1;
+    background: $boost;
+}
