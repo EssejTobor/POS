@@ -5,6 +5,7 @@ from ..widgets import (DashboardStatus, FilterBar, ItemDetailsModal,
                        ItemFormModal, ItemTable)
 from ...models import ItemStatus, WorkItem
 from ..widgets import FilterBar, ItemDetailsModal, ItemFormModal, ItemTable
+from ..workers import ItemFetchWorker
 from ..workers.db import ItemFetchWorker
 
 
@@ -47,8 +48,22 @@ class DashboardScreen(Container):
         """Fetch items from the database asynchronously."""
         loading = self.query_one(LoadingIndicator)
         table = self.query_one(ItemTable)
+        filters = self.query_one(FilterBar)
         table.display = False
         loading.display = True
+        worker = ItemFetchWorker(
+            self.app,
+            self.app.work_system,
+            item_type=filters.item_type,
+            status=filters.status,
+            search_text=filters.search_text,
+            sort_key=table.sort_key,
+            sort_reverse=table.sort_reverse,
+            page=table.current_page,
+            page_size=table.page_size,
+            callback=self._apply_items,
+        )
+        self.run_worker(worker, thread=True)
         query = (
             "SELECT * FROM work_items WHERE status != ? "
             "ORDER BY priority DESC, created_at DESC"
