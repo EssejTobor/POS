@@ -124,4 +124,5 @@ This migration marks version `0.2.0`.
 * Textual-first rewrite
 * Backward-compatible data structures
 
-All future development will extend the TUI as the primary interface. 
+All future development will extend the TUI as the primary interface.
+* Dashboard screen now refreshes items asynchronously with a loading indicator.

@@ -137,6 +137,7 @@
 - Added command-line argument support for selecting between TUI and CLI modes
 - Created legacy_cli documentation to guide users through the transition
 - Added tests for main entrypoint using stubs
+- Connected dashboard table to database with async refresh and loading indicator
 
 ### Changed
 - **Major architectural shift**: Transitioned from CLI-first to Textual-first approach (v0.2.0)
