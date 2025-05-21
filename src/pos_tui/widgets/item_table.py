@@ -106,7 +106,15 @@ class ItemTable(DataTable):
         self._row_items = []
         start = self.current_page * self.page_size
         end = start + self.page_size
-        for item in items[start:end]:
+        page_items = items[start:end]
+        if not page_items:
+            placeholder = [
+                "No items found",
+                *["" for _ in range(len(self.columns) - 1)],
+            ]
+            self.add_row(*placeholder, style="dim")
+            return
+        for item in page_items:
             self.add_row(*self._item_to_row(item), style=self._row_style(item))
             self._row_items.append(item)
 
