@@ -13,7 +13,7 @@ class DashboardScreen(Container):
     ]
 
     def compose(self) -> ComposeResult:
-
+        yield FilterBar(id="filter_bar")
         yield LoadingIndicator(id="loading")
         yield ItemTable(id="dashboard_table")
 
