@@ -2,7 +2,8 @@ from textual.app import ComposeResult
 from textual.containers import Container
 from textual.widgets import DataTable, LoadingIndicator
 
-from ..widgets import FilterBar, ItemDetailsModal, ItemFormModal, ItemTable
+from ..widgets import (DashboardStatus, FilterBar, ItemDetailsModal,
+                       ItemFormModal, ItemTable)
 
 
 class DashboardScreen(Container):
@@ -16,6 +17,7 @@ class DashboardScreen(Container):
         yield FilterBar(id="filter_bar")
         yield LoadingIndicator(id="loading")
         yield ItemTable(id="dashboard_table")
+        yield DashboardStatus(id="dashboard_status")
 
     def on_mount(self) -> None:
         self.query_one(LoadingIndicator).display = False
@@ -45,6 +47,10 @@ class DashboardScreen(Container):
         table.load_items(items)
         loading.display = False
         table.display = True
+
+        status = self.query_one(DashboardStatus)
+        total = len(self.app.work_system.items)
+        status.set_counts(incomplete=len(items), total=total)
 
     def on_filter_bar_filter_changed(
         self, event: FilterBar.FilterChanged

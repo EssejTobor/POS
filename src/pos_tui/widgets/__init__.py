@@ -5,9 +5,9 @@ This module contains custom widgets used throughout the POS application.
 """
 
 from .command_palette import CommandPalette
+from .dashboard_status import DashboardStatus
 from .filter_bar import FilterBar
 from .item_details_modal import ItemDetailsModal
-
 # Import widgets as they are implemented
 from .item_form import ItemEntryForm
 from .item_form_modal import ItemFormModal
@@ -26,5 +26,6 @@ __all__: list[str] = [
     "ItemFormModal",
     "FilterBar",
     "CommandPalette",
+    "DashboardStatus",
     # "Message",
 ]
