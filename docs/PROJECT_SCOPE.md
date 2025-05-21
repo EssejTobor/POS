@@ -93,6 +93,8 @@ The Personal Operating System (POS) is a terminal-based application for personal
 ### TUI Structure
 
 * **Screens**: Dashboard, LinkTree, NewItem
+  - Implemented with ItemEntryForm, ItemTable, and LinkTree widgets
+  - Keyboard shortcuts "1", "2", "3" switch between tabs
 * **Widgets**: Forms, Tables, Trees, Modals
 * **Event Handling**: Use `on_*` methods and `run_worker_thread` for async-safe DB access
 

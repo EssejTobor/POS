@@ -1,6 +1,3 @@
-import os
-from pathlib import Path
-
 from src.models import ItemType, Priority
 from src.storage import WorkSystem
 
