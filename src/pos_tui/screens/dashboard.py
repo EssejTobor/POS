@@ -45,8 +45,6 @@ class DashboardScreen(Container):
         table.load_items(items)
         loading.display = False
         table.display = True
-        yield FilterBar(id="filter_bar")
-        yield ItemTable(id="dashboard_table")
 
     def on_filter_bar_filter_changed(
         self, event: FilterBar.FilterChanged
@@ -57,4 +55,3 @@ class DashboardScreen(Container):
             status=event.status,
             search_text=event.search_text,
         )
-        main
