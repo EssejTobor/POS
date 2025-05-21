@@ -4,8 +4,8 @@ Personal Organization System (POS) - A terminal-based task management system
 
 from .cli import WorkSystemCLI
 from .models import ItemStatus, ItemType, Priority, WorkItem
-from .storage import WorkSystem
 from .pos_tui import POSTUI
+from .storage import WorkSystem
 
 __all__ = [
     "ItemType",

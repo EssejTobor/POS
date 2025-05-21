@@ -70,6 +70,7 @@ instance/
 #db things
 work_items.sqbpro
 *.sqbro
+/work_items.db
 # Scrapy stuff:
 .scrapy
 
