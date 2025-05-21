@@ -8,6 +8,7 @@ from .filter_bar import FilterBar
 from .item_details_modal import ItemDetailsModal
 # Import widgets as they are implemented
 from .item_form import ItemEntryForm
+from .item_form_modal import ItemFormModal
 from .item_table import ItemTable
 from .link_editor import LinkEditor
 from .link_tree import LinkTree
@@ -20,6 +21,7 @@ __all__: list[str] = [
     "LinkTree",
     "LinkEditor",
     "ItemDetailsModal",
+    "ItemFormModal",
     "FilterBar",
     # "Message",
 ]

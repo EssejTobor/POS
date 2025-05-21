@@ -281,6 +281,23 @@ class WorkSystem:
                 print(f"Error updating item: {e}")
                 raise
 
+    def delete_item(self, item_id: str) -> None:
+        """Remove an item from the system."""
+        with self._atomic_operation():
+            try:
+                if item_id not in self.items:
+                    raise ValueError(f"Item {item_id} not found")
+
+                try:
+                    self.db.delete_item(item_id)
+                except Exception as e:
+                    raise RuntimeError(f"Failed to delete item: {str(e)}")
+
+                del self.items[item_id]
+            except Exception as e:
+                print(f"Error deleting item: {e}")
+                raise
+
     def export_markdown(self, output_path: str = "work_items.md"):
         with open(output_path, "w") as f:
             f.write("# Work Items\n\n")

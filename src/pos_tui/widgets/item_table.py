@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from typing import Callable, Iterable, List
 
+from textual.message import Message
 from textual.reactive import reactive
-from textual.widgets import DataTable
+from textual.widgets import DataTable, OptionList
+from textual.widgets.option_list import Option
 
 from ...models import ItemStatus, ItemType, Priority, WorkItem
 
@@ -14,6 +16,7 @@ class ItemTable(DataTable):
     current_page: int = reactive(0)
     context_menu_row: int | None = None
     context_menu_open: bool = False
+    context_menu: OptionList | None = None
     last_action: str | None = None
 
     BINDINGS = [
@@ -22,16 +25,39 @@ class ItemTable(DataTable):
         ("d", "delete_selected", "Delete"),
     ]
 
+    class ViewRequested(Message):
+        def __init__(self, sender: "ItemTable", item: WorkItem) -> None:
+            super().__init__(sender)
+            self.item = item
+
+    class EditRequested(Message):
+        def __init__(self, sender: "ItemTable", item: WorkItem) -> None:
+            super().__init__(sender)
+            self.item = item
+
+    class DeleteRequested(Message):
+        def __init__(self, sender: "ItemTable", item: WorkItem) -> None:
+            super().__init__(sender)
+            self.item = item
+
     def __init__(self, page_size: int = 20, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.page_size = page_size
         self._items: List[WorkItem] = []
         self._filtered: List[WorkItem] = []
+        self._row_items: List[WorkItem] = []
         self.item_type_filter: ItemType | None = None
         self.status_filter: ItemStatus | None = None
         self.search_text: str = ""
         self.sort_key: Callable[[WorkItem], object] | None = None
         self.sort_reverse: bool = False
+
+    def _selected_item(self) -> WorkItem | None:
+        if self.cursor_row is None:
+            return None
+        if 0 <= self.cursor_row < len(self._row_items):
+            return self._row_items[self.cursor_row]
+        return None
 
     def on_mount(self) -> None:  # pragma: no cover - simple setup
         self.add_columns(
@@ -77,10 +103,12 @@ class ItemTable(DataTable):
             )
 
         self.clear(columns=False)
+        self._row_items = []
         start = self.current_page * self.page_size
         end = start + self.page_size
         for item in items[start:end]:
             self.add_row(*self._item_to_row(item), style=self._row_style(item))
+            self._row_items.append(item)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -115,22 +143,62 @@ class ItemTable(DataTable):
     # Action handlers and context menu helpers
     # ------------------------------------------------------------------
     def action_view_selected(self) -> None:  # pragma: no cover - simple action
+        item = self._selected_item()
+        if item is None:
+            return
         self.last_action = "view"
+        self.post_message(self.ViewRequested(self, item))
 
     def action_edit_selected(self) -> None:  # pragma: no cover - simple action
+        item = self._selected_item()
+        if item is None:
+            return
         self.last_action = "edit"
+        self.post_message(self.EditRequested(self, item))
 
     def action_delete_selected(self) -> None:  # pragma: no cover - simple action
+        item = self._selected_item()
+        if item is None:
+            return
         self.last_action = "delete"
+        self.post_message(self.DeleteRequested(self, item))
 
     def open_context_menu(self, row_index: int) -> None:
         """Open a simple context menu for the given row."""
         self.context_menu_row = row_index
+        if self.context_menu_open:
+            self.close_context_menu()
+        menu = OptionList(
+            Option("View", id="view"),
+            Option("Edit", id="edit"),
+            Option("Delete", id="delete"),
+            id="item_context_menu",
+        )
+        self.context_menu = menu
+        self.mount(menu)
+        self.focus()  # Ensure keyboard focus
         self.context_menu_open = True
 
     def close_context_menu(self) -> None:
         """Close the context menu if open."""
+        if self.context_menu is not None:
+            self.context_menu.remove()
+            self.context_menu = None
         self.context_menu_open = False
+
+    def on_option_list_option_selected(
+        self, event: OptionList.OptionSelected
+    ) -> None:  # pragma: no cover - simple UI
+        if not self.context_menu_open or self.context_menu is None:
+            return
+        option_id = event.option.id
+        if option_id == "view":
+            self.action_view_selected()
+        elif option_id == "edit":
+            self.action_edit_selected()
+        elif option_id == "delete":
+            self.action_delete_selected()
+        self.close_context_menu()
 
     # Filtering and sorting
     # ------------------------------------------------------------------
