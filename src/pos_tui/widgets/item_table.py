@@ -186,4 +186,3 @@ class ItemTable(DataTable):
             else:
                 self.sort_key = key_map[label]
                 self.sort_reverse = False
-                main

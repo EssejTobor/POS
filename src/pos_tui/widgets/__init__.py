@@ -4,8 +4,8 @@ Widgets for the POS Textual UI.
 This module contains custom widgets used throughout the POS application.
 """
 
-from .item_details_modal import ItemDetailsModal
 from .filter_bar import FilterBar
+from .item_details_modal import ItemDetailsModal
 
 # Import widgets as they are implemented
 from .item_form import ItemEntryForm
