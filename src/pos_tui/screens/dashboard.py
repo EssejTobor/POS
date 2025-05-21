@@ -6,7 +6,7 @@ from ..widgets import (DashboardStatus, FilterBar, ItemDetailsModal,
 from ...models import ItemStatus, WorkItem
 from ..widgets import FilterBar, ItemDetailsModal, ItemFormModal, ItemTable
 from ..workers import ItemFetchWorker
-from ..workers.db import ItemFetchWorker
+from ..workers.db import ItemFetchWorker as DBItemFetchWorker
 
 
 
@@ -68,7 +68,7 @@ class DashboardScreen(Container):
             "SELECT * FROM work_items WHERE status != ? "
             "ORDER BY priority DESC, created_at DESC"
         )
-        worker = ItemFetchWorker(
+        worker = DBItemFetchWorker(
             "fetch_items",
             self.app,
             self.app.connection_manager,
