@@ -15,7 +15,8 @@ from ..commands import Command, CommandRegistry
 class CommandPalette(Container):
     """UI widget for searching and executing commands."""
 
-    DEFAULT_CSS = Path(__file__).with_name("command_palette.css")
+    CSS_PATH = Path(__file__).parent.parent / "styles" / "command_palette.css"
+    DEFAULT_CSS = CSS_PATH.read_text()
 
     def __init__(self, registry: CommandRegistry, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
