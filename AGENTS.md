@@ -28,10 +28,10 @@ These rules apply to the entire repository unless a deeper `AGENTS.md` overrides
 *No external test frameworks required.*
 
 1. **Launch the program** in a separate process:
-   ```bash
+```bash
    python -m pos_tui.app              # Textual UI
    python -m src.cli add "demo" ...   # CLI examples
-````
+```
 
 2. If it crashes, read the traceback **once**, patch the code, and rerun.
    Repeat until the command exits with `0`.
