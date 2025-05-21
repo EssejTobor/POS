@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Iterable, List
 
 from textual.app import App
 from textual.worker import Worker
+
+from ..models import ItemStatus, ItemType, WorkItem
+from ..storage import WorkSystem
 
 
 @dataclass
@@ -38,6 +41,55 @@ class DatabaseWorker(Worker):
 
     def handle_error(self, error: Exception) -> None:
         self.app.log(f"Worker {self.name} failed: {error}")
+
+
+class ItemFetchWorker(DatabaseWorker):
+    """Worker that fetches items with filtering and sorting."""
+
+    def __init__(
+        self,
+        app: App,
+        work_system: WorkSystem,
+        *,
+        item_type: ItemType | None = None,
+        status: ItemStatus | None = None,
+        search_text: str = "",
+        sort_key: Callable[[WorkItem], object] | None = None,
+        sort_reverse: bool = False,
+        page: int = 0,
+        page_size: int = 20,
+        name: str = "item_fetch",
+        callback: Callable[[Iterable[WorkItem]], None] | None = None,
+    ) -> None:
+        self.work_system = work_system
+        self.item_type = item_type
+        self.status = status
+        self.search_text = search_text
+        self.sort_key = sort_key
+        self.sort_reverse = sort_reverse
+        self.page = page
+        self.page_size = page_size
+        self.callback = callback
+        super().__init__(name, self._run, app)
+
+    def _run(self) -> List[WorkItem]:
+        items = self.work_system.get_filtered_items(
+            item_type=self.item_type,
+            status=self.status,
+            search_text=self.search_text or None,
+        )
+        if self.sort_key:
+            items = sorted(
+                items,
+                key=self.sort_key,  # type: ignore[arg-type]
+                reverse=self.sort_reverse,
+            )
+        start = self.page * self.page_size
+        end = start + self.page_size
+        results = items[start:end]
+        if self.callback is not None:
+            self.app.call_from_thread(self.callback, results)
+        return results
 
 
 class WorkerPool:

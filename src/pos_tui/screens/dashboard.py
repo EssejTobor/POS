@@ -3,6 +3,7 @@ from textual.containers import Container
 from textual.widgets import DataTable, LoadingIndicator
 
 from ..widgets import FilterBar, ItemDetailsModal, ItemFormModal, ItemTable
+from ..workers import ItemFetchWorker
 
 
 class DashboardScreen(Container):
@@ -31,13 +32,22 @@ class DashboardScreen(Container):
         """Fetch items from the database asynchronously."""
         loading = self.query_one(LoadingIndicator)
         table = self.query_one(ItemTable)
+        filters = self.query_one(FilterBar)
         table.display = False
         loading.display = True
-        self.run_worker(self._fetch_items, thread=True)
-
-    def _fetch_items(self) -> None:
-        items = self.app.work_system.get_incomplete_items()
-        self.call_from_thread(self._apply_items, items)
+        worker = ItemFetchWorker(
+            self.app,
+            self.app.work_system,
+            item_type=filters.item_type,
+            status=filters.status,
+            search_text=filters.search_text,
+            sort_key=table.sort_key,
+            sort_reverse=table.sort_reverse,
+            page=table.current_page,
+            page_size=table.page_size,
+            callback=self._apply_items,
+        )
+        self.run_worker(worker, thread=True)
 
     def _apply_items(self, items) -> None:
         table = self.query_one(ItemTable)
