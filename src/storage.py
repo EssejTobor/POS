@@ -483,7 +483,6 @@ class WorkSystem:
         return sorted(self.db.get_all_tags())
         return self.db.get_all_tags()
 
-
     def suggest_link_targets(
         self, goal: str | None = None, limit: int = 50
     ) -> List[str]:
