@@ -1,4 +1,4 @@
-# POS Textual UI Implementation Plan
+<!-- # POS Textual UI Implementation Plan
 
 This document outlines the specific steps needed to implement each of the five key components of the POS Textual UI.
 
@@ -38,7 +38,7 @@ This document outlines the specific steps needed to implement each of the five k
    - Include all item fields and metadata
    - Show related items and links
 
-## 2. Item Entry Form Widget Implementation
+## 2. Item Entry Form Widget Implementation -->
 
 ### Steps:
 
