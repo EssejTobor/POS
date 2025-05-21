@@ -13,6 +13,15 @@ class ItemTable(DataTable):
     """Table for displaying work items with pagination and styling."""
 
     current_page: int = reactive(0)
+    context_menu_row: int | None = None
+    context_menu_open: bool = False
+    last_action: str | None = None
+
+    BINDINGS = [
+        ("v", "view_selected", "View"),
+        ("e", "edit_selected", "Edit"),
+        ("d", "delete_selected", "Delete"),
+    ]
 
     def __init__(self, page_size: int = 20, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -26,7 +35,15 @@ class ItemTable(DataTable):
         self.sort_reverse: bool = False
 
     def on_mount(self) -> None:  # pragma: no cover - simple setup
-        self.add_columns("ID", "Title", "Type", "Status", "Priority", "Due Date")
+        self.add_columns(
+            "ID",
+            "Title",
+            "Type",
+            "Status",
+            "Priority",
+            "Due Date",
+            "Actions",
+        )
 
     # ------------------------------------------------------------------
     # Data loading
@@ -78,6 +95,7 @@ class ItemTable(DataTable):
             item.status.name.title(),
             item.priority.name.title(),
             str(due),
+            "View | Edit | Delete",
         ]
 
     def _row_style(self, item: WorkItem) -> str:
@@ -94,6 +112,27 @@ class ItemTable(DataTable):
         return " ".join(filter(None, [priority_color, status_color]))
 
     # ------------------------------------------------------------------
+
+    # Action handlers and context menu helpers
+    # ------------------------------------------------------------------
+    def action_view_selected(self) -> None:  # pragma: no cover - simple action
+        self.last_action = "view"
+
+    def action_edit_selected(self) -> None:  # pragma: no cover - simple action
+        self.last_action = "edit"
+
+    def action_delete_selected(self) -> None:  # pragma: no cover - simple action
+        self.last_action = "delete"
+
+    def open_context_menu(self, row_index: int) -> None:
+        """Open a simple context menu for the given row."""
+        self.context_menu_row = row_index
+        self.context_menu_open = True
+
+    def close_context_menu(self) -> None:
+        """Close the context menu if open."""
+        self.context_menu_open = False
+
     # Filtering and sorting
     # ------------------------------------------------------------------
     def _apply_filters(self) -> None:
@@ -147,4 +186,4 @@ class ItemTable(DataTable):
             else:
                 self.sort_key = key_map[label]
                 self.sort_reverse = False
-            self.refresh_page()
+                main
