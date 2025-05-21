@@ -1,6 +1,6 @@
 import pytest
 from textual.testing import AppTest
-from textual.widgets import LoadingIndicator
+from textual.widgets import Button, LoadingIndicator, Static
 
 from src.pos_tui.app import POSTUI
 from src.pos_tui.widgets.filter_bar import FilterBar
@@ -24,3 +24,15 @@ async def test_filter_bar_present():
     app = POSTUI()
     async with AppTest(app) as pilot:
         assert pilot.app.query_one(FilterBar)
+
+
+@pytest.mark.asyncio
+async def test_dashboard_layout_components():
+    app = POSTUI()
+    async with AppTest(app) as pilot:
+        pilot.app.query_one("#dashboard_header")
+        pilot.app.query_one("#dashboard_footer")
+        pilot.app.query_one("#refresh_button", Button)
+        pilot.app.query_one("#create_button", Button)
+        footer = pilot.app.query_one("#status_bar", Static)
+        assert footer.renderable is not None
