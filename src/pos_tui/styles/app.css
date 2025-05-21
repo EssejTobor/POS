@@ -37,3 +37,7 @@ Footer {
 #filter_bar Input {
     width: 1fr;
 }
+
+.error {
+    border: heavy $error;
+}
