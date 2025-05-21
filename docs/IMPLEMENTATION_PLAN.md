@@ -179,7 +179,7 @@ This document outlines the specific steps needed to implement each of the five k
    - Create user-friendly error notifications
 
 5. **Optimize performance**
-   - Implement connection pooling for database access
+   - Implement efficient sqlite3 connection management
    - Add batching for multiple related operations
    - Create background prefetching for anticipated data needs
    - Implement lazy loading for large datasets

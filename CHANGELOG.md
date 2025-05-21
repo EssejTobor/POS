@@ -144,6 +144,9 @@
 - Marked CLI interface as deprecated with plans for full removal
 - Modified main.py to launch Textual UI by default with fallback to CLI
 - Updated version number to 0.2.0 in src/__init__.py to reflect the architectural change
+- Cleaned up requirements.txt to clearly indicate which packages are actually used
+- Removed references to unused packages (SQLAlchemy, FastAPI) from documentation
+- Updated documentation to focus on sqlite3 for database operations
 
 ### Deprecated
 - CLI-based commands and interfaces in favor of Textual TUI
