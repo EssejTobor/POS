@@ -66,3 +66,12 @@ def test_context_menu_state():
     table.open_context_menu(1)
     assert table.context_menu_open is True
     assert table.context_menu_row == 1
+
+
+def test_empty_state_when_no_items():
+    table = ItemTable()
+    table.on_mount()
+    table.load_items([])
+
+    assert table.row_count == 1
+    assert table.rows[0].get_cell(0) == "No items found"

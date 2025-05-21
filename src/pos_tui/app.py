@@ -14,6 +14,9 @@ from ..storage import WorkSystem
 from .commands import Command, CommandRegistry
 from .screens import DashboardScreen, LinkTreeScreen, NewItemScreen
 from .widgets import CommandPalette
+from .workers import WorkerPool
+from .workers.base import BaseWorker
+from .workers.db import DBConnectionManager
 
 
 class POSTUI(App):
@@ -28,6 +31,8 @@ class POSTUI(App):
         super().__init__(*args, **kwargs)
         self.work_system = WorkSystem()
         self.command_registry = CommandRegistry()
+        self.worker_pool = WorkerPool()
+        self.connection_manager = DBConnectionManager(self.work_system.db.db_path)
 
     BINDINGS = [
         ("1", "switch_tab('dashboard')", "Dashboard"),
@@ -35,6 +40,12 @@ class POSTUI(App):
         ("3", "switch_tab('link-tree')", "Link Tree"),
         ("ctrl+p", "toggle_palette()", "Command Palette"),
     ]
+
+    def schedule_worker(self, worker: BaseWorker, name: str | None = None) -> str:
+        """Run a worker and track it in the worker pool."""
+        worker_id = self.run_worker(worker, name or worker.name)
+        self.worker_pool.add(worker)
+        return worker_id
 
     def compose(self) -> ComposeResult:
         """Compose the UI layout."""
