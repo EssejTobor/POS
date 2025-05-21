@@ -9,19 +9,6 @@ dependencies = [
     "rich>=13.0.0"
 ]
 
-[project.optional-dependencies]
-dev = [
-  "pytest",
-  "pre-commit",
-  "mypy",
-  "ruff",
-  "black",
-  "isort"
-]
-
-test = [
-  "pytest"
-]
 
 [tool.mypy]
 python_version = "3.12"
