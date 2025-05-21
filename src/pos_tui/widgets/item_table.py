@@ -4,7 +4,6 @@ from typing import Callable, Iterable, List
 
 from textual.reactive import reactive
 from textual.widgets import DataTable
-from textual.widgets.data_table import HeaderSelected
 
 from ...models import ItemStatus, ItemType, Priority, WorkItem
 
@@ -168,8 +167,8 @@ class ItemTable(DataTable):
         self.sort_reverse = reverse
         self.refresh_page()
 
-    def on_header_selected(
-        self, event: HeaderSelected
+    def on_data_table_header_selected(
+        self, event: DataTable.HeaderSelected
     ) -> None:  # pragma: no cover - simple UI
         label = event.column_label
         key_map = {
@@ -186,3 +185,4 @@ class ItemTable(DataTable):
             else:
                 self.sort_key = key_map[label]
                 self.sort_reverse = False
+            self.refresh_page()

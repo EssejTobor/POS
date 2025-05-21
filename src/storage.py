@@ -93,10 +93,12 @@ class WorkSystem:
     def _atomic_operation(self):
         """Ensure atomic operations with proper rollback"""
         items_snapshot = self.items.copy()
+        counts_snapshot = self.entry_counts.copy()
         try:
             yield
         except Exception as e:
             self.items = items_snapshot
+            self.entry_counts = counts_snapshot
             raise e
 
     def _refresh_cache(self):
@@ -481,7 +483,6 @@ class WorkSystem:
     def get_all_tags(self) -> List[str]:
         """Get all unique tags in the system"""
         return sorted(self.db.get_all_tags())
-        return self.db.get_all_tags()
 
     def suggest_link_targets(
         self, goal: str | None = None, limit: int = 50
