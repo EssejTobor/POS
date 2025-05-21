@@ -40,7 +40,7 @@ This document outlines the specific steps needed to implement each of the five k
 
 ## 2. Item Entry Form Widget Implementation -->
 
-### Steps:
+<!-- ### Steps:
 
 1. **Design the form layout**
    - Create `ItemEntryForm` widget in `src/pos_tui/widgets/item_form.py`
@@ -57,7 +57,7 @@ This document outlines the specific steps needed to implement each of the five k
    - Create field validators for required fields
    - Implement format validation for dates and IDs
    - Add visual indicators for validation errors
-   - Display helpful error messages
+   - Display helpful error messages -->
 
 4. **Implement item linking interface**
    - Create a searchable item selector for linking
@@ -75,6 +75,8 @@ This document outlines the specific steps needed to implement each of the five k
    - Add keyboard shortcuts for save/cancel
    - Ensure focus management follows accessibility best practices
 
+
+----
 ## 3. Link Tree Visualization Implementation
 
 ### Steps:
@@ -94,6 +96,9 @@ This document outlines the specific steps needed to implement each of the five k
    - Style nodes based on item type and status
    - Add visual indicators for expanded/collapsed state
    - Create distinctive styling for the currently selected node
+
+
+----
 
 4. **Implement interactive features**
    - Add click handling for node selection
