@@ -24,7 +24,7 @@ These rules apply to the entire repository unless a deeper `AGENTS.md` overrides
 
 ---
 
-## 2. “Crash-First” Testing Workflow  
+## 2. "Crash-First" Testing Workflow  
 *No external test frameworks required.*
 
 1. **Launch the program** in a separate process:
@@ -108,5 +108,22 @@ git commit -am "fix: remove stray debug print"
 * Update `CHANGELOG.md` *only* when you introduce a user-visible behaviour
   change (new command, new CLI flag, schema migration, …).
 * Keep comments and docstrings concise but accurate.
+* When implementing a feature or fixing a bug:
+  * Check off the corresponding item in `docs/checklist.md`
+  * Create or update validation protocols in the appropriate markdown file
+* **Always update documentation as you implement** - this ensures our progress tracking stays accurate.
+
+## 7. Checklist and Validation Protocols
+
+* After implementing a feature in the checklist:
+  * Mark the item as complete with `[x]` in `docs/checklist.md`
+  * Update the "Phase X Status" and percentage in the summary table
+  * Update the "Current Implementation Stage" and "Next Steps Priority" 
+* For each feature implementation:
+  * Create validation protocols that detail how to test the feature
+  * Document edge cases and expected behavior
+  * These protocols help ensure quality and make testing easier
+
+**Remember**: Documentation is as important as code. Keeping the checklist and validation protocols updated ensures everyone knows the project's status.
 
 
