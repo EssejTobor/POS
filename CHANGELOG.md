@@ -132,6 +132,8 @@
 - Added modular package structure with screens, widgets, and styles directories
 - Implemented basic Textual UI application structure with tabbed interface
 - Created stub implementation for Dashboard, New Item, and Link Tree screens
+- Implemented Dashboard, New Item, and Link Tree screens using new ItemEntryForm,
+  ItemTable, and LinkTree widgets with keyboard shortcuts
 - Added command-line argument support for selecting between TUI and CLI modes
 - Created legacy_cli documentation to guide users through the transition
 - Added tests for main entrypoint using stubs
@@ -145,16 +147,12 @@
 - Marked CLI interface as deprecated with plans for full removal
 - Modified main.py to launch Textual UI by default with fallback to CLI
 - Updated version number to 0.2.0 in src/__init__.py to reflect the architectural change
-<<<<<<< HEAD
 - Cleaned up requirements.txt to clearly indicate which packages are actually used
 - Removed references to unused packages (SQLAlchemy, FastAPI) from documentation
 - Updated documentation to focus on sqlite3 for database operations
-=======
 - Fixed tag retrieval by querying the database directly in `get_all_tags()`
 - Removed root-level `work_items.db` and added `/work_items.db` to `.gitignore` to keep the canonical database in `data/db/`
 - Synced pyproject.toml version to 0.2.0 to match src/__init__.py
-
->>>>>>> 56fb1742dd17d1389097dd8afb8ee76c117d29e3
 
 ### Deprecated
 - CLI-based commands and interfaces in favor of Textual TUI

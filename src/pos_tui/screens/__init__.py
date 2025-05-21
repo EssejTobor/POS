@@ -5,12 +5,12 @@ This module contains the main screens used in the POS application.
 """
 
 # Import screens as they are implemented
-# from .dashboard import DashboardScreen
-# from .item_entry import ItemEntryScreen
-# from .link_tree import LinkTreeScreen
+from .dashboard import DashboardScreen
+from .link_tree import LinkTreeScreen
+from .new_item import NewItemScreen
 
 __all__: list[str] = [
-    # "DashboardScreen",
-    # "ItemEntryScreen",
-    # "LinkTreeScreen",
+    "DashboardScreen",
+    "NewItemScreen",
+    "LinkTreeScreen",
 ]

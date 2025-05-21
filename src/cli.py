@@ -6,7 +6,7 @@ from pathlib import Path
 # remain functional even when Textual isn't installed (e.g. in minimal test
 # environments).
 try:  # pragma: no cover - optional dependency check
-    import textual  # type: ignore
+    import textual  # type: ignore  # noqa: F401
 
     TEXTUAL_AVAILABLE = True
 except Exception:  # pragma: no cover - executed when Textual isn't installed
@@ -69,9 +69,6 @@ from .migrate import MigrationManager
 from .models import ItemStatus, ItemType, Priority
 from .schemas import AddItemInput, AddThoughtInput, UpdateItemInput
 from .storage import WorkSystem
-
-
-
 
 
 class WorkSystemCLI(cmd.Cmd):

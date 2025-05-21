@@ -8,9 +8,10 @@ for the Textual-based interface.
 from pathlib import Path
 
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Header, Static, TabbedContent, TabPane
+from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from ..storage import WorkSystem
+from .screens import DashboardScreen, LinkTreeScreen, NewItemScreen
 
 
 class POSTUI(App):
@@ -25,21 +26,32 @@ class POSTUI(App):
         super().__init__(*args, **kwargs)
         self.work_system = WorkSystem()
 
+    BINDINGS = [
+        ("1", "switch_tab('dashboard')", "Dashboard"),
+        ("2", "switch_tab('new-item')", "New Item"),
+        ("3", "switch_tab('link-tree')", "Link Tree"),
+    ]
+
     def compose(self) -> ComposeResult:
         """Compose the UI layout."""
         yield Header()
 
-        with TabbedContent():
+        with TabbedContent(id="tabs"):
             with TabPane("Dashboard", id="dashboard"):
-                yield Static("Dashboard - Items overview will display here")
+                yield DashboardScreen()
 
             with TabPane("New Item", id="new-item"):
-                yield Static("Item entry form will be implemented here")
+                yield NewItemScreen()
 
             with TabPane("Link Tree", id="link-tree"):
-                yield Static("Link visualization will be implemented here")
+                yield LinkTreeScreen()
 
         yield Footer()
+
+    def action_switch_tab(self, tab_id: str) -> None:
+        """Switch to the given tab in TabbedContent."""
+        tabs = self.query_one("#tabs", TabbedContent)
+        tabs.active = tab_id
 
     def on_mount(self) -> None:
         """Handle the app mount event."""
