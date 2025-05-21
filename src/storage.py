@@ -480,7 +480,9 @@ class WorkSystem:
 
     def get_all_tags(self) -> List[str]:
         """Get all unique tags in the system"""
+        return sorted(self.db.get_all_tags())
         return self.db.get_all_tags()
+
 
     def suggest_link_targets(
         self, goal: str | None = None, limit: int = 50

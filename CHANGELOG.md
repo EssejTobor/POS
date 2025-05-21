@@ -145,6 +145,7 @@
 - Marked CLI interface as deprecated with plans for full removal
 - Modified main.py to launch Textual UI by default with fallback to CLI
 - Updated version number to 0.2.0 in src/__init__.py to reflect the architectural change
+- Fixed tag retrieval by querying the database directly in `get_all_tags()`
 - Removed root-level `work_items.db` and added `/work_items.db` to `.gitignore` to keep the canonical database in `data/db/`
 - Synced pyproject.toml version to 0.2.0 to match src/__init__.py
 
