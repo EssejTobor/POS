@@ -4,12 +4,8 @@ if TYPE_CHECKING:  # pragma: no cover - only for type checkers
     from pydantic import BaseModel, Field, field_validator, validator
 else:  # pragma: no cover - runtime fallback
     try:
-        from pydantic import (  # type: ignore[attr-defined]
-            BaseModel,
-            Field,
-            field_validator,
-            validator,
-        )
+        from pydantic import Field  # type: ignore[attr-defined]
+        from pydantic import BaseModel, field_validator, validator
     except Exception:  # pragma: no cover - pydantic is unavailable
 
         class BaseModelMeta(type):

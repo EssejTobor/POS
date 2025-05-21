@@ -10,9 +10,9 @@ This module contains custom widgets used throughout the POS application.
 # from .link_tree import LinkTree
 # from .message import Message
 
-__all__ = [
+__all__: list[str] = [
     # "ItemEntryForm",
     # "ItemTable",
     # "LinkTree",
     # "Message",
-] 
+]
