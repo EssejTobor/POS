@@ -167,8 +167,8 @@ class ItemTable(DataTable):
         self.sort_reverse = reverse
         self.refresh_page()
 
-    def on_data_table_header_selected(
-        self, event: DataTable.HeaderSelected
+    def on_data_table_header_pressed(
+        self, event: DataTable.HeaderPressed
     ) -> None:  # pragma: no cover - simple UI
         label = event.column_label
         key_map = {
