@@ -134,6 +134,7 @@
 - Created stub implementation for Dashboard, New Item, and Link Tree screens
 - Implemented Dashboard, New Item, and Link Tree screens using new ItemEntryForm,
   ItemTable, and LinkTree widgets with keyboard shortcuts
+- Implemented `ItemDetailModal` widget for viewing item details in a modal dialog
 - Added command-line argument support for selecting between TUI and CLI modes
 - Created legacy_cli documentation to guide users through the transition
 - Added tests for main entrypoint using stubs
