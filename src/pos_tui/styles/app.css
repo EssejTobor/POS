@@ -25,4 +25,15 @@ Footer {
     color: $text;
     dock: bottom;
     height: 1;
-} 
+}
+
+#filter_bar {
+    layout: horizontal;
+    padding: 0 1;
+    height: auto;
+    background: $boost;
+}
+
+#filter_bar Input {
+    width: 1fr;
+}

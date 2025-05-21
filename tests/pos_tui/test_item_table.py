@@ -22,7 +22,15 @@ def test_columns_defined():
     table = ItemTable()
     table.on_mount()
     headers = [col.label for col in table.columns]
-    assert headers == ["ID", "Title", "Type", "Status", "Priority", "Due Date"]
+    assert headers == [
+        "ID",
+        "Title",
+        "Type",
+        "Status",
+        "Priority",
+        "Due Date",
+        "Actions",
+    ]
 
 
 def test_pagination():
@@ -44,3 +52,17 @@ def test_row_style():
     row_style = table.rows[0].style
     assert "bold red" in str(row_style)
     assert "yellow" in str(row_style)
+
+
+def test_keyboard_bindings_defined():
+    table = ItemTable()
+    keys = {b.key for b in table.BINDINGS}
+    assert {"v", "e", "d"} <= keys
+
+
+def test_context_menu_state():
+    table = ItemTable()
+    table.on_mount()
+    table.open_context_menu(1)
+    assert table.context_menu_open is True
+    assert table.context_menu_row == 1
