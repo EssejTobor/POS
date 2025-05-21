@@ -41,3 +41,13 @@ Footer {
 .error {
     border: heavy $error;
 }
+
+#command_palette {
+    display: none;
+    background: $panel;
+    width: 60%;
+    height: 40%;
+    margin: 2 2;
+    layout: vertical;
+    dock: top;
+}

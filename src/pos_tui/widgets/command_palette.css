@@ -1,0 +1,9 @@
+#command_palette {
+    background: $surface;
+    border: heavy $secondary;
+    width: 60%;
+    height: 40%;
+    padding: 1 2;
+    layout: vertical;
+    dock: top;
+}

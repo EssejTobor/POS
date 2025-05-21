@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Dict, Set
 
+from textual.reactive import reactive
 from textual.widgets import Tree
 
 from ...models import ItemStatus, ItemType, WorkItem
@@ -14,12 +15,14 @@ class LinkTree(Tree[str]):
     """Tree visualization of linked work items."""
 
     DEFAULT_MAX_DEPTH = 3
+    zoom_level: int = reactive(0)
 
     def __init__(self, *args, work_system: WorkSystem | None = None, **kwargs) -> None:
         super().__init__("Root", *args, **kwargs)
         self.work_system = work_system
         self._link_cache: Dict[str, Dict] = {}
         self.max_depth = self.DEFAULT_MAX_DEPTH
+        self.context_menu_node: str | None = None
 
     # ------------------------------------------------------------------
     # Public API
@@ -72,6 +75,39 @@ class LinkTree(Tree[str]):
             self._add_nodes(self.root, data)
         else:  # pragma: no cover - no data provided
             self.root.add("No data")
+
+    # ------------------------------------------------------------------
+    # Interactive helpers
+    # ------------------------------------------------------------------
+    def action_zoom_in(self) -> None:
+        self.zoom_level += 1
+        self.styles.indent = 1 + self.zoom_level
+
+    def action_zoom_out(self) -> None:
+        self.zoom_level = max(0, self.zoom_level - 1)
+        self.styles.indent = 1 + self.zoom_level
+
+    def open_context_menu(self, node_id: str) -> None:
+        self.context_menu_node = node_id
+
+    def close_context_menu(self) -> None:
+        self.context_menu_node = None
+
+    def export_tree(self) -> str:
+        """Export the current tree as plain text."""
+        return "\n".join(node.label for node in self.nodes)
+
+    def bookmark_view(self) -> Dict:
+        """Return a bookmark representing the current tree state."""
+        return {"root": self.root.label, "depth": self.max_depth}
+
+    # --------------------------------------------------------------
+    # Event handlers
+    # --------------------------------------------------------------
+    def on_tree_node_selected(
+        self, event: Tree.NodeSelected
+    ) -> None:  # pragma: no cover - simple selection
+        self.open_context_menu(event.node.id)
 
     # ------------------------------------------------------------------
     # Node helpers
