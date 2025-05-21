@@ -118,10 +118,18 @@ The Personal Operating System (POS) is a terminal-based application for personal
 
 ## **Versioning Policy**
 
-This migration marks version `0.2.0`.
+This migration marks version `0.2.1`.
 
 * Major CLI deprecation
 * Textual-first rewrite
 * Backward-compatible data structures
 
 All future development will extend the TUI as the primary interface. 
+---
+
+## Recent Updates
+
+* Implemented initial Textual interface with three screens: **Dashboard**, **New Item**, and **Link Tree**.
+* Added corresponding widgets `ItemEntryForm`, `ItemTable`, and `LinkTree`.
+* Keyboard shortcuts `1`, `2`, and `3` switch between the screens.
+* Smoke test runs the TUI in headless mode to ensure startup.
