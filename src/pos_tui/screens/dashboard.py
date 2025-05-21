@@ -1,9 +1,13 @@
 from textual.app import ComposeResult
 from textual.containers import Container
-from textual.widgets import DataTable, LoadingIndicator
-
+from textual.widgets import Button, DataTable, LoadingIndicator, Static
+from ..widgets import (DashboardStatus, FilterBar, ItemDetailsModal,
+                       ItemFormModal, ItemTable)
+from ...models import ItemStatus, WorkItem
 from ..widgets import FilterBar, ItemDetailsModal, ItemFormModal, ItemTable
 from ..workers import ItemFetchWorker
+from ..workers.db import ItemFetchWorker
+
 
 
 class DashboardScreen(Container):
@@ -11,12 +15,21 @@ class DashboardScreen(Container):
 
     BINDINGS = [
         ("r", "refresh", "Refresh Items"),
+        ("n", "create", "New Item"),
     ]
 
     def compose(self) -> ComposeResult:
+        with Container(id="dashboard_header"):
+            yield Static("Dashboard", id="dashboard_title")
+            yield Button("Refresh", id="refresh_button")
+            yield Button("Create", id="create_button")
+
         yield FilterBar(id="filter_bar")
         yield LoadingIndicator(id="loading")
         yield ItemTable(id="dashboard_table")
+        yield DashboardStatus(id="dashboard_status")
+        with Container(id="dashboard_footer"):
+            yield Static("", id="status_bar")
 
     def on_mount(self) -> None:
         self.query_one(LoadingIndicator).display = False
@@ -24,6 +37,9 @@ class DashboardScreen(Container):
 
     def action_refresh(self) -> None:
         self.refresh()
+
+    def action_create(self) -> None:  # pragma: no cover - simple UI
+        self.app.action_switch_tab("new-item")
 
     # --------------------------------------------------------------
     # Data Loading
@@ -48,13 +64,34 @@ class DashboardScreen(Container):
             callback=self._apply_items,
         )
         self.run_worker(worker, thread=True)
+        query = (
+            "SELECT * FROM work_items WHERE status != ? "
+            "ORDER BY priority DESC, created_at DESC"
+        )
+        worker = ItemFetchWorker(
+            "fetch_items",
+            self.app,
+            self.app.connection_manager,
+            query,
+            [ItemStatus.COMPLETED.value],
+            on_success=lambda result: self.call_from_thread(self._apply_items, result),
+        )
+        self.app.schedule_worker(worker)
 
     def _apply_items(self, items) -> None:
         table = self.query_one(ItemTable)
         loading = self.query_one(LoadingIndicator)
-        table.load_items(items)
+        work_items = [
+            WorkItem.from_dict(row) if isinstance(row, dict) else row for row in items
+        ]
+        table.load_items(work_items)
         loading.display = False
         table.display = True
+        self._update_status_bar(items)
+
+        status = self.query_one(DashboardStatus)
+        total = len(self.app.work_system.items)
+        status.set_counts(incomplete=len(items), total=total)
 
     def on_filter_bar_filter_changed(
         self, event: FilterBar.FilterChanged
@@ -88,3 +125,18 @@ class DashboardScreen(Container):
     ) -> None:  # pragma: no cover - UI action
         self.app.work_system.delete_item(event.item.id)
         self.refresh()
+
+    def _update_status_bar(self, items) -> None:
+        from ...models import ItemStatus
+
+        counts = {
+            status: len([i for i in items if i.status == status])
+            for status in ItemStatus
+        }
+        total = len(items)
+        text = (
+            f"Total: {total} | Not Started: {counts[ItemStatus.NOT_STARTED]} | "
+            f"In Progress: {counts[ItemStatus.IN_PROGRESS]} | "
+            f"Completed: {counts[ItemStatus.COMPLETED]}"
+        )
+        self.query_one("#status_bar", Static).update(text)
