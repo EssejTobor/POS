@@ -7,7 +7,7 @@ from textual.app import ComposeResult
 from textual.containers import Container
 from textual.widgets import Button, Input, LoadingIndicator, Select, Static
 
-from ...models import ItemStatus, ItemType, Priority
+from ...models import ItemStatus, ItemType, Priority, WorkItem
 from ...storage import WorkSystem
 from .link_editor import LinkEditor
 
@@ -25,6 +25,7 @@ class ItemEntryForm(Static):
         tag_options: Iterable[str] | None = None,
         link_options: Iterable[tuple[str, str]] | None = None,
         work_system: WorkSystem | None = None,
+        item: WorkItem | None = None,
         *args,
         **kwargs,
     ) -> None:
@@ -33,7 +34,18 @@ class ItemEntryForm(Static):
         self.tag_options = sorted(set(tag_options or []))
         self.link_options = list(link_options or [])
         self.work_system = work_system
+        self.item = item
         self.link_editor: LinkEditor | None = None
+
+    def on_mount(self) -> None:  # pragma: no cover - simple setup
+        if self.item is not None:
+            self.query_one("#title_field", Input).value = self.item.title
+            self.query_one("#description_field", Input).value = self.item.description
+            self.query_one("#type_selector", Select).value = self.item.item_type.value
+            self.query_one("#priority_selector", Select).value = str(
+                self.item.priority.value
+            )
+            self.query_one("#status_selector", Select).value = self.item.status.value
 
     def compose(self) -> ComposeResult:
         """Create the layout for the entry form."""
@@ -168,18 +180,37 @@ class ItemEntryForm(Static):
         message = ""
         try:
             if self.work_system is not None:
-                item = self.work_system.add_item(
-                    goal="default",
-                    title=self.query_one("#title_field", Input).value.strip(),
-                    item_type=ItemType(
-                        self.query_one("#type_selector", Select).value
-                        or ItemType.TASK.value
-                    ),
-                    description=self.query_one("#description_field", Input).value,
-                    priority=Priority(
-                        int(self.query_one("#priority_selector", Select).value or 2)
-                    ),
-                )
+                if self.item is not None:
+                    self.work_system.update_item(
+                        self.item.id,
+                        title=self.query_one("#title_field", Input).value.strip(),
+                        item_type=ItemType(
+                            self.query_one("#type_selector", Select).value
+                            or ItemType.TASK.value
+                        ),
+                        description=self.query_one("#description_field", Input).value,
+                        priority=Priority(
+                            int(self.query_one("#priority_selector", Select).value or 2)
+                        ),
+                        status=ItemStatus(
+                            self.query_one("#status_selector", Select).value
+                            or ItemStatus.NOT_STARTED.value
+                        ),
+                    )
+                    item = self.work_system.items[self.item.id]
+                else:
+                    item = self.work_system.add_item(
+                        goal="default",
+                        title=self.query_one("#title_field", Input).value.strip(),
+                        item_type=ItemType(
+                            self.query_one("#type_selector", Select).value
+                            or ItemType.TASK.value
+                        ),
+                        description=self.query_one("#description_field", Input).value,
+                        priority=Priority(
+                            int(self.query_one("#priority_selector", Select).value or 2)
+                        ),
+                    )
                 for target, link_type in (
                     self.link_editor.links if self.link_editor else []
                 ):

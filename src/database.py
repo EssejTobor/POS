@@ -172,6 +172,23 @@ class Database:
             )
             conn.commit()
 
+    def delete_item(self, item_id: str) -> None:
+        """Delete a work item and associated data."""
+        with self.get_connection() as conn:
+            conn.execute(
+                "DELETE FROM item_links WHERE source_id = ? OR target_id = ?",
+                (item_id, item_id),
+            )
+            conn.execute(
+                "DELETE FROM item_tags WHERE item_id = ?",
+                (item_id,),
+            )
+            conn.execute(
+                "DELETE FROM work_items WHERE id = ?",
+                (item_id,),
+            )
+            conn.commit()
+
     def get_items_by_goal(self, goal: str) -> List[WorkItem]:
         """Optimized query for getting items by goal"""
         with self.get_connection() as conn:

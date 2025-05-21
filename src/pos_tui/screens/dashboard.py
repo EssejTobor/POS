@@ -1,8 +1,8 @@
 from textual.app import ComposeResult
 from textual.containers import Container
-from textual.widgets import LoadingIndicator
+from textual.widgets import DataTable, LoadingIndicator
 
-from ..widgets import FilterBar, ItemTable
+from ..widgets import FilterBar, ItemDetailsModal, ItemFormModal, ItemTable
 
 
 class DashboardScreen(Container):
@@ -55,3 +55,26 @@ class DashboardScreen(Container):
             status=event.status,
             search_text=event.search_text,
         )
+
+    def on_data_table_cell_selected(
+        self, event: DataTable.CellSelected
+    ) -> None:  # pragma: no cover - simple UI
+        table = self.query_one(ItemTable)
+        if event.sender is table and event.column_label == "Actions":
+            table.open_context_menu(event.coordinate.row)
+
+    def on_item_table_view_requested(
+        self, event: ItemTable.ViewRequested
+    ) -> None:  # pragma: no cover - UI action
+        self.app.push_screen(ItemDetailsModal(event.item, self.app.work_system))
+
+    def on_item_table_edit_requested(
+        self, event: ItemTable.EditRequested
+    ) -> None:  # pragma: no cover - UI action
+        self.app.push_screen(ItemFormModal(event.item, self.app.work_system))
+
+    def on_item_table_delete_requested(
+        self, event: ItemTable.DeleteRequested
+    ) -> None:  # pragma: no cover - UI action
+        self.app.work_system.delete_item(event.item.id)
+        self.refresh()
