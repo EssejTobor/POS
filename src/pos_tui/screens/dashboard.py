@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.containers import Container
 from textual.widgets import LoadingIndicator
 
-from ..widgets import ItemTable
+from ..widgets import FilterBar, ItemTable
 
 
 class DashboardScreen(Container):
@@ -13,6 +13,7 @@ class DashboardScreen(Container):
     ]
 
     def compose(self) -> ComposeResult:
+
         yield LoadingIndicator(id="loading")
         yield ItemTable(id="dashboard_table")
 
@@ -44,3 +45,16 @@ class DashboardScreen(Container):
         table.load_items(items)
         loading.display = False
         table.display = True
+        yield FilterBar(id="filter_bar")
+        yield ItemTable(id="dashboard_table")
+
+    def on_filter_bar_filter_changed(
+        self, event: FilterBar.FilterChanged
+    ) -> None:  # pragma: no cover - simple UI
+        table = self.query_one(ItemTable)
+        table.set_filters(
+            item_type=event.item_type,
+            status=event.status,
+            search_text=event.search_text,
+        )
+        main
