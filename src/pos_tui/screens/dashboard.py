@@ -2,7 +2,9 @@ from textual.app import ComposeResult
 from textual.containers import Container
 from textual.widgets import DataTable, LoadingIndicator
 
+from ...models import ItemStatus, WorkItem
 from ..widgets import FilterBar, ItemDetailsModal, ItemFormModal, ItemTable
+from ..workers.db import ItemFetchWorker
 
 
 class DashboardScreen(Container):
@@ -33,16 +35,27 @@ class DashboardScreen(Container):
         table = self.query_one(ItemTable)
         table.display = False
         loading.display = True
-        self.run_worker(self._fetch_items, thread=True)
-
-    def _fetch_items(self) -> None:
-        items = self.app.work_system.get_incomplete_items()
-        self.call_from_thread(self._apply_items, items)
+        query = (
+            "SELECT * FROM work_items WHERE status != ? "
+            "ORDER BY priority DESC, created_at DESC"
+        )
+        worker = ItemFetchWorker(
+            "fetch_items",
+            self.app,
+            self.app.connection_manager,
+            query,
+            [ItemStatus.COMPLETED.value],
+            on_success=lambda result: self.call_from_thread(self._apply_items, result),
+        )
+        self.app.schedule_worker(worker)
 
     def _apply_items(self, items) -> None:
         table = self.query_one(ItemTable)
         loading = self.query_one(LoadingIndicator)
-        table.load_items(items)
+        work_items = [
+            WorkItem.from_dict(row) if isinstance(row, dict) else row for row in items
+        ]
+        table.load_items(work_items)
         loading.display = False
         table.display = True
 
