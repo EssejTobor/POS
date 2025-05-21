@@ -137,6 +137,7 @@
 - Added command-line argument support for selecting between TUI and CLI modes
 - Created legacy_cli documentation to guide users through the transition
 - Added tests for main entrypoint using stubs
+- Added action buttons and context menu in `ItemTable` with keyboard shortcuts
 
 ### Changed
 - **Major architectural shift**: Transitioned from CLI-first to Textual-first approach (v0.2.0)
