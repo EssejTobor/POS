@@ -27,13 +27,9 @@ These rules apply to the entire repository unless a deeper `AGENTS.md` overrides
 
 ---
 
-## 3. Documentation & Changelog
-- **MANDATORY**: Append a bullet to `[Unreleased]` in `CHANGELOG.md` before any commit.
-- If architecture or behavior changes, update `PROJECT_SCOPE.md`.
-- Use this log format:
+## 3. Documentation 
+- N/A
 
-Updated CHANGELOG.md: <one-line summary>
-Updated PROJECT\_SCOPE.md: <one-line summary> (if applicable)
 
 
 ---
