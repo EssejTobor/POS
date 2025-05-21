@@ -14,7 +14,7 @@ from ..storage import WorkSystem
 from .commands import Command, CommandRegistry
 from .screens import DashboardScreen, LinkTreeScreen, NewItemScreen
 from .widgets import CommandPalette
-from .workers import WorkerPool
+from .workers import WorkerPool, DatabaseWorker, ItemFetchWorker
 from .workers.base import BaseWorker
 from .workers.db import DBConnectionManager
 
