@@ -30,6 +30,7 @@ POS is designed to help track work items, goals, and thoughts through an interac
 
 POS is currently transitioning to a Textual-first interface (v0.2.0), with the legacy CLI functionality being deprecated.
 
+
 ## Documentation
 
 For detailed information about the project's scope and implementation strategy, see [Project Scope](docs/PROJECT_SCOPE.md).
