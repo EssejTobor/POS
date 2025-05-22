@@ -12,7 +12,7 @@ from textual.app import ComposeResult
 from textual.containers import Container, Grid, Horizontal, Vertical
 from textual.message import Message
 from textual.validation import Validator, ValidationResult
-from textual.widgets import Button, Input, Label, ListView, Select, Static, Switch, TextArea
+from textual.widgets import Button, Input, Label, ListView, Select, Static, TextArea
 
 from ...models import ItemStatus, ItemType, LinkType, Priority, WorkItem
 from ..workers import LinkWorker, ItemSearchWorker
@@ -145,6 +145,15 @@ class ItemEntryForm(Container):
         
         # Main form
         with Vertical(classes="form-section"):
+            # Goal field
+            with Horizontal(classes="field-container"):
+                yield Label("Goal:", classes="field-label")
+                yield Input(
+                    placeholder="Enter goal",
+                    id="goal_field",
+                    classes="field-input",
+                )
+
             # Title field
             with Horizontal(classes="field-container"):
                 yield Label("Title:", classes="field-label")
@@ -196,11 +205,6 @@ class ItemEntryForm(Container):
                     id="description_field",
                     classes="field-input"
                 )
-                
-            # Is thought field
-            with Horizontal(classes="field-container"):
-                yield Label("Is thought:", classes="field-label")
-                yield Switch(id="is_thought_field", classes="field-input")
                 
             # Links section
             with Container(id="links-section"):
@@ -258,6 +262,7 @@ class ItemEntryForm(Container):
         self.query_one("#form-title").update(f"Edit Item: {item.id}")
         
         # Set form values
+        self.query_one("#goal_field").value = item.goal
         self.query_one("#title_field").value = item.title
         self.query_one("#type_field").value = item.item_type.value
         self.query_one("#priority_field").value = str(item.priority.value)
@@ -271,9 +276,6 @@ class ItemEntryForm(Container):
         if hasattr(item, "description") and item.description:
             self.query_one("#description_field").value = item.description
             
-        # Set is_thought based on item type
-        is_thought = item.item_type == ItemType.THOUGHT
-        self.query_one("#is_thought_field").value = is_thought
         
         # Show the cancel button
         self.query_one("#cancel_btn").display = True
@@ -379,13 +381,13 @@ class ItemEntryForm(Container):
     def clear_form(self) -> None:
         """Clear all form fields."""
         # Reset to default values
+        self.query_one("#goal_field").value = ""
         self.query_one("#title_field").value = ""
         self.query_one("#type_field").value = ItemType.TASK.value
         self.query_one("#priority_field").value = str(Priority.MED.value)
         self.query_one("#status_field").value = ItemStatus.NOT_STARTED.value
         self.query_one("#tags_field").value = ""
         self.query_one("#description_field").value = ""
-        self.query_one("#is_thought_field").value = False
         
         # Clear item search field
         self.query_one("#item_search_field").value = ""
@@ -417,6 +419,7 @@ class ItemEntryForm(Container):
         self.query_one("#error-container").update("")
         
         # Check required fields
+        goal = self.query_one("#goal_field").value
         title = self.query_one("#title_field").value
         if not title:
             self.errors.append("Title is required")
@@ -475,26 +478,26 @@ class ItemEntryForm(Container):
     def collect_form_data(self) -> Dict[str, Union[str, int, bool]]:
         """Collect data from the form fields."""
         # Get values from form fields
+        goal = self.query_one("#goal_field").value
         title = self.query_one("#title_field").value
         item_type = self.query_one("#type_field").value
         priority = int(self.query_one("#priority_field").value)
         status = self.query_one("#status_field").value
         tags_str = self.query_one("#tags_field").value
         description = self.query_one("#description_field").value
-        is_thought = self.query_one("#is_thought_field").value
         
         # Process tags
         tags = [tag.strip() for tag in tags_str.split(",") if tag.strip()]
         
         # Return collected data
         return {
+            "goal": goal,
             "title": title,
             "item_type": item_type,
             "priority": priority,
             "status": status,
             "tags": tags,
             "description": description,
-            "is_thought": is_thought
         }
     
     @on(Button.Pressed, "#submit_btn")

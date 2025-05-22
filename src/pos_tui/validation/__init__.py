@@ -84,7 +84,7 @@ class ValidationResult:
             "pass_count": len(self.passes),
             "fail_count": len(self.failures),
             "duration": self.duration,
-            "timestamp": datetime.datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat()
         }
     
     def to_dict(self) -> Dict[str, Any]:
@@ -95,7 +95,7 @@ class ValidationResult:
             "failures": self.failures,
             "notes": self.notes,
             "duration": self.duration,
-            "timestamp": datetime.datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat()
         }
     
     def to_json(self) -> str:
@@ -183,7 +183,7 @@ class ValidationProtocol:
         os.makedirs(directory, exist_ok=True)
         
         # Create filename with timestamp
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{self.name}_{timestamp}.json"
         filepath = os.path.join(directory, filename)
         
@@ -195,7 +195,7 @@ class ValidationProtocol:
 
 # Import validation protocols
 from .item_management import ItemCreationValidation, ItemEditingValidation, OptimisticUIValidation
-from .ui_components import UIComponentsValidation
+from .ui_components import ItemFormValidation, UIComponentsValidation
 from .item_links import LinkManagementValidation, LinkNavigationValidation
 from .tree_visualization import TreeVisualizationValidation
 from .navigation_validation import NavigationValidator, run_validation
@@ -206,6 +206,7 @@ __all__ = [
     "ItemCreationValidation",
     "ItemEditingValidation",
     "OptimisticUIValidation",
+    "ItemFormValidation",
     "UIComponentsValidation",
     "LinkManagementValidation",
     "LinkNavigationValidation",
