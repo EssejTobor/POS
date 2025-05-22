@@ -15,6 +15,7 @@ from .toast import ToastNotification
 from .item_table import ItemTable
 from .link_editor import LinkEditor
 from .link_tree import LinkTree
+from .linked_items import LinkedItemsWidget
 
 # from .message import Message
 
@@ -30,5 +31,6 @@ __all__: list[str] = [
     "DashboardStatus",
     "ConfirmModal",
     "ToastNotification",
+    "LinkedItemsWidget",
     # "Message",
 ]

@@ -154,6 +154,35 @@ The `EditItemModalValidation` and `ItemTableValidation` protocols in `src/pos_tu
 4. Simulating user interaction events
 5. Checking for appropriate responses to events
 
+### Linked Items Widget
+
+**Feature Description**: Displays all links for an item grouped by relationship type with color-coded indicators.
+
+#### Essential Behaviors to Validate
+
+1. Links should be grouped by type
+2. Each link should expose "Open" and "Remove" actions
+3. Link types should use consistent colors across widgets
+
+#### Validation Strategy
+
+The `LinkedItemsWidgetValidation` protocol in `src/pos_tui/validation/link_widget.py` validates basic widget behavior by instantiating the widget with an in-memory database and verifying it mounts successfully and exposes a `refresh_links` method.
+### Link Creation Validation
+
+**Protocol Name**: `link_validation`
+
+**Description**: Ensures link creation logic enforces constraints like circular reference detection and link count limits.
+
+**Key Validations**:
+- Valid links can be created between items
+- Duplicate or circular links are rejected
+- Exceeding the maximum link count fails
+
+**Usage**:
+```bash
+python -m src.pos_tui.validation.run link_validation
+```
+
 ## Adding New Validation Protocols
 
 To create a new validation protocol:
