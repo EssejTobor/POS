@@ -50,6 +50,7 @@ class POSTUI(App):
         Binding("1", "switch_tab('dashboard')", "Dashboard"),
         Binding("2", "switch_tab('new-item')", "New Item"),
         Binding("3", "switch_tab('link-tree')", "Link Tree"),
+        Binding("n", "push_screen('newitem')", "New Item"),
         Binding("ctrl+p", "toggle_command_palette", "Command Palette"),
         Binding("f1", "show_shortcuts", "Shortcuts"),
         Binding("t", "toggle_theme", "Toggle Theme"),
@@ -82,6 +83,11 @@ class POSTUI(App):
         log(f"action_switch_tab called with tab_id: {tab_id}")
         tabs = self.query_one("#tabs", TabbedContent)
         tabs.active = tab_id
+
+    def action_push_screen(self, name: str) -> None:
+        """Push a screen onto the stack by name."""
+        if name == "newitem":
+            self.push_screen(NewItemScreen())
 
     def on_mount(self) -> None:
         """Handle the app mount event."""

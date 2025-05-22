@@ -194,6 +194,10 @@ class DashboardScreen(Screen):
         
         # Update pagination info
         table.update_pagination_info(len(items))
+
+    def refresh_items(self) -> None:
+        """Refresh the dashboard data."""
+        self.load_data()
     
     def _update_action_buttons(self, enabled: bool) -> None:
         """Enable or disable action buttons."""
