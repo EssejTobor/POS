@@ -115,7 +115,7 @@ Footer {
     border: round $primary;
     layout: horizontal;
     align-horizontal: center;
-    align-vertical: center;
+    align-vertical: middle;
 }
 
 #toast_container Button {
