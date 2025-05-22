@@ -5,6 +5,8 @@ from textual.containers import VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static
 
+from .linked_items import LinkedItemsWidget
+
 from ...models import WorkItem
 from ...storage import WorkSystem
 
@@ -30,24 +32,12 @@ class ItemDetailsModal(ModalScreen[None]):
             f"Updated At: {self.item.updated_at}",
         ]
 
-        links = self.work_system.get_links(self.item.id)
-        related: list[str] = ["Related Items:"]
-        if links.get("outgoing"):
-            related.append("Outgoing:")
-            for link in links["outgoing"]:
-                related.append(f" - {link['target_id']} ({link['link_type']})")
-        if links.get("incoming"):
-            related.append("Incoming:")
-            for link in links["incoming"]:
-                related.append(f" - {link['source_id']} ({link['link_type']})")
-        if len(related) == 1:
-            related.append(" None")
-
-        return "\n".join(details + [""] + related)
+        return "\n".join(details)
 
     def compose(self) -> ComposeResult:
         text = self._build_details_text()
         yield VerticalScroll(Static(text, id="item_details"))
+        yield LinkedItemsWidget(self.item.id, self.work_system, id="linked_items")
         yield Button("Close", id="close_button")
 
     def on_button_pressed(

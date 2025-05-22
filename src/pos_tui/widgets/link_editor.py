@@ -6,6 +6,8 @@ from textual.app import ComposeResult
 from textual.containers import Container
 from textual.widgets import Button, Input, Select, Static
 
+from .link_utils import format_link_type
+
 
 class LinkEditor(Static):
     """Widget for selecting and managing item links."""
@@ -44,6 +46,7 @@ class LinkEditor(Static):
             icon = icons.get(link_type, "→")
             container.mount(
                 Container(
+                    Static(f"{target} ({format_link_type(link_type)})"),
                     Static(f"{icon} {target} ({link_type})"),
                     Button("Remove", id=f"remove_link_{idx}"),
                 )
