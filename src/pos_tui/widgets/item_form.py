@@ -6,6 +6,7 @@ from typing import Iterable
 from textual.app import ComposeResult
 from textual.containers import Container
 from textual.widgets import Button, Input, LoadingIndicator, Select, Static
+from textual.message import Message
 
 from ...models import ItemStatus, ItemType, Priority, WorkItem
 from ...storage import WorkSystem
@@ -19,6 +20,26 @@ class ItemEntryForm(Static):
         ("ctrl+s", "submit", "Save"),
         ("ctrl+c", "cancel", "Cancel"),
     ]
+
+    class SaveStarted(Message):
+        """Emitted when the save worker begins."""
+
+        def __init__(self, sender: "ItemEntryForm") -> None:
+            super().__init__(sender)
+
+    class SaveResult(Message):
+        """Emitted when the save operation finishes."""
+
+        def __init__(self, sender: "ItemEntryForm", success: bool, message: str) -> None:
+            super().__init__(sender)
+            self.success = success
+            self.message = message
+
+    class Cancelled(Message):
+        """Emitted when the user cancels the form."""
+
+        def __init__(self, sender: "ItemEntryForm") -> None:
+            super().__init__(sender)
 
     def __init__(
         self,
@@ -168,11 +189,13 @@ class ItemEntryForm(Static):
                 return
 
         self.query_one("#save_loading", LoadingIndicator).display = True
+        self.post_message(self.SaveStarted(self))
         self.run_worker(self._save_item, thread=True)
 
     def action_cancel(self) -> None:  # pragma: no cover - simple UI
         self.reset_form()
         self.query_one("#validation_message", Static).update("Canceled")
+        self.post_message(self.Cancelled(self))
 
     def _save_item(self) -> None:
         """Worker method to perform database save."""
@@ -229,3 +252,4 @@ class ItemEntryForm(Static):
             self.reset_form()
         else:
             self.query_one("#validation_message", Static).update(f"Error: {message}")
+        self.post_message(self.SaveResult(self, success, message))
