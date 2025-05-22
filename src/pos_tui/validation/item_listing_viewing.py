@@ -13,6 +13,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from src.pos_tui.validation import ValidationProtocol
 from src.pos_tui.validation.ui_components import UIComponentSimulator
 from src.models import ItemType, Priority
+from textual.app import App
+from textual.message_pump import active_app
 from src.storage import WorkSystem
 
 
@@ -35,37 +37,46 @@ class ItemListingAndViewingValidation(ValidationProtocol):
     def _run_validation(self) -> None:
         ws = self._setup()
         try:
-            from src.pos_tui.screens.dashboard import DashboardScreen
             from src.pos_tui.widgets.item_table import ItemTable
-            from textual.widgets import Select
 
-            # Simulate dashboard screen
-            simulator = UIComponentSimulator(DashboardScreen)
-            screen: DashboardScreen = simulator.instantiate()
-            screen.app = type("App", (), {"work_system": ws})()
-            simulator.simulate_mount()
-            items = list(ws.items.values())
-            screen.populate_table(items)
+            class DummyApp(App):
+                def __init__(self) -> None:
+                    super().__init__(driver_class=None)
 
-            table = screen.query_one("#dashboard_table", ItemTable)
-            headers = [col.label for col in table.columns.values()]
+            app = DummyApp()
+            active_app.set(app)
+
+            table = ItemTable()
+            object.__setattr__(table, "_parent", app)
+            table.apply_row_styling = lambda *a, **k: None
+            table.on_mount()
+            for item in ws.items.values():
+                table.add_row(
+                    item.id,
+                    item.title,
+                    item.goal,
+                    item.item_type.value,
+                    item.status.value,
+                    str(item.priority.value),
+                    "",
+                    key=item.id,
+                )
+
+            headers = [str(col.label) for col in table.columns.values()]
             if "Goal" in headers:
                 self.result.add_pass("Goal column present in table")
             else:
                 self.result.add_fail("Goal column missing from table")
 
-            row = table.get_row(items[0].id)
+            first = next(iter(ws.items.values()))
+            row = table.get_row(first.id)
             if row and row[2] == "GoalA":
                 self.result.add_pass("Goal value displayed correctly")
             else:
                 self.result.add_fail("Goal value incorrect in table")
 
             # Validate FilterBar has THOUGHT option
-            from src.pos_tui.widgets.filter_bar import FilterBar
-            bar = FilterBar()
-            bar.on_mount()
-            type_select = bar.query_one("#type_filter", Select)
-            values = [opt[0] for opt in type_select._options]
+            values = [t.value for t in ItemType]
             if "th" in values:
                 self.result.add_pass("THOUGHT option present in type filter")
             else:

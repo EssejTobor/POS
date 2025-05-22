@@ -288,10 +288,16 @@ class ItemCreationValidation(ValidationProtocol):
 
 
 class ItemCreationViaFormValidation(ValidationProtocol):
-    """Validate that NewItemScreen passes form data correctly to ItemSaveWorker."""
+    """Validate the complete item creation flow via the form."""
 
     def __init__(self) -> None:
         super().__init__("item_creation_via_form")
+        self.temp_db: str | None = None
+
+    def _setup_temp_db(self) -> str:
+        temp = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
+        temp.close()
+        return temp.name
 
     def _run_validation(self) -> None:
         from src.pos_tui.screens.new_item import NewItemScreen
@@ -308,43 +314,145 @@ class ItemCreationViaFormValidation(ValidationProtocol):
                     return self.indicator
                 return super().query_one(selector, *a, **kw)
 
+        # Prepare temporary database and monkey patch WorkSystem to use it
+        self.temp_db = self._setup_temp_db()
+        original_ws_init = WorkSystem.__init__
+        temp_db = self.temp_db
+
+        def patched_init(self, storage_path: str = "work_items.db") -> None:
+            original_ws_init(self, temp_db)
+
+        WorkSystem.__init__ = patched_init
+
         screen = DummyScreen()
 
-        test_data = {
-            "goal": "FormGoal",
-            "title": "Form Item",
-            "item_type": ItemType.THOUGHT.value,
-            "priority": Priority.HI.value,
-            "status": ItemStatus.NOT_STARTED.value,
-            "description": "desc",
-            "tags": [],
-        }
+        item_types = [
+            ItemType.TASK,
+            ItemType.LEARNING,
+            ItemType.RESEARCH,
+            ItemType.THOUGHT,
+        ]
 
-        captured: dict[str, Any] = {}
-
-        def fake_start(self, **kwargs):
-            captured.update(kwargs)
-
-        original_start = ItemSaveWorker.start
-        ItemSaveWorker.start = fake_start
         try:
-            message = ItemEntryForm.ItemSubmitted(test_data, [])
-            import asyncio
-            asyncio.run(screen.on_item_entry_form_item_submitted(message))
+            for itype in item_types:
+                goal = f"Goal{itype.value}"
+                title = f"{itype.name} Item"
+                form_data = {
+                    "goal": goal,
+                    "title": title,
+                    "item_type": itype.value,
+                    "priority": Priority.MED.value,
+                    "status": ItemStatus.NOT_STARTED.value,
+                    "description": "desc",
+                    "tags": [],
+                }
+
+                # Simulate form collect_form_data
+                class MockInput:
+                    def __init__(self, value: str = "") -> None:
+                        self.value = value
+
+                class DummyForm(ItemEntryForm):
+                    def __init__(self) -> None:
+                        super().__init__()
+                        self.fields = {
+                            "#goal_field": MockInput(),
+                            "#title_field": MockInput(),
+                            "#type_field": MockInput(ItemType.TASK.value),
+                            "#priority_field": MockInput(str(Priority.MED.value)),
+                            "#status_field": MockInput(ItemStatus.NOT_STARTED.value),
+                            "#tags_field": MockInput(),
+                            "#description_field": MockInput(),
+                        }
+
+                    def query_one(self, selector: str, *_a, **_k):
+                        return self.fields[selector]
+
+                form = DummyForm()
+                form.query_one("#goal_field").value = goal
+                form.query_one("#title_field").value = title
+                form.query_one("#type_field").value = itype.value
+                form.query_one("#priority_field").value = str(Priority.MED.value)
+                form.query_one("#status_field").value = ItemStatus.NOT_STARTED.value
+                form.query_one("#description_field").value = "desc"
+
+                collected = form.collect_form_data()
+
+                if collected == form_data:
+                    self.result.add_pass(f"Form data collected for {itype.name}")
+                else:
+                    self.result.add_fail(
+                        f"Form data mismatch for {itype.name}: {collected}"
+                    )
+
+                captured: dict[str, Any] = {}
+
+                def fake_start(self, **kwargs):
+                    captured.update(kwargs)
+                    captured["result"] = ItemSaveWorker._run(self, **kwargs)
+
+                original_start = ItemSaveWorker.start
+                ItemSaveWorker.start = fake_start
+
+                try:
+                    message = ItemEntryForm.ItemSubmitted(collected, [])
+                    import asyncio
+
+                    asyncio.run(screen.on_item_entry_form_item_submitted(message))
+                finally:
+                    ItemSaveWorker.start = original_start
+
+                item_data = captured.get("item_data", {})
+
+                if item_data.get("goal") == goal:
+                    self.result.add_pass(f"Goal passed for {itype.name}")
+                else:
+                    self.result.add_fail(f"Goal missing for {itype.name}")
+
+                if item_data.get("item_type") == itype.value:
+                    self.result.add_pass(
+                        f"Item type {itype.name} passed correctly"
+                    )
+                else:
+                    self.result.add_fail(
+                        f"Item type {itype.name} not passed correctly"
+                    )
+
+                result = captured.get("result", {})
+                if result.get("success"):
+                    self.result.add_pass(f"ItemSaveWorker succeeded for {itype.name}")
+                else:
+                    self.result.add_fail(
+                        f"ItemSaveWorker failed for {itype.name}: {result.get('message')}"
+                    )
+
+                if itype == ItemType.THOUGHT:
+                    ws = WorkSystem(self.temp_db)
+                    created = next(
+                        (i for i in ws.items.values() if i.title == title), None
+                    )
+                    prefix = f"{goal[:2].lower()}th"
+                    if created and created.id.startswith(prefix):
+                        self.result.add_pass("Thought ID uses 'th' prefix")
+                    else:
+                        bad_id = created.id if created else "<missing>"
+                        self.result.add_fail(
+                            f"Thought ID prefix incorrect: {bad_id}"
+                        )
+
+            # Verify database contents via introspection
+            state = dump_database_state(self.temp_db)
+            if len(state["items"]) == len(item_types):
+                self.result.add_pass("All items saved to database")
+            else:
+                self.result.add_fail(
+                    f"Database item count {len(state['items'])} != {len(item_types)}"
+                )
         finally:
-            ItemSaveWorker.start = original_start
-
-        item_data = captured.get("item_data", {})
-
-        if item_data.get("goal") == test_data["goal"]:
-            self.result.add_pass("Goal passed to ItemSaveWorker")
-        else:
-            self.result.add_fail("Goal missing from ItemSaveWorker parameters")
-
-        if item_data.get("item_type") == ItemType.THOUGHT.value:
-            self.result.add_pass("Item type passed correctly to ItemSaveWorker")
-        else:
-            self.result.add_fail("Item type not passed correctly to ItemSaveWorker")
+            WorkSystem.__init__ = original_ws_init
+            if self.temp_db and os.path.exists(self.temp_db):
+                os.unlink(self.temp_db)
+                self.result.add_note(f"Removed temporary database {self.temp_db}")
 
 
 class ItemEditingValidation(ValidationProtocol):
