@@ -15,7 +15,7 @@ from typing import Dict, List, Any, Optional, Tuple
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from src.models import ItemType, Priority, ItemStatus
-from src.work_system import WorkSystem
+from src.storage import WorkSystem
 
 def dump_database_state(db_path: str, output_path: Optional[str] = None) -> Dict[str, Any]:
     """

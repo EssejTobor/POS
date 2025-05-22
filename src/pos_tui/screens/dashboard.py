@@ -1,21 +1,29 @@
 from textual.app import ComposeResult
 from textual.containers import Container
 from textual.widgets import Button, DataTable, LoadingIndicator, Static
-from ..widgets import (DashboardStatus, FilterBar, ItemDetailsModal,
-                       ItemFormModal, ItemTable)
+from ..widgets import (
+    DashboardStatus,
+    FilterBar,
+    ItemDetailsModal,
+    ItemFormModal,
+    ItemTable,
+    ConfirmModal,
+)
 from ...models import ItemStatus, WorkItem
-from ..widgets import FilterBar, ItemDetailsModal, ItemFormModal, ItemTable
 from ..workers import ItemFetchWorker
-from ..workers.db import ItemFetchWorker as DBItemFetchWorker
+from ..workers.db import ItemFetchWorker as DBItemFetchWorker, ItemSaveWorker
 
 
 
 class DashboardScreen(Container):
     """Screen displaying an overview of work items."""
 
+    last_deleted: tuple[WorkItem, int] | None = None
+
     BINDINGS = [
         ("r", "refresh", "Refresh Items"),
         ("n", "create", "New Item"),
+        ("u", "undo_delete", "Undo Delete"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -123,8 +131,60 @@ class DashboardScreen(Container):
     def on_item_table_delete_requested(
         self, event: ItemTable.DeleteRequested
     ) -> None:  # pragma: no cover - UI action
-        self.app.work_system.delete_item(event.item.id)
-        self.refresh()
+        modal = ConfirmModal(
+            f"Delete '{event.item.title}'?",
+            variant="danger",
+        )
+
+        def _on_result(result: bool) -> None:
+            if result:
+                self._perform_delete(event.item)
+
+        self.app.push_screen(modal, callback=_on_result)
+
+    def _perform_delete(self, item: WorkItem) -> None:
+        table = self.query_one(ItemTable)
+        if item in table._items:
+            index = table._items.index(item)
+        else:
+            index = -1
+
+        self.last_deleted = (item, index)
+
+        if item.id in self.app.work_system.items:
+            del self.app.work_system.items[item.id]
+
+        table.load_items(self.app.work_system.items.values())
+        self.query_one("#status_bar", Static).update("Item deleted. Press 'u' to undo.")
+
+        def op(conn):
+            self.app.work_system.db.delete_item(item.id)
+            return 1
+
+        worker = ItemSaveWorker(
+            "delete_item",
+            self.app,
+            self.app.connection_manager,
+            op,
+        )
+        self.app.schedule_worker(worker)
+
+    def action_undo_delete(self) -> None:  # pragma: no cover - simple UI
+        if not self.last_deleted:
+            return
+        item, index = self.last_deleted
+        try:
+            self.app.work_system.db.add_item(item)
+            self.app.work_system.items[item.id] = item
+        except Exception as e:  # pragma: no cover - basic error
+            self.query_one("#status_bar", Static).update(f"Undo failed: {e}")
+            self.last_deleted = None
+            return
+
+        table = self.query_one(ItemTable)
+        table.load_items(self.app.work_system.items.values())
+        self.query_one("#status_bar", Static).update("Undo successful")
+        self.last_deleted = None
 
     def _update_status_bar(self, items) -> None:
         from ...models import ItemStatus
