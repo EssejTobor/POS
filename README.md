@@ -33,3 +33,13 @@ POS is currently using Textual 3.2.0 for its interface (v0.4.0), with the legacy
 ## Documentation
 
 For detailed information about the project's scope and implementation strategy, see [Project Scope](docs/PROJECT_SCOPE.md).
+
+## Validation Runner
+
+Run built-in validation protocols from the command line:
+
+```bash
+python -m src.pos_tui.validation.run --all
+```
+
+Use `--list` to display protocols or `--protocol <name>` to run one.

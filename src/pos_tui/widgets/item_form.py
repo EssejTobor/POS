@@ -136,6 +136,7 @@ class ItemEntryForm(Container):
         self.errors: List[str] = []
         self.linked_items: List[Dict[str, str]] = []
         self.item_search_results: List[Dict[str, str]] = []
+        self._initial_data: Dict[str, Union[str, int, bool]] | None = None
     
     def compose(self) -> ComposeResult:
         """Compose the form layout."""
@@ -249,6 +250,7 @@ class ItemEntryForm(Container):
         """Handle the mount event to set up initial state."""
         # Hide the cancel button initially
         self.query_one("#cancel_btn").display = False
+        self._initial_data = None
         
         # Clear any previous linked items
         self.linked_items = []
@@ -283,6 +285,9 @@ class ItemEntryForm(Container):
         # Load linked items if this is an existing item
         if item.id:
             self.load_linked_items(item.id)
+
+        # Capture initial form data for dirty check
+        self._initial_data = self.collect_form_data()
     
     def load_linked_items(self, item_id: str) -> None:
         """Load linked items for an existing item."""
@@ -499,6 +504,13 @@ class ItemEntryForm(Container):
             "tags": tags,
             "description": description,
         }
+
+    def is_dirty(self) -> bool:
+        """Return True if form data differs from original edit data."""
+        if self._initial_data is None:
+            return False
+        current = self.collect_form_data()
+        return current != self._initial_data
     
     @on(Button.Pressed, "#submit_btn")
     def handle_submit(self) -> None:
@@ -527,6 +539,17 @@ class ItemEntryForm(Container):
     def handle_item_search(self, event: Input.Changed) -> None:
         """Handle changes to the item search field."""
         self.search_items(event.value)
+
+    @on(Input.Changed, "#title_field")
+    def _validate_title_live(self, event: Input.Changed) -> None:
+        """Live validation for the title field."""
+        if "Title is required" in self.errors and event.value:
+            self.validate_form()
+
+    @on(TextArea.Changed, "#description_field")
+    def _validate_description_live(self, event: TextArea.Changed) -> None:
+        if "Description is required" in self.errors and event.value:
+            self.validate_form()
     
     @on(Button.Pressed, "#add_link_btn")
     def handle_add_link(self) -> None:

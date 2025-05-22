@@ -356,9 +356,7 @@ class DashboardScreen(Screen):
     
     def _delete_item(self, item_id: str) -> None:
         """Delete the selected item after confirmation."""
-        from textual.screen import ModalScreen
-        from textual.containers import Center
-        from textual.widgets import Button, Static
+        from ..widgets import ConfirmModal
         
         # Get reference to the app and work system
         app = self.app
@@ -376,57 +374,8 @@ class DashboardScreen(Screen):
             self.notify("Item not found", severity="error")
             return
         
-        class DeleteConfirmationModal(ModalScreen):
-            """Modal screen for delete confirmation."""
-            
-            DEFAULT_CSS = """
-            #delete-confirmation {
-                width: 40;
-                height: auto;
-                padding: 1 2;
-                background: $surface;
-                border: tall $primary;
-            }
-            
-            #delete-confirmation Static {
-                width: 100%;
-                text-align: center;
-                margin-bottom: 1;
-            }
-            
-            #confirmation-buttons {
-                width: 100%;
-                height: auto;
-                align: center middle;
-            }
-            
-            #confirmation-buttons Button {
-                margin: 0 1;
-            }
-            """
-            
-            def __init__(self, item_id: str, original_item: WorkItem):
-                super().__init__()
-                self.item_id = item_id
-                self.original_item = original_item
-                
-            def compose(self) -> ComposeResult:
-                with Center():
-                    with Container(id="delete-confirmation"):
-                        yield Static("Are you sure you want to delete this item?")
-                        with Horizontal(id="confirmation-buttons"):
-                            yield Button("Cancel", variant="primary", id="cancel_btn")
-                            yield Button("Delete", variant="error", id="confirm_btn")
-                            
-            def on_button_pressed(self, event: Button.Pressed) -> None:
-                if event.button.id == "cancel_btn":
-                    self.dismiss(False)
-                elif event.button.id == "confirm_btn":
-                    # Dismiss the modal with True to indicate confirmation
-                    self.dismiss(True)
-        
         # Show the confirmation modal with callback
-        def handle_delete_confirmation(confirmed):
+        def handle_delete_confirmation(confirmed: bool) -> None:
             if confirmed:
                 # Get the dashboard screen and table
                 dashboard = self.app.query_one("DashboardScreen")
@@ -452,7 +401,7 @@ class DashboardScreen(Screen):
                 # Run the actual delete operation asynchronously
                 asyncio.create_task(dashboard._delete_item_async(item_id))
         
-        self.app.push_screen(DeleteConfirmationModal(item_id, original_item), callback=handle_delete_confirmation)
+        self.app.push_screen(ConfirmModal("Delete this item?", variant="danger"), callback=handle_delete_confirmation)
     
     async def _delete_item_async(self, item_id: str) -> None:
         """Delete an item from the database asynchronously."""
