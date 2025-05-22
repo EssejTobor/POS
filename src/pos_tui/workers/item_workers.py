@@ -185,7 +185,7 @@ class ItemSaveWorker(BaseWorker):
             with work_system._atomic_operation():
                 if item_id:
                     # Update existing item
-                    success = work_system.update_work_item(item_id, **item_data)
+                    success = work_system.update_item(item_id, **item_data)
                     if success:
                         # Get the updated item
                         item = work_system.get_work_item(item_id)
@@ -208,6 +208,7 @@ class ItemSaveWorker(BaseWorker):
                         }
                 else:
                     # Create new item
+                    goal = item_data.get("goal", "")
                     item_type = item_data.get("item_type", "task")
                     title = item_data.get("title", "")
                     description = item_data.get("description", "")
@@ -217,6 +218,7 @@ class ItemSaveWorker(BaseWorker):
                     
                     # Create new item
                     new_id = work_system.add_work_item(
+                        goal=goal,
                         item_type=item_type,
                         title=title,
                         description=description,

@@ -68,7 +68,7 @@ python -m src.pos_tui.validation.run item_editing
 
 ### UI Component Validations
 
-**Protocol Names**: `edit_modal`, `item_table`
+**Protocol Names**: `edit_modal`, `item_table`, `item_entry_form`
 
 **Description**: Validates UI components without rendering them
 
@@ -77,10 +77,11 @@ python -m src.pos_tui.validation.run item_editing
 - Lifecycle event handling
 - Method signatures and behavior
 - Message handling and event flow
+- Form data collection for ItemEntryForm
 
 **Usage**:
 ```bash
-python -m src.pos_tui.validation.run edit_modal item_table
+python -m src.pos_tui.validation.run edit_modal item_table item_entry_form
 ```
 
 ## Feature Validation Protocols
