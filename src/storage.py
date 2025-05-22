@@ -508,3 +508,7 @@ class WorkSystem:
 
         # Format for display: "ID - Title"
         return [f"{item.id} - {item.title[:40]}" for item in items]
+
+    def add_work_item(self, **kw):
+        """Alias for backward compatibility."""
+        return self.add_item(**kw)
