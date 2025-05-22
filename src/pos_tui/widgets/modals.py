@@ -27,7 +27,11 @@ class ConfirmModal(ModalScreen[bool]):
                 yield Button("No", id="no_button")
 
     def on_mount(self) -> None:
-        container = self.query_one("#confirm_container", Container)
+        try:
+            container = self.query_one("#confirm_container", Container)
+        except Exception:
+            # In headless validation there may be no DOM
+            return
         container.styles.opacity = 0
         container.styles.animate("opacity", 1.0, duration=0.4)
 
