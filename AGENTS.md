@@ -24,32 +24,57 @@ These rules apply to the entire repository unless a deeper `AGENTS.md` overrides
 
 ---
 
-## 2. "Crash-First" Testing Workflow  
+## 2. "First-Principles" Validation Workflow
 *No external test frameworks required.*
 
-1. **Launch the program** in a separate process:
+### Core Validation Principles
+
+1. **Self-Validating Scripts**:
+   - Use the built-in validation framework in `src/pos_tui/validation/`
+   - Each feature should have validation protocols in the appropriate module
+
+2. **Runtime Introspection**:
+   - Use `src/pos_tui/validation/introspect.py` for database inspection
+   - Compare system state before and after operations
+
+3. **UI Component Simulation**:
+   - Use `UIComponentSimulator` to validate UI components without rendering
+   - Verify properties, methods, and event handling
+
+### Running Validations
+
+The validation framework provides a command-line interface:
 ```bash
-   python -m pos_tui.app              # Textual UI
-   python -m src.cli add "demo" ...   # CLI examples
+# Run all validation protocols
+python -m src.pos_tui.validation.run
+
+# List available protocols
+python -m src.pos_tui.validation.run --list
+
+# Run specific protocols
+python -m src.pos_tui.validation.run item_editing edit_modal
 ```
 
-2. If it crashes, read the traceback **once**, patch the code, and rerun.
-   Repeat until the command exits with `0`.
-3. **Inline sanity checks** are encouraged:
+### Creating New Validation Protocols
 
-   ```python
-   # src/something.py
-   def _quick_check() -> None:
-       item = WorkSystem().add("title", "desc")
-       assert item.id.startswith("wk")
-   if __name__ == "__main__":
-       _quick_check()
-   ```
+To create a new validation protocol:
 
-   Running `python src/something.py` must finish silently.
+1. Create a new subclass of `ValidationProtocol`
+2. Implement the `_run_validation()` method
+3. Register the protocol in `src/pos_tui/validation/run.py`
 
-> Goal: leave the repo in a state where *real users* can run the main entry
-> points without exploding, even if no formal test suite exists.
+Example:
+```python
+from src.pos_tui.validation import ValidationProtocol
+
+class MyFeatureValidation(ValidationProtocol):
+    def __init__(self):
+        super().__init__("my_feature")
+    
+    def _run_validation(self) -> None:
+        # Implement validation logic
+        # Use self.result.add_pass(), self.result.add_fail(), etc.
+```
 
 ---
 
@@ -93,13 +118,15 @@ apply_patch <<'PATCH'
 *** End Patch
 PATCH
 
-# 2. Re-run the failing command
-python -m pos_tui.app          # or any CLI example
+# 2. Run validation protocols
+python -m src.pos_tui.validation.run
+
+# 3. Re-run the application
+python -m pos_tui.app
 # -> no crash? commit
 git commit -am "fix: remove stray debug print"
 
-# 3. Repeat
-
+# 4. Repeat
 ```
 ---
 
@@ -120,10 +147,10 @@ git commit -am "fix: remove stray debug print"
   * Update the "Phase X Status" and percentage in the summary table
   * Update the "Current Implementation Stage" and "Next Steps Priority" 
 * For each feature implementation:
-  * Create validation protocols that detail how to test the feature
-  * Document edge cases and expected behavior
-  * These protocols help ensure quality and make testing easier
+  * Create validation protocols that detail expected behavior
+  * Implement corresponding validation scripts in `src/pos_tui/validation/`
+  * Document validation results in `docs/validation_protocols.md`
 
-**Remember**: Documentation is as important as code. Keeping the checklist and validation protocols updated ensures everyone knows the project's status.
+**Remember**: Validation is as important as implementation. Every feature should have a corresponding validation protocol that can verify its functionality without relying on external frameworks.
 
 

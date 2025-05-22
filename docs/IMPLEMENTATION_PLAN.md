@@ -9,12 +9,12 @@ This plan reorganizes the Textual UI implementation into a sequential process wi
 1. Create directory structure for Textual UI:
    ```
    src/pos_tui/
-   +-- __init__.py
-   +-- app.py              # Main application entry point
-   +-- screens/            # Screen components
-   +-- widgets/            # Reusable UI components
-   +-- workers/            # Thread workers
-   +-- styles/             # CSS styles
+   ├── __init__.py
+   ├── app.py              # Main application entry point
+   ├── screens/            # Screen components
+   ├── widgets/            # Reusable UI components
+   ├── workers/            # Thread workers
+   └── styles/             # CSS styles
    ```
 2. Implement basic `POSApp` class in `app.py` with Textual boilerplate
 3. Create empty module files for core components
@@ -40,7 +40,6 @@ This plan reorganizes the Textual UI implementation into a sequential process wi
    - CSS loading from `styles/base.css`
 2. Add placeholder screens and basic navigation
 3. Create application entry point in `__main__.py`
-
 
 
 **Deliverable:** Running application shell with working database connection and thread management.

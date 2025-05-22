@@ -1,22 +1,73 @@
 # POS Application Validation Protocols
 
-This document outlines validation protocols for key features of the POS (Personal Operating System) application. These protocols provide structured approaches to verify that features work as expected without relying solely on automated tests.
+This document outlines validation protocols for key features of the POS (Personal Operating System) application. These protocols provide structured approaches to verify that features work correctly without relying on external testing frameworks.
 
 ## Purpose
 
 - Document expected behaviors for features
 - Provide consistent validation procedures
-- Enable quality verification by any team member
+- Enable quality verification using first-principles approach
 - Establish clear standards for feature acceptance
 
-## General Validation Approach
+## First-Principles Validation Approach
 
-When validating features in the POS application, follow these principles:
+The POS application uses a first-principles approach to validation that avoids external testing frameworks:
 
-1. **Focus on user-visible behavior** - Validate what affects users directly
-2. **Validate state synchronization** - Ensure UI and database remain consistent
-3. **Cover critical edge cases** - Address error handling and race conditions
-4. **Target specific implementation points** - Concentrate on one feature area at a time
+1. **Self-Validating Scripts** - Features are validated using scripts that verify their own results
+2. **System State Introspection** - Database and application state are examined before and after operations
+3. **UI Component Simulation** - UI components are validated by simulating their lifecycle and events
+4. **Result Documentation** - Validation results are captured, displayed, and stored for future reference
+
+## Running Validations
+
+The validation framework provides a command-line interface:
+
+```bash
+# Run all validation protocols
+python -m src.pos_tui.validation.run
+
+# List available protocols
+python -m src.pos_tui.validation.run --list
+
+# Run specific protocols
+python -m src.pos_tui.validation.run item_editing edit_modal item_table
+```
+
+## Available Validation Protocols
+
+### Item Management Validation
+
+**Protocol Name**: `item_editing`
+
+**Description**: Validates item editing, deletion, and optimistic UI update functionality
+
+**Key Validations**:
+- Basic item editing operations
+- Item deletion with proper cleanup
+- Optimistic UI update pattern with undo capability
+- Proper state management during operations
+
+**Usage**:
+```bash
+python -m src.pos_tui.validation.run item_editing
+```
+
+### UI Component Validations
+
+**Protocol Names**: `edit_modal`, `item_table`
+
+**Description**: Validates UI components without rendering them
+
+**Key Validations**:
+- Component instantiation and properties
+- Lifecycle event handling
+- Method signatures and behavior
+- Message handling and event flow
+
+**Usage**:
+```bash
+python -m src.pos_tui.validation.run edit_modal item_table
+```
 
 ## Feature Validation Protocols
 
@@ -24,150 +75,101 @@ When validating features in the POS application, follow these principles:
 
 **Feature Description**: The application updates the UI immediately upon edit or delete operations, without waiting for database operations to complete. Users can undo these actions via toast notifications.
 
-#### Essential Validation Scenarios
+#### Essential Behaviors to Validate
 
-##### 1. Edit Item Basic Flow
+1. **Edit Operation**:
+   - Item updates should be reflected immediately in the UI
+   - Database operations should happen asynchronously
+   - Toast notification should appear with "Undo" option
+   - Database should eventually reflect the changes
+
+2. **Delete Operation**:
+   - Item should be removed from the UI immediately 
+   - Database deletion should happen asynchronously
+   - Toast notification should appear with "Undo" option
+   - Database should eventually reflect the deletion
+
+3. **Undo Functionality**:
+   - Clicking "Undo" should revert UI changes
+   - Clicking "Undo" should revert database changes
+   - Confirmation notification should appear
+
+4. **Error Handling**:
+   - Database errors should be reported via notifications
+   - UI should refresh to match database state on errors
+
+#### Validation Strategy
+
+The `ItemEditingValidation` protocol in `src/pos_tui/validation/item_management.py` validates this feature by:
+
+1. Creating a temporary test database with sample items
+2. Performing edit operations and verifying results
+3. Performing delete operations and verifying results
+4. Simulating the optimistic update pattern and undo operations
+5. Verifying database state after each operation
+
+### UI Component Structure and Behavior
+
+**Feature Description**: UI components like EditItemModal and ItemTable provide essential functionality for the application interface.
+
+#### Essential Behaviors to Validate
+
+1. **EditItemModal Component**:
+   - Should store and display the item being edited
+   - Should provide form fields for all editable properties
+   - Should handle form submission and pass data to parent
+   - Should support cancellation of edits
+
+2. **ItemTable Component**:
+   - Should display item data in a tabular format
+   - Should provide cell update mechanism for optimistic UI updates
+   - Should emit appropriate messages for item selection/editing/deletion
+   - Should handle context menu and action button events
+
+#### Validation Strategy
+
+The `EditItemModalValidation` and `ItemTableValidation` protocols in `src/pos_tui/validation/ui_components.py` validate these components by:
+
+1. Using `UIComponentSimulator` to instantiate components
+2. Simulating component lifecycle events
+3. Verifying properties, methods, and message classes
+4. Simulating user interaction events
+5. Checking for appropriate responses to events
+
+## Adding New Validation Protocols
+
+To create a new validation protocol:
+
+1. Create a new subclass of `ValidationProtocol` in the appropriate module
+2. Implement the `_run_validation()` method with validation logic
+3. Register the protocol in `src/pos_tui/validation/run.py`
+4. Document the protocol in this file
+
+Example:
+```python
+class MyFeatureValidation(ValidationProtocol):
+    def __init__(self):
+        super().__init__("my_feature")
+    
+    def _run_validation(self) -> None:
+        # Implement validation logic
+        # Use self.result.add_pass(), self.result.add_fail(), etc.
 ```
-Scenario: Edit an item with immediate UI update
-Steps:
-1. Select an existing item in the dashboard table
-2. Click the edit button (✏️) or use context menu "Edit Item" option
-3. Modify at least one field (e.g., title, status)
-4. Click Submit
-
-Expected Results:
-- Table updates immediately, without page refresh
-- Toast notification appears with "Item updated successfully" message
-- Toast includes an "Undo" button
-- Database state reflects changes (check after toast disappears)
-```
-
-##### 2. Delete Item Basic Flow
-```
-Scenario: Delete an item with immediate UI update
-Steps:
-1. Select an existing item in the dashboard table
-2. Click the delete button or use context menu "Delete Item" option
-3. Confirm deletion in the confirmation modal
-
-Expected Results:
-- Item row disappears immediately from the table
-- Toast notification appears with "Item deleted" message
-- Toast includes an "Undo" button
-- Database no longer contains the item (check after toast disappears)
-```
-
-##### 3. Undo Operation Flow
-```
-Scenario: Revert an edit operation using undo
-Steps:
-1. Perform an edit as in Scenario 1
-2. Click the "Undo" button in the toast notification
-
-Expected Results:
-- Table immediately reverts to show original values
-- "Edit undone" notification briefly appears
-- Database state reflects original values
-```
-
-##### 4. Edge Case: Network/Database Error Handling
-```
-Scenario: System handles database errors gracefully
-Steps:
-1. [For testing purposes only] Temporarily modify _update_item_async or 
-   _delete_item_async to raise an exception
-2. Perform an edit or delete operation
-
-Expected Results:
-- Error notification appears
-- Table refreshes to show accurate data from database
-- System remains in a usable state
-```
-
-#### Validation Checklist
-
-- [ ] Edit operation updates UI immediately
-- [ ] Delete operation updates UI immediately
-- [ ] Undo edit operation restores original state
-- [ ] Undo delete operation restores deleted item
-- [ ] Error handling works as expected
-- [ ] All operations reflect correctly in the database after completion
-
----
-
-### [Additional Feature Protocol Template]
-
-**Feature Description**: Brief description of the feature.
-
-#### Essential Validation Scenarios
-
-##### 1. Basic Flow
-```
-Scenario: Description
-Steps:
-1. Step 1
-2. Step 2
-...
-
-Expected Results:
-- Result 1
-- Result 2
-...
-```
-
-##### 2. Alternative Flows
-```
-Scenario: Description
-Steps:
-1. Step 1
-2. Step 2
-...
-
-Expected Results:
-- Result 1
-- Result 2
-...
-```
-
-##### 3. Edge Cases
-```
-Scenario: Description
-Steps:
-1. Step 1
-2. Step 2
-...
-
-Expected Results:
-- Result 1
-- Result 2
-...
-```
-
-#### Validation Checklist
-
-- [ ] Check 1
-- [ ] Check 2
-- [ ] Check 3
 
 ## Validation Result Documentation
 
-When completing a validation procedure, document your findings:
+Validation results are automatically saved to `data/validation_results/` in JSON format:
 
 ```
-Validation Report: [Feature Name]
-Date: YYYY-MM-DD
-Validator: [Name]
+{
+  "name": "item_editing",
+  "timestamp": "2023-05-15T14:30:22.123456",
+  "success": true,
+  "passed": ["Item title updated successfully", ...],
+  "failed": [],
+  "warnings": ["Consider optimizing database lookup"],
+  "notes": ["Created temporary database", ...]
+}
+```
 
-Results:
-- [Pass/Fail] Scenario 1
-- [Pass/Fail] Scenario 2
-...
-
-Issues Identified:
-1. [Issue description]
-2. [Issue description]
-...
-
-Notes:
-[Any additional observations]
-``` 
+These results can be reviewed to track validation history and identify areas for improvement. 
