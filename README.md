@@ -20,6 +20,20 @@ POS is designed to help track work items, goals, and thoughts through an interac
 2. Install dependencies: `pip install -r requirements.txt`
 3. Launch the application: `python main.py`
 
+## Running Validation Protocols
+
+The project includes a self-validating framework to verify feature behavior. You can run all available validations or target specific protocols using the console script:
+
+```bash
+# Run every protocol
+python -m src.pos_tui.validation.run
+
+# Run a subset of protocols
+python -m src.pos_tui.validation.run item_editing edit_modal
+```
+
+Results are written to `data/validation_results/` in JSON format. See [docs/validation_protocols.md](docs/validation_protocols.md) for details.
+
 ## Project Structure
 
 - `src/` - Core application code 
