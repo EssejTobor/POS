@@ -1,192 +1,197 @@
 """
-Validation runner for the POS application.
+Runner for validation protocols.
 
-This script runs all validation protocols and reports the results.
+Provides CLI utilities for running validation protocols.
 """
 
+import argparse
 import os
 import sys
-import argparse
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-# Add parent directory to path to allow imports
+# Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from src.pos_tui.validation import ValidationResult, enable_validation_mode
-from src.pos_tui.validation.item_management import ItemEditingValidation
-from src.pos_tui.validation.ui_components import (
-    EditItemModalValidation,
-    ItemTableValidation,
-    ConfirmModalValidation,
-    DetailScreenValidation,
+from src.pos_tui.validation import (
+    ValidationProtocol,
+    ItemCreationValidation,
+    ItemEditingValidation,
+    OptimisticUIValidation,
+    UIComponentsValidation,
+    LinkManagementValidation,
+    LinkNavigationValidation
 )
-from src.pos_tui.validation.link_widget import LinkedItemsWidgetValidation
-from src.pos_tui.validation.links import LinkValidation
-from src.pos_tui.validation.link_tree import LinkTreeValidation
-from src.pos_tui.validation.navigation import NavigationValidation
-from src.pos_tui.validation.usability import UsabilityValidation
-from src.pos_tui.validation.filter_bar import FilterBarValidation
-
-from src.pos_tui.validation.command_palette import CommandPaletteValidation
 
 
-
-def run_selected_validations(validation_names: List[str] = None) -> Dict[str, ValidationResult]:
+def get_available_protocols() -> Dict[str, ValidationProtocol]:
+    """Get all available validation protocols.
+    
+    Returns:
+        Dictionary mapping protocol names to protocol instances
     """
-    Run selected validation protocols.
+    return {
+        "item_creation": ItemCreationValidation(),
+        "item_editing": ItemEditingValidation(),
+        "optimistic_ui": OptimisticUIValidation(),
+        "ui_components": UIComponentsValidation(),
+        "link_management": LinkManagementValidation(),
+        "link_navigation": LinkNavigationValidation(),
+    }
+
+
+def run_protocol(protocol_name: str) -> bool:
+    """Run a specific validation protocol.
     
     Args:
-        validation_names: List of validation protocol names to run. If None, run all.
+        protocol_name: Name of the protocol to run
         
     Returns:
-        Dictionary of validation results keyed by validation name
+        True if the protocol passed, False otherwise
     """
-    # Available validation protocols
-    validation_protocols = {
-        "item_editing": ItemEditingValidation,
-        "edit_modal": EditItemModalValidation,
-        "item_table": ItemTableValidation,
-        "confirm_modal": ConfirmModalValidation,
-        "detail_screen": DetailScreenValidation,
-        "linked_items_widget": LinkedItemsWidgetValidation,
-        "link_validation": LinkValidation,
-        "link_tree": LinkTreeValidation,
-        "navigation_validation": NavigationValidation,
-        "usability": UsabilityValidation,
-        "filter_bar": FilterBarValidation,
-        "command_palette": CommandPaletteValidation,
-
-        # Add more validation protocols here as they are implemented
-    }
+    protocols = get_available_protocols()
     
-    # Filter protocols by name if specified
-    if validation_names:
-        protocols_to_run = {name: protocol for name, protocol in validation_protocols.items() 
-                            if name in validation_names}
-    else:
-        protocols_to_run = validation_protocols
+    if protocol_name not in protocols:
+        print(f"Error: Protocol '{protocol_name}' not found")
+        print(f"Available protocols: {', '.join(protocols.keys())}")
+        return False
     
-    if not protocols_to_run:
-        print(f"Error: No matching validation protocols found. Available: {', '.join(validation_protocols.keys())}")
-        return {}
+    protocol = protocols[protocol_name]
+    print(f"Running validation protocol: {protocol_name}")
     
-    # Enable validation mode
-    enable_validation_mode()
+    # Run the protocol
+    result = protocol.run()
+    protocol.print_results()
     
-    # Run each protocol and collect results
-    results = {}
-    for name, protocol_class in protocols_to_run.items():
-        print(f"\n{'='*20} Running {name} validation {'='*20}\n")
-        
-        # Instantiate and run the protocol
-        protocol = protocol_class()
-        result = protocol.validate()
-        
-        results[name] = result
+    # Save results
+    result_path = protocol.save_results()
+    print(f"Results saved to: {result_path}")
     
-    return results
+    return result.passed
 
 
-def summarize_results(results: Dict[str, ValidationResult]) -> None:
+def run_all_protocols() -> bool:
+    """Run all validation protocols.
+    
+    Returns:
+        True if all protocols passed, False otherwise
     """
-    Print a summary of all validation results.
+    protocols = get_available_protocols()
+    all_passed = True
+    
+    for name, protocol in protocols.items():
+        print(f"\n\nRunning validation protocol: {name}")
+        print("=" * 60)
+        
+        # Run the protocol
+        result = protocol.run()
+        protocol.print_results()
+        
+        # Save results
+        result_path = protocol.save_results()
+        print(f"Results saved to: {result_path}")
+        
+        # Update overall pass/fail status
+        if not result.passed:
+            all_passed = False
+    
+    return all_passed
+
+
+def run_protocol_group(group_name: str) -> bool:
+    """Run a group of related validation protocols.
     
     Args:
-        results: Dictionary of validation results
+        group_name: Name of the protocol group to run
+        
+    Returns:
+        True if all protocols in the group passed, False otherwise
     """
-    if not results:
-        print("\nNo validation results to summarize.")
-        return
+    # Define protocol groups
+    groups = {
+        "item": ["item_creation", "item_editing", "optimistic_ui"],
+        "ui": ["ui_components"],
+        "links": ["link_management", "link_navigation"],
+    }
     
-    print("\n" + "="*80)
-    print(f"VALIDATION SUMMARY ({len(results)} protocols)")
-    print("="*80)
+    if group_name not in groups:
+        print(f"Error: Group '{group_name}' not found")
+        print(f"Available groups: {', '.join(groups.keys())}")
+        return False
     
-    # Count overall statistics
-    total_pass = 0
-    total_fail = 0
-    total_warn = 0
+    protocols = get_available_protocols()
+    all_passed = True
     
-    for name, result in results.items():
-        total_pass += len(result.passed)
-        total_fail += len(result.failed)
-        total_warn += len(result.warnings)
+    for protocol_name in groups[group_name]:
+        if protocol_name not in protocols:
+            print(f"Warning: Protocol '{protocol_name}' not found in available protocols")
+            continue
+        
+        print(f"\n\nRunning validation protocol: {protocol_name}")
+        print("=" * 60)
+        
+        # Run the protocol
+        protocol = protocols[protocol_name]
+        result = protocol.run()
+        protocol.print_results()
+        
+        # Save results
+        result_path = protocol.save_results()
+        print(f"Results saved to: {result_path}")
+        
+        # Update overall pass/fail status
+        if not result.passed:
+            all_passed = False
     
-    # Print summary table
-    print(f"\nTotal checks: {total_pass + total_fail}")
-    print(f"Passed: {total_pass}")
-    print(f"Failed: {total_fail}")
-    print(f"Warnings: {total_warn}")
-    
-    # Print status of each validation
-    print("\nProtocol Status:")
-    print("-"*80)
-    print(f"{'Protocol':<30} {'Status':<10} {'Pass':<8} {'Fail':<8} {'Warn':<8}")
-    print("-"*80)
-    
-    for name, result in results.items():
-        status = "SUCCESS" if result.success else "FAILURE"
-        print(f"{name:<30} {status:<10} {len(result.passed):<8} {len(result.failed):<8} {len(result.warnings):<8}")
-    
-    # Print failure details if any
-    failures = [(name, fail) for name, result in results.items() 
-                for fail in result.failed]
-    
-    if failures:
-        print("\nFailure Details:")
-        print("-"*80)
-        for name, failure in failures:
-            print(f"[{name}] {failure}")
-    
-    print("\n" + "="*80)
-    print(f"OVERALL STATUS: {'SUCCESS' if total_fail == 0 else 'FAILURE'}")
-    print("="*80)
+    return all_passed
 
 
 def main() -> int:
-    """
-    Run the validation protocols specified by command line arguments.
+    """Run validation protocols based on command line arguments.
     
     Returns:
-        Exit code (0 for success, 1 for failures)
+        Exit code (0 for success, non-zero for failure)
     """
-    parser = argparse.ArgumentParser(description="Run validation protocols for the POS application")
-    parser.add_argument("protocols", nargs="*", help="Specific protocols to run (default: all)")
-    parser.add_argument("--list", action="store_true", help="List available validation protocols")
+    parser = argparse.ArgumentParser(description="Run validation protocols for POS TUI")
+    
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--all", action="store_true", help="Run all validation protocols")
+    group.add_argument("--protocol", type=str, help="Run a specific validation protocol")
+    group.add_argument("--group", type=str, help="Run a group of related validation protocols")
+    group.add_argument("--list", action="store_true", help="List available protocols and groups")
+    
     args = parser.parse_args()
     
-    # List available protocols if requested
     if args.list:
-        # This matches the protocols defined in run_selected_validations
-        available_protocols = [
-            "item_editing",
-            "edit_modal",
-            "item_table",
-            "confirm_modal",
-            "detail_screen",
-            "linked_items_widget",
-            "link_validation",
-            "link_tree",
-            "navigation_validation",
-            "filter_bar",
-            "command_palette",
-            # Add more as implemented
-        ]
+        protocols = get_available_protocols()
+        groups = {
+            "item": ["item_creation", "item_editing", "optimistic_ui"],
+            "ui": ["ui_components"],
+            "links": ["link_management", "link_navigation"],
+        }
         
-        print("Available validation protocols:")
-        for protocol in available_protocols:
-            print(f"  - {protocol}")
+        print("Available Validation Protocols:")
+        for name in protocols.keys():
+            print(f"  - {name}")
+        
+        print("\nAvailable Protocol Groups:")
+        for name, protocols in groups.items():
+            print(f"  - {name}: {', '.join(protocols)}")
+        
         return 0
     
-    # Run validations
-    results = run_selected_validations(args.protocols if args.protocols else None)
+    if args.all:
+        success = run_all_protocols()
+    elif args.protocol:
+        success = run_protocol(args.protocol)
+    elif args.group:
+        success = run_protocol_group(args.group)
+    else:
+        # This should not happen due to required=True
+        print("Error: No action specified")
+        return 1
     
-    # Summarize results
-    summarize_results(results)
-    
-    # Return success if all validations passed
-    return 0 if all(result.success for result in results.values()) else 1
+    return 0 if success else 1
 
 
 if __name__ == "__main__":

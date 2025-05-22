@@ -4,30 +4,6 @@ Screen {
     background: $surface;
 }
 
-DashboardScreen {
-    layout: grid;
-    grid-size: 1 4;
-    grid-rows: auto auto 1fr auto;
-    height: 1fr;
-}
-
-#dashboard_header {
-    layout: horizontal;
-    padding: 0 1;
-    height: auto;
-    background: $boost;
-}
-
-#dashboard_title {
-    width: 1fr;
-}
-
-#dashboard_footer {
-    padding: 0 1;
-    height: auto;
-    background: $boost;
-}
-
 TabbedContent {
     width: 100%;
     height: 1fr;
@@ -51,73 +27,32 @@ Footer {
     height: 1;
 }
 
-#filter_bar {
-    layout: horizontal;
-    padding: 0 1;
-    height: auto;
-    background: $boost;
-}
-
-#filter_bar Input {
-    width: 1fr;
-}
-
-.error {
-    border: heavy $error;
-}
-
-#command_palette {
-    display: none;
-    background: $panel;
-    width: 60%;
-    height: 40%;
-    margin: 2 2;
-    layout: vertical;
-    dock: top;
-}
-
-#dashboard_status {
-    height: auto;
-    padding: 0 1;
-    background: $boost;
-}
-
-/* --------------------------------------------------------------
-   Confirm Modal styles
-   -------------------------------------------------------------- */
-#confirm_container {
-    width: 50%;
-    padding: 1 2;
-    background: $panel;
-    border: round $warning;
-    layout: vertical;
-    align: center middle;
-}
-
-#confirm_container.danger {
-    border: round $error;
-}
-
-#confirm_buttons {
-    layout: horizontal;
+/* Dashboard screen styles */
+#dashboard-content {
     width: 100%;
-    align-horizontal: center;
-    padding-top: 1;
+    height: 100%;
+    layout: vertical;
 }
 
-/* --------------------------------------------------------------
-   Toast Notification styles
-   -------------------------------------------------------------- */
-#toast_container {
-    width: 40%;
-    padding: 1 2;
-    background: $boost;
-    border: round $primary;
-    layout: horizontal;
-    align-horizontal: center;
-    align-vertical: middle;
+#action_buttons {
+    dock: bottom;
+    height: 3;
+    background: $panel;
+    padding: 1;
 }
 
-#toast_container Button {
-    margin-left: 1;
+#status_message {
+    dock: bottom;
+    height: 1;
+    color: $text-muted;
+    text-align: center;
+    background: $panel-darken-1;
 }
+
+Button {
+    margin: 0 1 0 0;
+}
+
+#loading_indicator {
+    align: center middle;
+} 

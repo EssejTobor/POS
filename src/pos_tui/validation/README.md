@@ -11,6 +11,18 @@ The validation framework is built on these key principles:
 3. **Simulation** - Validating UI components by simulating their lifecycle and events
 4. **Documentation** - Capturing and storing validation results for future reference
 
+## IMPORTANT: Global Testing Strategy
+
+**This first-principles validation framework is the ONLY testing approach for the entire project:**
+
+- It replaces ALL testing approaches across ALL phases of the project
+- No external testing frameworks (pytest, unittest, etc.) should be used
+- All features (existing and new) must be validated using this framework
+- Any references to "tests" or "testing" in project documentation refer to this approach
+- Existing features should be gradually migrated to this approach as they are modified
+
+All contributors must use this validation framework exclusively for testing any aspect of the application.
+
 ## Getting Started
 
 ### Running Validations

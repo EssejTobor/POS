@@ -1,7 +1,7 @@
 # requirements-3.12.txt - Essential dependencies for POS application
 
 # Core dependencies
-textual==2.1.2            # TUI framework
+textual==3.2.0            # TUI framework
 rich==13.9.4              # Terminal formatting
 typing_extensions==4.12.2  # Type hints
 colorama==0.4.6           # Cross-platform terminal colors (used by rich)

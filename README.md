@@ -1,6 +1,6 @@
 # Personal Operating System (POS)
 
-A terminal-based personal task and knowledge management system built with Python and the Textual framework.
+A terminal-based personal task and knowledge management system built with Python and the Textual framework (v3.2.0).
 
 ## Overview
 
@@ -13,28 +13,12 @@ POS is designed to help track work items, goals, and thoughts through an interac
 - Visualize thought hierarchies and evolution
 - Filter and search across your knowledge base
 - Navigate efficiently using keyboard shortcuts and command palette
-- Toggle between light and dark themes
-- View a keyboard shortcut reference screen
 
 ## Getting Started
 
 1. Clone the repository
 2. Install dependencies: `pip install -r requirements.txt`
 3. Launch the application: `python main.py`
-
-## Running Validation Protocols
-
-The project includes a self-validating framework to verify feature behavior. You can run all available validations or target specific protocols using the console script:
-
-```bash
-# Run every protocol
-python -m src.pos_tui.validation.run
-
-# Run a subset of protocols
-python -m src.pos_tui.validation.run item_editing edit_modal
-```
-
-Results are written to `data/validation_results/` in JSON format. See [docs/validation_protocols.md](docs/validation_protocols.md) for details.
 
 ## Project Structure
 
@@ -44,7 +28,7 @@ Results are written to `data/validation_results/` in JSON format. See [docs/vali
 
 ## Project Status
 
-POS is currently transitioning to a Textual-first interface (v0.2.0), with the legacy CLI functionality being deprecated.
+POS is currently using Textual 3.2.0 for its interface (v0.4.0), with the legacy CLI functionality deprecated.
 
 ## Documentation
 

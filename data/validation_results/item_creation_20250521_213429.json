@@ -1,0 +1,15 @@
+{
+  "name": "item_creation",
+  "timestamp": "2025-05-21T21:34:29.822417",
+  "success": false,
+  "passed": [],
+  "failed": [
+    "Validation protocol threw an exception: type object 'Priority' has no attribute 'HIGH'"
+  ],
+  "warnings": [],
+  "notes": [
+    "Created temporary database at C:\\Users\\Jesse\\AppData\\Local\\Temp\\tmpw6uv85nl.db",
+    "Removed temporary database at C:\\Users\\Jesse\\AppData\\Local\\Temp\\tmpw6uv85nl.db",
+    "Exception traceback: Traceback (most recent call last):\n  File \"C:\\Programming\\POS2\\src\\pos_tui\\validation\\__init__.py\", line 133, in validate\n    self._run_validation()\n    ~~~~~~~~~~~~~~~~~~~~^^\n  File \"C:\\Programming\\POS2\\src\\pos_tui\\validation\\item_management.py\", line 49, in _run_validation\n    self._validate_create_task()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"C:\\Programming\\POS2\\src\\pos_tui\\validation\\item_management.py\", line 79, in _validate_create_task\n    \"priority\": Priority.HIGH,\n                ^^^^^^^^^^^^^\nAttributeError: type object 'Priority' has no attribute 'HIGH'\n"
+  ]
+}

@@ -1,0 +1,55 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Implementation Checklist Rule
+
+This rule ensures that the Textual UI Implementation Checklist is maintained and updated throughout development.
+
+## Checklist Maintenance Guidelines
+
+1. **Before Implementing Features**:
+   - Review the current implementation status in `docs/checklist.md`
+   - Identify which phase and features you're about to work on
+   - Update the checklist to mark "in progress" items if applicable
+
+2. **After Implementing Features**:
+   - Update `docs/checklist.md` to mark completed items
+   - Adjust progress percentages in the summary table
+   - Document any deviations from the original implementation plan
+
+3. **When Creating Pull Requests**:
+   - Include updates to the checklist as part of your PR
+   - Ensure the checklist accurately reflects the work completed
+
+## Checklist Structure
+
+The checklist follows the same 6-phase structure as the Implementation Plan:
+
+1. Core Infrastructure
+2. Basic Item Display
+3. Item Management
+4. Item Relationships
+5. Advanced Visualization
+6. Navigation and Usability
+
+## Checklist Status Legend
+
+- `[ ]` - Not started
+- `[x]` - Completed
+- `[-]` - Partially implemented or in progress
+
+## Required Documentation Updates
+
+When implementing features, always update:
+1. `docs/checklist.md` - Mark completed items
+2. `CHANGELOG.md` - Document new features or changes
+3. `PROJECT_SCOPE.md` - Update if architectural changes occur
+
+## Notes for Cursor AI
+
+- Always check and update the checklist when working on Textual UI components
+- Suggest updating the checklist file when advising on implementation tasks
+- Reference the current implementation status when planning next steps
+

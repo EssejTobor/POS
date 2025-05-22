@@ -1,0 +1,21 @@
+{
+  "name": "item_editing",
+  "timestamp": "2025-05-21T21:44:27.280683",
+  "success": false,
+  "passed": [
+    "Item title updated successfully to 'Edited: Test Task 1'",
+    "Item status updated successfully to 'IN_PROGRESS'",
+    "Unmodified field 'item_type' preserved correctly",
+    "Unmodified field 'description' preserved correctly",
+    "Unmodified field 'priority' preserved correctly"
+  ],
+  "failed": [
+    "Validation protocol threw an exception: 'WorkSystem' object has no attribute 'delete_item'"
+  ],
+  "warnings": [],
+  "notes": [
+    "Created temporary database at C:\\Users\\Jesse\\AppData\\Local\\Temp\\tmpvruqmppu.db with 3 items",
+    "Removed temporary database at C:\\Users\\Jesse\\AppData\\Local\\Temp\\tmpvruqmppu.db",
+    "Exception traceback: Traceback (most recent call last):\n  File \"C:\\Programming\\POS2\\src\\pos_tui\\validation\\__init__.py\", line 133, in validate\n    self._run_validation()\n    ~~~~~~~~~~~~~~~~~~~~^^\n  File \"C:\\Programming\\POS2\\src\\pos_tui\\validation\\item_management.py\", line 359, in _run_validation\n    self._validate_delete_operation()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"C:\\Programming\\POS2\\src\\pos_tui\\validation\\item_management.py\", line 443, in _validate_delete_operation\n    ws.delete_item(item_id)\n    ^^^^^^^^^^^^^^\nAttributeError: 'WorkSystem' object has no attribute 'delete_item'. Did you mean: 'update_item'?\n"
+  ]
+}

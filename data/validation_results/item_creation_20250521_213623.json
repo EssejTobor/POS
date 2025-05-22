@@ -1,0 +1,15 @@
+{
+  "name": "item_creation",
+  "timestamp": "2025-05-21T21:36:23.170749",
+  "success": false,
+  "passed": [],
+  "failed": [
+    "Validation protocol threw an exception: WorkSystem.add_item() got an unexpected keyword argument 'status'"
+  ],
+  "warnings": [],
+  "notes": [
+    "Created temporary database at C:\\Users\\Jesse\\AppData\\Local\\Temp\\tmplhrokkog.db",
+    "Removed temporary database at C:\\Users\\Jesse\\AppData\\Local\\Temp\\tmplhrokkog.db",
+    "Exception traceback: Traceback (most recent call last):\n  File \"C:\\Programming\\POS2\\src\\pos_tui\\validation\\__init__.py\", line 133, in validate\n    self._run_validation()\n    ~~~~~~~~~~~~~~~~~~~~^^\n  File \"C:\\Programming\\POS2\\src\\pos_tui\\validation\\item_management.py\", line 49, in _run_validation\n    self._validate_create_task()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"C:\\Programming\\POS2\\src\\pos_tui\\validation\\item_management.py\", line 84, in _validate_create_task\n    task = ws.add_item(\n        title=task_data[\"title\"],\n    ...<4 lines>...\n        tags=task_data[\"tags\"]\n    )\nTypeError: WorkSystem.add_item() got an unexpected keyword argument 'status'\n"
+  ]
+}

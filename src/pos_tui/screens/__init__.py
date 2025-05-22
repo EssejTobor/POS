@@ -8,13 +8,13 @@ This module contains the main screens used in the POS application.
 from .dashboard import DashboardScreen
 from .link_tree import LinkTreeScreen
 from .new_item import NewItemScreen
-from .detail import ItemDetailScreen
-from .shortcuts import ShortcutHelpScreen
+from .shortcuts import ShortcutsScreen
+from .debug_screen import DebugScreen
 
 __all__: list[str] = [
     "DashboardScreen",
     "NewItemScreen",
     "LinkTreeScreen",
-    "ItemDetailScreen",
-    "ShortcutHelpScreen",
+    "ShortcutsScreen",
+    "DebugScreen",
 ]

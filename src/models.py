@@ -86,6 +86,15 @@ class Priority(Enum):
     HI = 3  # High urgency/importance - critical items
 
 
+class LinkType(Enum):
+    """Defines the types of relationships between work items"""
+    
+    REFERENCES = "references"  # Basic connection between items
+    EVOLVES_FROM = "evolves-from"  # Shows thought evolution
+    INSPIRED_BY = "inspired-by"  # Influence without direct evolution
+    PARENT_CHILD = "parent-child"  # Hierarchical relationship
+
+
 class WorkItem(BaseModel):
     """
     Core data structure representing a single work item.

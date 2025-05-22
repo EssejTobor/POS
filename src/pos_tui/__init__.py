@@ -7,6 +7,5 @@ interacting with the POS functionality.
 """
 
 from .app import POSTUI
-from .commands import Command, CommandRegistry
 
-__all__ = ["POSTUI", "CommandRegistry", "Command"]
+__all__ = ["POSTUI"]

@@ -1,0 +1,13 @@
+{
+  "name": "item_editing",
+  "timestamp": "2025-05-21T21:36:23.237928",
+  "success": false,
+  "passed": [],
+  "failed": [
+    "Validation protocol threw an exception: WorkSystem.add_item() got an unexpected keyword argument 'status'"
+  ],
+  "warnings": [],
+  "notes": [
+    "Exception traceback: Traceback (most recent call last):\n  File \"C:\\Programming\\POS2\\src\\pos_tui\\validation\\__init__.py\", line 133, in validate\n    self._run_validation()\n    ~~~~~~~~~~~~~~~~~~~~^^\n  File \"C:\\Programming\\POS2\\src\\pos_tui\\validation\\item_management.py\", line 353, in _run_validation\n    self.temp_db = self._setup_test_db()\n                   ~~~~~~~~~~~~~~~~~~~^^\n  File \"C:\\Programming\\POS2\\src\\pos_tui\\validation\\item_management.py\", line 333, in _setup_test_db\n    item = ws.add_item(\n        title=item_data[\"title\"],\n    ...<3 lines>...\n        status=item_data[\"status\"]\n    )\nTypeError: WorkSystem.add_item() got an unexpected keyword argument 'status'\n"
+  ]
+}

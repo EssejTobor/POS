@@ -1,8 +1,9 @@
 """
-Validation framework for the POS application.
+First-principles validation framework for POS TUI.
 
-This module provides a first-principles approach to code validation
-without relying on external testing frameworks.
+This module provides a validation framework for TUI components that
+verifies functionality through first-principles testing rather than
+using external testing frameworks.
 """
 
 import os
@@ -12,6 +13,7 @@ import logging
 from typing import Dict, List, Any, Callable, Optional, Union, Tuple
 from datetime import datetime
 from pathlib import Path
+import time
 
 # Setup logging
 logging.basicConfig(
@@ -34,115 +36,183 @@ VALIDATION_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 class ValidationResult:
     """Container for validation results."""
     
-    def __init__(self, name: str):
-        self.name = name
-        self.timestamp = datetime.now()
-        self.passed: List[str] = []
-        self.failed: List[str] = []
-        self.warnings: List[str] = []
+    def __init__(self):
+        """Initialize the validation result container."""
+        self.passes: List[str] = []
+        self.failures: List[str] = []
         self.notes: List[str] = []
-    
-    @property
-    def success(self) -> bool:
-        """Return True if validation passed without failures."""
-        return len(self.failed) == 0
+        self.start_time: Optional[float] = None
+        self.end_time: Optional[float] = None
     
     def add_pass(self, message: str) -> None:
-        """Add a passed check."""
-        self.passed.append(message)
-        logger.info(f"✓ PASS: {message}")
+        """Add a passing test result."""
+        self.passes.append(message)
     
     def add_fail(self, message: str) -> None:
-        """Add a failed check."""
-        self.failed.append(message)
-        logger.error(f"✗ FAIL: {message}")
-    
-    def add_warning(self, message: str) -> None:
-        """Add a warning."""
-        self.warnings.append(message)
-        logger.warning(f"⚠ WARNING: {message}")
+        """Add a failing test result."""
+        self.failures.append(message)
     
     def add_note(self, message: str) -> None:
-        """Add a note."""
+        """Add a note about the test execution."""
         self.notes.append(message)
-        logger.info(f"ℹ NOTE: {message}")
     
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert the result to a dictionary."""
+    def start_timer(self) -> None:
+        """Start timing the validation."""
+        self.start_time = time.time()
+    
+    def stop_timer(self) -> None:
+        """Stop timing the validation."""
+        self.end_time = time.time()
+    
+    @property
+    def duration(self) -> float:
+        """Get the duration of the validation in seconds."""
+        if self.start_time is None or self.end_time is None:
+            return 0.0
+        return self.end_time - self.start_time
+    
+    @property
+    def passed(self) -> bool:
+        """Check if the validation passed (no failures)."""
+        return len(self.failures) == 0
+    
+    @property
+    def summary(self) -> Dict[str, Any]:
+        """Get a summary of the validation results."""
         return {
-            "name": self.name,
-            "timestamp": self.timestamp.isoformat(),
-            "success": self.success,
             "passed": self.passed,
-            "failed": self.failed,
-            "warnings": self.warnings,
-            "notes": self.notes,
+            "pass_count": len(self.passes),
+            "fail_count": len(self.failures),
+            "duration": self.duration,
+            "timestamp": datetime.datetime.now().isoformat()
         }
     
-    def save(self) -> Path:
-        """Save the validation result to disk."""
-        timestamp_str = self.timestamp.strftime("%Y%m%d_%H%M%S")
-        filename = f"{self.name}_{timestamp_str}.json"
-        result_path = VALIDATION_RESULTS_DIR / filename
-        
-        with open(result_path, "w") as f:
-            json.dump(self.to_dict(), f, indent=2)
-        
-        return result_path
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert the validation results to a dictionary."""
+        return {
+            "passed": self.passed,
+            "passes": self.passes,
+            "failures": self.failures,
+            "notes": self.notes,
+            "duration": self.duration,
+            "timestamp": datetime.datetime.now().isoformat()
+        }
     
-    def print_summary(self) -> None:
-        """Print a summary of the validation results."""
-        print("\n" + "=" * 80)
-        print(f"VALIDATION RESULTS: {self.name}")
-        print(f"Timestamp: {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
-        print("=" * 80)
-        
-        print(f"\nSTATUS: {'SUCCESS' if self.success else 'FAILURE'}")
-        print(f"Passed: {len(self.passed)}")
-        print(f"Failed: {len(self.failed)}")
-        print(f"Warnings: {len(self.warnings)}")
-        
-        if self.failed:
-            print("\nFAILURES:")
-            for i, failure in enumerate(self.failed, 1):
-                print(f"  {i}. {failure}")
-        
-        if self.warnings:
-            print("\nWARNINGS:")
-            for i, warning in enumerate(self.warnings, 1):
-                print(f"  {i}. {warning}")
-        
-        if self.notes:
-            print("\nNOTES:")
-            for i, note in enumerate(self.notes, 1):
-                print(f"  {i}. {note}")
-        
-        print("\n" + "=" * 80)
+    def to_json(self) -> str:
+        """Convert the validation results to JSON."""
+        return json.dumps(self.to_dict(), indent=2)
+    
+    def save_to_file(self, filepath: str) -> None:
+        """Save the validation results to a JSON file."""
+        with open(filepath, "w") as f:
+            f.write(self.to_json())
 
 
 class ValidationProtocol:
     """Base class for validation protocols."""
     
     def __init__(self, name: str):
+        """Initialize the validation protocol.
+        
+        Args:
+            name: Name of the validation protocol
+        """
         self.name = name
-        self.result = ValidationResult(name)
+        self.result = ValidationResult()
     
-    def validate(self) -> ValidationResult:
-        """Run validation and return results."""
+    def run(self) -> ValidationResult:
+        """Run the validation protocol.
+        
+        Returns:
+            ValidationResult object containing the validation results
+        """
+        self.result.start_timer()
         try:
             self._run_validation()
         except Exception as e:
-            self.result.add_fail(f"Validation protocol threw an exception: {str(e)}")
+            self.result.add_fail(f"Validation failed with error: {str(e)}")
             import traceback
-            self.result.add_note(f"Exception traceback: {traceback.format_exc()}")
+            self.result.add_note(traceback.format_exc())
+        finally:
+            self.result.stop_timer()
         
-        self.result.print_summary()
-        self.result.save()
         return self.result
     
     def _run_validation(self) -> None:
-        """Override this method to implement specific validation logic."""
-        raise NotImplementedError("Subclasses must implement _run_validation()")
+        """Implement the validation logic in subclasses."""
+        raise NotImplementedError("Subclasses must implement _run_validation")
+    
+    def print_results(self) -> None:
+        """Print the validation results to the console."""
+        print(f"\n=== Validation Results for {self.name} ===")
+        
+        print(f"\nDuration: {self.result.duration:.2f} seconds")
+        
+        if self.result.notes:
+            print("\nNotes:")
+            for note in self.result.notes:
+                print(f"  - {note}")
+        
+        print(f"\nPassing Tests ({len(self.result.passes)}):")
+        for i, msg in enumerate(self.result.passes, 1):
+            print(f"  ✓ {i}. {msg}")
+        
+        if self.result.failures:
+            print(f"\nFailing Tests ({len(self.result.failures)}):")
+            for i, msg in enumerate(self.result.failures, 1):
+                print(f"  ✗ {i}. {msg}")
+        
+        print(f"\nOverall Result: {'PASS' if self.result.passed else 'FAIL'}")
+    
+    def save_results(self, directory: str = None) -> str:
+        """Save the validation results to a file.
+        
+        Args:
+            directory: Directory to save the results in (default: data/validation_results)
+            
+        Returns:
+            Path to the saved file
+        """
+        # Determine directory
+        if directory is None:
+            # Default to data/validation_results in the project root
+            project_root = Path(__file__).parent.parent.parent.parent
+            directory = project_root / "data" / "validation_results"
+        
+        # Create directory if it doesn't exist
+        os.makedirs(directory, exist_ok=True)
+        
+        # Create filename with timestamp
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{self.name}_{timestamp}.json"
+        filepath = os.path.join(directory, filename)
+        
+        # Save results
+        self.result.save_to_file(filepath)
+        
+        return filepath
+
+
+# Import validation protocols
+from .item_management import ItemCreationValidation, ItemEditingValidation, OptimisticUIValidation
+from .ui_components import UIComponentsValidation
+from .item_links import LinkManagementValidation, LinkNavigationValidation
+from .tree_visualization import TreeVisualizationValidation
+from .navigation_validation import NavigationValidator, run_validation
+
+__all__ = [
+    "ValidationResult",
+    "ValidationProtocol",
+    "ItemCreationValidation",
+    "ItemEditingValidation",
+    "OptimisticUIValidation",
+    "UIComponentsValidation",
+    "LinkManagementValidation",
+    "LinkNavigationValidation",
+    "TreeVisualizationValidation",
+    "NavigationValidator",
+    "run_validation"
+]
 
 
 def enable_validation_mode() -> None:

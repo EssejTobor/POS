@@ -1,0 +1,60 @@
+---
+description: 
+globs: **/*.py,**/requirements.txt,**/requirements.in,**/setup.py,**/pyproject.toml,pip,uv
+alwaysApply: false
+---
+# Python Environment Management
+
+This project uses `uv` for Python package management and virtual environment handling. Always use `uv` commands instead of `pip` or standard `python` commands for package-related operations.
+
+
+### Package Installation
+
+When installing packages, use:
+```
+uv pip install [package-name]
+```
+
+### Running Python Scripts
+
+When running Python scripts, use:
+```
+uv run [script-name.py]
+```
+
+### Managing Virtual Environments
+
+To create a virtual environment:
+```
+uv venv
+```
+
+To activate venv:
+```
+source .venv/Scripts/activate
+```
+
+### Updating Dependencies
+
+To update project dependencies:
+```
+uv pip compile requirements.in
+uv pip sync requirements.txt
+```
+
+## Notes for Cursor AI
+
+- Always prefer `uv` commands over standard `pip` or `python` commands.
+- When suggesting package installations or script executions, use the `uv` prefix.
+- For any Python-related tasks, assume a `uv`-managed environment is in use.
+- Remember that we're developing on Windows 10.
+
+### Initial Setup Commands
+
+```
+# Create virtual environment
+uv venv
+
+# Generate requirements file
+uv pip freeze > requirements.txt
+```

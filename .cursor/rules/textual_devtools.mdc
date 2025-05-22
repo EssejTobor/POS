@@ -1,0 +1,76 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Textual Devtools Debugging Protocol
+
+When debugging Textual TUI issues in the POS application, ALWAYS use the following approach:
+
+## Version Information
+
+The POS application uses Textual 3.x, which has significant differences from earlier versions:
+- Different CSS property naming (border properties, color syntax)
+- Widget changes and reorganization
+- Updated event handling
+
+Always refer to the latest [Textual documentation](mdc:https:/textual.textualize.io).
+
+## Initial Investigation
+
+1. Start by running the application with the Textual developer console:
+   ```bash
+   # In one terminal
+   textual console
+   
+   # In another terminal
+   textual run --dev main.py
+   ```
+
+2. Look for error messages, warnings, or unusual behavior in the console output.
+
+3. Add focused logging statements at suspected problem areas:
+   ```python
+   from textual import log
+   
+   # Log variables, state, or widget trees
+   log("Debug point reached", variable=value, widget_id=self.id)
+   log(self.tree)  # For widget hierarchy issues
+   ```
+
+## Common Issue Categories
+
+### Widget/Import Issues
+- Check import paths in the console output
+- Verify the widget exists in the installed Textual version
+- Use `textual --version` to confirm Textual version
+- Compare with widget availability in Textual documentation
+
+### CSS and Styling Issues
+- Use correct border syntax: `border: solid $color;` not `border-left-color: $color;`
+- Color opacity: Check documentation for current syntax (e.g., `$color 10%` may need updating)
+- Use `textual run --dev` for live CSS editing to test fixes immediately
+- Check CSS class application with `log(widget.classes)` 
+
+### Event Handling Problems
+- Add logging before and after event handlers
+- Verify event propagation in the console
+- Check for correct event class imports
+- Ensure event handler signatures match the expected format
+
+### Worker Thread Debugging
+- Always use `worker.start()` not `worker.run()`
+- Add logging before worker creation and in callback functions
+- Check for thread-safety issues with database operations
+- Verify data structures passed to and from workers
+
+## Resolution Steps
+
+1. Locate precise error location from console output
+2. Add targeted logging statements around the issue
+3. Test hypothesis with minimal code changes
+4. Verify fix by running with dev console
+5. Document the issue and solution in CHANGELOG.md
+
+Always use the developer console when troubleshooting - never rely on assumptions about what might be happening behind the scenes.
+

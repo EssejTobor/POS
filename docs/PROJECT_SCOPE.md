@@ -2,7 +2,7 @@
 
 ## **Project Overview**
 
-The Personal Operating System (POS) is a terminal-based application for personal task and knowledge management. It uses the [Textual](https://github.com/Textualize/textual) framework as its primary user interface and provides a structured way to track work items, goals, and thoughts through an interactive TUI. All interactions—including item creation, browsing, editing, and relationship visualization—are handled through Textual. Legacy CLI functionality has been deprecated.
+The Personal Operating System (POS) is a terminal-based application for personal task and knowledge management. It uses the [Textual](https://github.com/Textualize/textual) framework (v3.2.0) as its primary user interface and provides a structured way to track work items, goals, and thoughts through an interactive TUI. All interactions—including item creation, browsing, editing, and relationship visualization—are handled through Textual. Legacy CLI functionality has been deprecated.
 
 ---
 
@@ -52,7 +52,6 @@ The Personal Operating System (POS) is a terminal-based application for personal
 * View evolution and reference trees
 * Filter by tags, status, priority, or type
 * Use search and command palette for power navigation
-* Toggle between light and dark themes
 
 ---
 
@@ -97,13 +96,29 @@ The Personal Operating System (POS) is a terminal-based application for personal
   - Implemented with ItemEntryForm, ItemTable, and LinkTree widgets
   - Keyboard shortcuts "1", "2", "3" switch between tabs
 * **Widgets**: Forms, Tables, Trees, Modals
-* **Event Handling**: Use `on_*` methods and `run_worker_thread` for async-safe DB access
+* **Event Handling**: 
+  - Use modern Textual 3.2.0 patterns with `@on` decorators for event handling
+  - Leverage action methods with the standard Textual binding system
+  - Use `run_worker_thread` for async-safe DB access
 
 ### Implementation Tracking
 
 * Progress tracked via `docs/checklist.md` based on the phased Implementation Plan
 * All new features should update the checklist to reflect current status
 * Overall implementation progress measured by phase completion percentages
+
+### Current Phase Implementation Status
+
+#### Phase 4: Advanced Linking and Visualization (In Progress)
+
+- **4.1 Extend Item Form with Linking** (Completed)
+  - Enhanced `ItemEntryForm` with linking interface including item search and link type selection
+  - Added linked items display with remove capability
+  - Implemented form validation for link constraints
+  - Extended `ItemSaveWorker` to handle relationship creation/deletion with atomic operations
+
+- **4.2 Create Link Tree Visualization** (Pending)
+  - Planned for the next implementation stage
 
 ### Testing
 

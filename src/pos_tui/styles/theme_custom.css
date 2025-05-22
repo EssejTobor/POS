@@ -1,0 +1,24 @@
+:root {
+    --primary: #2196F3;
+    --primary-darken-1: #1976D2;
+    --primary-darken-2: #0D47A1;
+    --primary-lighten-1: #64B5F6;
+    --accent: #FF4081;
+    --accent-darken-1: #F50057;
+    --accent-lighten-1: #FF80AB;
+    --background: #FAFAFA;
+    --surface: #FFFFFF;
+    --error: #B00020;
+    --on-primary: #FFFFFF;
+    --on-secondary: #000000;
+    --on-background: #000000;
+    --on-surface: #000000;
+    --on-error: #FFFFFF;
+    --panel: #F5F5F5;
+    --panel-darken-1: #EEEEEE;
+    --text: #000000;
+    --text-muted: #666666;
+    --boost: #E0E0E0;
+    --warning: #FF9800;
+    --success: #4CAF50;
+}

@@ -1,89 +1,208 @@
-from __future__ import annotations
+"""
+Database connection manager for thread-safe database access.
+
+This module provides a connection manager for SQLite that handles
+connection pooling, thread safety, and timeout/retry logic.
+"""
 
 import sqlite3
+import threading
 import time
 from contextlib import contextmanager
-from queue import Empty, Queue
-from typing import Any, Callable, Iterable
+from pathlib import Path
+from typing import Dict, Generator, List, Optional, Tuple, Union
 
-from textual.app import App
-
-from .base import BaseWorker
+# Thread-local storage for database connections
+_thread_local = threading.local()
 
 
 class DBConnectionManager:
-    """Simple SQLite connection pool with retry logic."""
+    """Manages SQLite connections with thread safety and connection pooling.
 
-    def __init__(self, db_path: str, pool_size: int = 4) -> None:
-        self.db_path = db_path
-        self.pool: Queue[sqlite3.Connection] = Queue(maxsize=pool_size)
-        for _ in range(pool_size):
-            conn = sqlite3.connect(db_path, check_same_thread=False)
+    This class ensures that each thread has its own database connection and
+    handles timeouts and retries for database operations.
+    """
+
+    def __init__(
+        self,
+        db_path: Union[str, Path],
+        max_retries: int = 3,
+        retry_delay: float = 0.5,
+        timeout: float = 5.0,
+    ):
+        """Initialize the database connection manager.
+
+        Args:
+            db_path: Path to the SQLite database file
+            max_retries: Maximum number of retry attempts for failed operations
+            retry_delay: Delay between retry attempts in seconds
+            timeout: SQLite connection timeout in seconds
+        """
+        self.db_path = Path(db_path)
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
+        self.timeout = timeout
+        self._conn_lock = threading.Lock()
+        self._connections: Dict[int, sqlite3.Connection] = {}
+
+    def _get_connection(self) -> sqlite3.Connection:
+        """Get a thread-specific database connection.
+
+        Returns:
+            An SQLite connection object specific to the current thread
+        """
+        thread_id = threading.get_ident()
+
+        # Check if this thread already has a connection
+        if hasattr(_thread_local, "connection"):
+            return _thread_local.connection
+
+        with self._conn_lock:
+            # Create a new connection for this thread
+            conn = sqlite3.connect(
+                self.db_path,
+                timeout=self.timeout,
+                isolation_level=None,  # Use autocommit mode by default
+                check_same_thread=False,  # Allow cross-thread usage with proper locking
+            )
+
+            # Enable foreign keys support
+            conn.execute("PRAGMA foreign_keys = ON")
+
+            # Row factory returns rows as dictionaries
             conn.row_factory = sqlite3.Row
-            self.pool.put(conn)
+
+            # Store connection for this thread
+            _thread_local.connection = conn
+            self._connections[thread_id] = conn
+
+            return conn
 
     @contextmanager
-    def connection(self, retries: int = 3, delay: float = 0.05):
-        """Acquire a connection with simple retry logic."""
-        attempt = 0
-        while True:
-            try:
-                conn = self.pool.get_nowait()
-                break
-            except Empty:
-                if attempt >= retries:
-                    raise RuntimeError("No database connections available")
-                attempt += 1
-                time.sleep(delay)
+    def transaction(self) -> Generator[sqlite3.Connection, None, None]:
+        """Context manager for handling database transactions.
+
+        Provides a connection with transaction support and automatic rollback on error.
+
+        Yields:
+            An SQLite connection object with an active transaction
+        """
+        conn = self._get_connection()
+        conn.execute("BEGIN TRANSACTION")
         try:
             yield conn
-            conn.commit()
-        finally:
-            self.pool.put(conn)
+            conn.execute("COMMIT")
+        except Exception:
+            conn.execute("ROLLBACK")
+            raise
 
+    @contextmanager
+    def connection(self) -> Generator[sqlite3.Connection, None, None]:
+        """Context manager for handling database connections.
 
-class ItemFetchWorker(BaseWorker):
-    """Worker to fetch items using the connection manager."""
+        Provides a connection without transaction support for simple operations.
 
-    def __init__(
-        self,
-        name: str,
-        app: App,
-        manager: DBConnectionManager,
-        query: str,
-        params: Iterable[Any] | None = None,
-        **kwargs: Any,
-    ) -> None:
-        params = params or []
+        Yields:
+            An SQLite connection object
+        """
+        yield self._get_connection()
 
-        def task() -> list[dict[str, Any]]:
-            with manager.connection() as conn:
-                cursor = conn.execute(query, tuple(params))
-                return [dict(row) for row in cursor.fetchall()]
+    def execute(
+        self, query: str, params: Optional[Tuple] = None, retries: Optional[int] = None
+    ) -> sqlite3.Cursor:
+        """Execute an SQL query with retry logic.
 
-        super().__init__(name, task, app, **kwargs)
+        Args:
+            query: SQL query to execute
+            params: Parameters to bind to the query
+            retries: Number of retry attempts (defaults to self.max_retries)
 
+        Returns:
+            SQLite cursor object with the query results
 
-class ItemSaveWorker(BaseWorker):
-    """Worker to execute write operations using a connection."""
+        Raises:
+            sqlite3.Error: If the query fails after all retry attempts
+        """
+        if retries is None:
+            retries = self.max_retries
 
-    def __init__(
-        self,
-        name: str,
-        app: App,
-        manager: DBConnectionManager,
-        operation: Callable[[sqlite3.Connection], int],
-        **kwargs: Any,
-    ) -> None:
+        conn = self._get_connection()
+        last_error = None
 
-        def task() -> int:
-            with manager.connection() as conn:
-                return operation(conn)
+        for attempt in range(retries + 1):
+            try:
+                if params is None:
+                    return conn.execute(query)
+                else:
+                    return conn.execute(query, params)
+            except sqlite3.Error as e:
+                last_error = e
+                if attempt < retries:
+                    time.sleep(self.retry_delay)
+                    continue
+                raise last_error
 
-        super().__init__(name, task, app, **kwargs)
+        # This should never be reached, but added for type checking completeness
+        raise last_error if last_error else RuntimeError("Unknown database error")
 
+    def execute_many(
+        self, query: str, params_list: List[Tuple], retries: Optional[int] = None
+    ) -> sqlite3.Cursor:
+        """Execute an SQL query with multiple parameter sets.
 
-class LinkWorker(ItemSaveWorker):
-    """Alias for ItemSaveWorker used for link operations."""
+        Args:
+            query: SQL query to execute
+            params_list: List of parameter tuples to bind to the query
+            retries: Number of retry attempts (defaults to self.max_retries)
 
-    pass
+        Returns:
+            SQLite cursor object
+
+        Raises:
+            sqlite3.Error: If the query fails after all retry attempts
+        """
+        if retries is None:
+            retries = self.max_retries
+
+        conn = self._get_connection()
+        last_error = None
+
+        for attempt in range(retries + 1):
+            try:
+                return conn.executemany(query, params_list)
+            except sqlite3.Error as e:
+                last_error = e
+                if attempt < retries:
+                    time.sleep(self.retry_delay)
+                    continue
+                raise last_error
+
+        # This should never be reached, but added for type checking completeness
+        raise last_error if last_error else RuntimeError("Unknown database error")
+
+    def close_all(self) -> None:
+        """Close all database connections.
+
+        This method should be called when shutting down the application.
+        """
+        with self._conn_lock:
+            for conn in self._connections.values():
+                try:
+                    conn.close()
+                except Exception:
+                    pass  # Ignore errors when closing connections
+            self._connections.clear()
+
+    def close_current(self) -> None:
+        """Close the database connection for the current thread."""
+        thread_id = threading.get_ident()
+        with self._conn_lock:
+            if thread_id in self._connections:
+                try:
+                    self._connections[thread_id].close()
+                except Exception:
+                    pass  # Ignore errors when closing connection
+                del self._connections[thread_id]
+
+            if hasattr(_thread_local, "connection"):
+                delattr(_thread_local, "connection") 

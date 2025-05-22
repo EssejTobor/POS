@@ -1,45 +1,80 @@
-from __future__ import annotations
+"""
+Modals for the POS TUI application.
+
+Contains modal screens for various interactive dialogs.
+"""
 
 from textual.app import ComposeResult
-from textual.containers import Container
-from textual.widgets import Button, Static
+from textual.containers import Container, Horizontal, Vertical
 from textual.screen import ModalScreen
+from textual.widgets import Button, Label, Static
+
+from ...models import WorkItem
+from .item_form import ItemEntryForm
 
 
-class ConfirmModal(ModalScreen[bool]):
-    """Simple yes/no confirmation modal."""
-
-    BINDINGS = [
-        ("y", "confirm", "Yes"),
-        ("n", "cancel", "No"),
-    ]
-
-    def __init__(self, message: str, *, variant: str = "warning") -> None:
-        super().__init__()
-        self.message = message
-        self.variant = variant
-
+class EditItemModal(ModalScreen):
+    """Modal screen for editing work items."""
+    
+    DEFAULT_CSS = """
+    EditItemModal {
+        align: center middle;
+    }
+    
+    #edit-container {
+        background: $surface;
+        border: thick $primary;
+        width: 90%;
+        height: 90%;
+        padding: 1 2;
+    }
+    
+    #edit-title {
+        text-style: bold;
+        text-align: center;
+        width: 100%;
+        background: $primary;
+        padding: 1 0;
+        color: $text;
+        margin-bottom: 1;
+    }
+    """
+    
+    def __init__(self, item: WorkItem, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.item = item
+    
     def compose(self) -> ComposeResult:
-        with Container(id="confirm_container", classes=self.variant):
-            yield Static(self.message, id="confirm_message")
-            with Container(id="confirm_buttons"):
-                yield Button("Yes", id="yes_button")
-                yield Button("No", id="no_button")
-
+        """Compose the edit item modal."""
+        with Container(id="edit-container"):
+            yield Static(f"Edit Item: {self.item.title}", id="edit-title")
+            
+            # Use the existing ItemEntryForm component
+            form = ItemEntryForm(id="edit-item-form")
+            yield form
+    
     def on_mount(self) -> None:
-        try:
-            container = self.query_one("#confirm_container", Container)
-        except Exception:
-            # In headless validation there may be no DOM
-            return
-        container.styles.opacity = 0
-        container.styles.animate("opacity", 1.0, duration=0.4)
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:  # pragma: no cover - UI action
-        self.dismiss(event.button.id == "yes_button")
-
-    def action_confirm(self) -> None:  # pragma: no cover - key binding
-        self.dismiss(True)
-
-    def action_cancel(self) -> None:  # pragma: no cover - key binding
-        self.dismiss(False)
+        """Configure the form when the modal is mounted."""
+        # Get the form and set it up for editing
+        form = self.query_one("#edit-item-form", ItemEntryForm)
+        form.edit_item(self.item)
+        
+        # Hide the cancel button in the form and use our own handlers
+        form.query_one("#cancel_btn").display = False
+    
+    def on_item_entry_form_item_submitted(self, message: ItemEntryForm.ItemSubmitted) -> None:
+        """Handle form submission from the edit form."""
+        # Save the updated item data
+        self.dismiss(message.item_data)
+    
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button presses in the form."""
+        button_id = event.button.id
+        
+        if button_id == "clear_btn":
+            # Just reset the form to the original item data
+            form = self.query_one("#edit-item-form", ItemEntryForm)
+            form.edit_item(self.item)
+        elif button_id == "submit_btn":
+            # The form's own submit handler will trigger item_submitted
+            pass 

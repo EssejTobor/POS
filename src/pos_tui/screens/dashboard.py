@@ -1,290 +1,470 @@
+"""
+Dashboard screen for displaying and managing work items.
+
+Provides an overview of work items with filtering, sorting and action capabilities.
+"""
+
+import asyncio
+from datetime import datetime
+from typing import Dict, List, Optional, Union
+
 from textual.app import ComposeResult
-from textual.containers import Container
-from textual.widgets import Button, DataTable, LoadingIndicator, Static
-from ..widgets import (
-    DashboardStatus,
-    FilterBar,
-    ItemFormModal,
-    ItemTable,
-    ConfirmModal,
-    ToastNotification,
-)
-from ...models import ItemStatus, WorkItem, ItemType, Priority
-from ..widgets.item_form import ItemEntryForm
-from ..workers import ItemFetchWorker
-from ..workers.db import ItemFetchWorker as DBItemFetchWorker, ItemSaveWorker
-from .detail import ItemDetailScreen
+from textual.containers import Container, Horizontal, Vertical
+from textual.screen import Screen, ModalScreen
+from textual.widgets import Button, DataTable, Footer, Header, Input, Label, LoadingIndicator, Select, Static
+from textual.notifications import Notification
+from textual.worker import Worker, get_current_worker
+
+from ...models import ItemStatus, ItemType, Priority, WorkItem
+from ..widgets import FilterBar, ItemDetailsModal, ItemTable
+from ..widgets.modals import EditItemModal
 
 
-
-class DashboardScreen(Container):
-    """Screen displaying an overview of work items."""
-
-    last_deleted: tuple[WorkItem, int] | None = None
-    last_edit: tuple[WorkItem, WorkItem] | None = None
-
-    BINDINGS = [
-        ("r", "refresh", "Refresh Items"),
-        ("n", "create", "New Item"),
-        ("u", "undo_last", "Undo"),
-    ]
+class DashboardScreen(Screen):
+    """Screen displaying an overview of work items with filtering and management capabilities."""
 
     def compose(self) -> ComposeResult:
-        with Container(id="dashboard_header"):
-            yield Static("Dashboard", id="dashboard_title")
-            yield Button("Refresh", id="refresh_button")
-            yield Button("Create", id="create_button")
-
-        yield FilterBar(id="filter_bar")
-        yield LoadingIndicator(id="loading")
-        yield ItemTable(id="dashboard_table")
-        yield DashboardStatus(id="dashboard_status")
-        with Container(id="dashboard_footer"):
-            yield Static("", id="status_bar")
-
+        """Compose the dashboard layout."""
+        # Header section
+        yield Header(show_clock=True)
+        
+        # Main content area
+        with Container(id="dashboard-content"):
+            # Filter and search section
+            yield FilterBar(id="filter_bar")
+            
+            # Work items table
+            yield ItemTable(id="dashboard_table")
+            
+            # Status message
+            yield Static("Loading items...", id="status_message")
+            
+            # Loading indicator
+            yield LoadingIndicator(id="loading_indicator")
+            
+            # Action buttons section
+            with Horizontal(id="action_buttons"):
+                yield Button("Refresh", id="refresh_btn", variant="primary")
+                yield Button("New Item", id="new_item_btn", variant="success")
+                yield Button("Details", id="details_btn", variant="default", disabled=True)
+                yield Button("Edit", id="edit_btn", variant="default", disabled=True)
+                yield Button("Delete", id="delete_btn", variant="error", disabled=True)
+        
+        # Footer with helpful information
+        yield Footer()
+    
     def on_mount(self) -> None:
-        self.query_one(LoadingIndicator).display = False
-        self.load_items()
-
-    def action_refresh(self) -> None:
-        self.load_items()
-
-    def action_create(self) -> None:  # pragma: no cover - simple UI
-        self.app.action_switch_tab("new-item")
-
-    # --------------------------------------------------------------
-    # Data Loading
-    # --------------------------------------------------------------
-    def load_items(self) -> None:
-        """Fetch items from the database asynchronously."""
-        loading = self.query_one(LoadingIndicator)
-        table = self.query_one(ItemTable)
-        filters = self.query_one(FilterBar)
-        table.display = False
-        loading.display = True
-        worker = ItemFetchWorker(
-            self.app,
-            self.app.work_system,
-            item_type=list(filters.item_types),
-            status=list(filters.statuses),
-            search_text=filters.search_text,
-            start_date=filters.start_date,
-            end_date=filters.end_date,
-            sort_key=table.sort_key,
-            sort_reverse=table.sort_reverse,
-            page=table.current_page,
-            page_size=table.page_size,
-            callback=self._apply_items,
-        )
-        self.run_worker(worker, thread=True)
-        query = (
-            "SELECT * FROM work_items WHERE status != ? "
-            "ORDER BY priority DESC, created_at DESC"
-        )
-        worker = DBItemFetchWorker(
-            "fetch_items",
-            self.app,
-            self.app.connection_manager,
-            query,
-            [ItemStatus.COMPLETED.value],
-            on_success=lambda result: self.call_from_thread(self._apply_items, result),
-        )
-        self.app.schedule_worker(worker)
-
-    def _apply_items(self, items) -> None:
-        table = self.query_one(ItemTable)
-        loading = self.query_one(LoadingIndicator)
-        work_items = [
-            WorkItem.from_dict(row) if isinstance(row, dict) else row for row in items
-        ]
-        table.load_items(work_items)
-        loading.display = False
-        table.display = True
-        self._update_status_bar(items)
-
-        status = self.query_one(DashboardStatus)
-        total = len(self.app.work_system.items)
-        status.set_counts(incomplete=len(items), total=total)
-
-    def on_filter_bar_filter_changed(
-        self, event: FilterBar.FilterChanged
-    ) -> None:  # pragma: no cover - simple UI
-        table = self.query_one(ItemTable)
-        table.set_filters(
-            item_type=list(event.item_types),
-            status=list(event.statuses),
-            search_text=event.search_text,
-            start_date=event.start_date,
-            end_date=event.end_date,
-        )
-
-    def on_data_table_cell_selected(
-        self, event: DataTable.CellSelected
-    ) -> None:  # pragma: no cover - simple UI
-        table = self.query_one(ItemTable)
-        if event.sender is table and event.column_label == "Actions":
-            table.open_context_menu(event.coordinate.row)
-
-    def on_item_table_view_requested(
-        self, event: ItemTable.ItemSelected
-    ) -> None:  # pragma: no cover - UI action
-        self.app.push_screen(ItemDetailScreen(event.item, self.app.work_system))
-
-    def on_item_table_edit_requested(
-        self, event: ItemTable.ItemEditRequested
-    ) -> None:  # pragma: no cover - UI action
-        self.app.push_screen(ItemFormModal(event.item, self.app.work_system))
-
-    def on_item_entry_form_save_started(
-        self, event: ItemEntryForm.SaveStarted
-    ) -> None:
-        form = event.sender
-        if form.item is None:
-            return
-        import copy
-        from textual.widgets import Input, Select
-        original = copy.deepcopy(form.item)
-        updated = copy.deepcopy(form.item)
-        updated.title = form.query_one("#title_field", Input).value.strip()
-        updated.description = form.query_one("#description_field", Input).value
-        updated.item_type = ItemType(
-            form.query_one("#type_selector", Select).value or ItemType.TASK.value
-        )
-        updated.priority = Priority(
-            int(form.query_one("#priority_selector", Select).value or 2)
-        )
-        updated.status = ItemStatus(
-            form.query_one("#status_selector", Select).value
-            or ItemStatus.NOT_STARTED.value
-        )
-        self.app.work_system.items[updated.id] = updated
-        table = self.query_one(ItemTable)
-        table.update_item(updated)
-        self.last_edit = (original, updated)
-        self.query_one("#status_bar", Static).update(
-            "Item updated. Press 'u' to undo."
-        )
-
-    def on_item_entry_form_save_result(
-        self, event: ItemEntryForm.SaveResult
-    ) -> None:
-        if not self.last_edit:
-            return
-        original, updated = self.last_edit
-        if not event.success:
-            self.app.work_system.items[original.id] = original
-            table = self.query_one(ItemTable)
-            table.update_item(original)
-            self.query_one("#status_bar", Static).update(
-                f"Edit failed: {event.message}"
+        """Initialize the dashboard after it's mounted."""
+        # Hide loading indicator initially
+        self.query_one("#loading_indicator").display = False
+        
+        # Start loading data
+        self.load_data()
+    
+    def on_item_table_item_selected(self, event: ItemTable.ItemSelected) -> None:
+        """Handle item selection in the table."""
+        # Enable action buttons when an item is selected
+        self._update_action_buttons(True)
+        
+        # Store the selected item ID
+        self._selected_item_id = event.item_id
+    
+    def on_filter_bar_filter_changed(self, event: FilterBar.FilterChanged) -> None:
+        """Handle filter change events from the filter bar."""
+        # Update status message
+        status = self.query_one("#status_message", Static)
+        status.update("Applying filters...")
+        
+        # Show loading indicator
+        self.query_one("#loading_indicator").display = True
+        
+        # Schedule async task to fetch filtered items
+        asyncio.create_task(
+            self.fetch_filtered_items(
+                item_type=event.item_type,
+                search_text=event.search_text,
+                status=event.status
             )
-            self.last_edit = None
-        else:
-            self.query_one("#status_bar", Static).update(
-                "Edit saved. Press 'u' to undo."
-            )
-
-    def on_item_table_delete_requested(
-        self, event: ItemTable.ItemDeleteRequested
-    ) -> None:  # pragma: no cover - UI action
-        modal = ConfirmModal(
-            f"Delete '{event.item.title}'?",
-            variant="danger",
         )
-
-        def _on_result(result: bool) -> None:
-            if result:
-                self._perform_delete(event.item)
-
-        self.app.push_screen(modal, callback=_on_result)
-
-    def _perform_delete(self, item: WorkItem) -> None:
-        table = self.query_one(ItemTable)
-        index = table.remove_item(item.id)
-
-        if index is None:
-            index = -1
-
-        self.last_deleted = (item, index)
-
-        if item.id in self.app.work_system.items:
-            del self.app.work_system.items[item.id]
-
-
-
-        def op(conn):
-            self.app.work_system.db.delete_item(item.id)
-            return 1
-
-        from ..error import log_and_notify
-
-        worker = ItemSaveWorker(
-            "delete_item",
-            self.app,
-            self.app.connection_manager,
-            op,
-            on_error=lambda e: (
-                log_and_notify(self.app, e, "Delete failed"),
-                self.call_from_thread(self._restore_deleted, item, index),
-            ),
-        )
-        self.app.schedule_worker(worker)
-
-    def _restore_deleted(self, item: WorkItem, index: int) -> None:
-        """Reinsert a deleted item if the delete worker fails."""
-        self.app.work_system.items[item.id] = item
-        table = self.query_one(ItemTable)
-        table.load_items(self.app.work_system.items.values())
-        self.last_deleted = None
-        self.query_one("#status_bar", Static).update("Delete failed; item restored")
-
-    def action_undo_last(self) -> None:  # pragma: no cover - simple UI
-        if self.last_edit:
-            original, updated = self.last_edit
-            try:
-                self.app.work_system.update_item(
-                    updated.id,
-                    title=original.title,
-                    description=original.description,
-                    item_type=original.item_type,
-                    priority=original.priority,
-                    status=original.status,
-                )
-                table = self.query_one(ItemTable)
-                table.update_item(self.app.work_system.items[updated.id])
-                self.query_one("#status_bar", Static).update("Undo successful")
-            except Exception as e:
-                self.query_one("#status_bar", Static).update(f"Undo failed: {e}")
-            finally:
-                self.last_edit = None
+    
+    async def fetch_filtered_items(
+        self, 
+        item_type: Optional[str] = None, 
+        search_text: Optional[str] = None,
+        status: Optional[str] = None
+    ) -> None:
+        """Fetch items from database with filters applied."""
+        # Get reference to the app and work system
+        app = self.app
+        if not hasattr(app, "work_system"):
             return
-
-        if self.last_deleted:
-            item, index = self.last_deleted
-            try:
-                self.app.work_system.db.add_item(item)
-                self.app.work_system.items[item.id] = item
-            except Exception as e:  # pragma: no cover - basic error
-                self.query_one("#status_bar", Static).update(f"Undo failed: {e}")
-                self.last_deleted = None
-                return
-
-            table = self.query_one(ItemTable)
-            table.load_items(self.app.work_system.items.values())
-            self.query_one("#status_bar", Static).update("Undo successful")
-            self.last_deleted = None
-
-    def _update_status_bar(self, items) -> None:
-        from ...models import ItemStatus
-
-        counts = {
-            status: len([i for i in items if i.status == status])
-            for status in ItemStatus
-        }
-        total = len(items)
-        text = (
-            f"Total: {total} | Not Started: {counts[ItemStatus.NOT_STARTED]} | "
-            f"In Progress: {counts[ItemStatus.IN_PROGRESS]} | "
-            f"Completed: {counts[ItemStatus.COMPLETED]}"
+            
+        work_system = app.work_system
+        
+        # Convert string values to enum types if needed
+        status_enum = None
+        if status:
+            for s in ItemStatus:
+                if s.value == status:
+                    status_enum = s
+                    break
+        
+        type_enum = None
+        if item_type:
+            for t in ItemType:
+                if t.value == item_type:
+                    type_enum = t
+                    break
+        
+        # Get filtered items
+        items = work_system.get_filtered_items(
+            item_type=type_enum,
+            status=status_enum,
+            search_text=search_text
         )
-        self.query_one("#status_bar", Static).update(text)
+        
+        # Simulate a delay to show loading (remove in production)
+        await asyncio.sleep(0.5)
+        
+        # Hide loading indicator and update UI
+        self.query_one("#loading_indicator").display = False
+        status = self.query_one("#status_message", Static)
+        status.update(f"{len(items)} items found")
+        
+        # Populate the table
+        self.populate_table(items)
+    
+    def load_data(self) -> None:
+        """Load work items data from the database."""
+        # Update status message
+        status = self.query_one("#status_message", Static)
+        status.update("Loading items...")
+        
+        # Show loading indicator
+        self.query_one("#loading_indicator").display = True
+        
+        # Disable action buttons while loading
+        self._update_action_buttons(False)
+        
+        # Schedule async task to fetch items
+        asyncio.create_task(self.fetch_items())
+    
+    async def fetch_items(self) -> None:
+        """Fetch items from database asynchronously."""
+        # Get reference to the app and work system
+        app = self.app
+        if not hasattr(app, "work_system"):
+            return
+            
+        work_system = app.work_system
+        # Fetch incomplete items as the default view
+        items = work_system.get_incomplete_items()
+        
+        # Simulate a delay to show loading (remove in production)
+        await asyncio.sleep(0.5)
+        
+        # Hide loading indicator and update UI
+        self.query_one("#loading_indicator").display = False
+        status = self.query_one("#status_message", Static)
+        status.update(f"{len(items)} items found")
+        
+        # Populate the table
+        self.populate_table(items)
+    
+    def populate_table(self, items: List[WorkItem]) -> None:
+        """Populate the table with work items."""
+        table = self.query_one("#dashboard_table", ItemTable)
+        table.clear()
+        
+        # Add items to the table
+        for item in items:
+            # Format the due date (if we had one)
+            due_date = datetime.now().strftime("%Y-%m-%d") if hasattr(item, "due_date") else ""
+            
+            # Add the row with appropriate styling based on priority and status
+            table.add_row(
+                item.id,
+                item.title,
+                item.item_type.value,
+                item.status.value,
+                str(item.priority.value),
+                due_date,
+                key=item.id
+            )
+        
+        # Update pagination info
+        table.update_pagination_info(len(items))
+    
+    def _update_action_buttons(self, enabled: bool) -> None:
+        """Enable or disable action buttons."""
+        self.query_one("#details_btn").disabled = not enabled
+        self.query_one("#edit_btn").disabled = not enabled
+        self.query_one("#delete_btn").disabled = not enabled
+    
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button press events."""
+        button_id = event.button.id
+        
+        if button_id == "refresh_btn":
+            self.load_data()
+        
+        elif button_id == "new_item_btn":
+            # Switch to the New Item tab
+            app = self.app
+            app.action_switch_tab("new-item")
+            
+        elif button_id == "details_btn":
+            # Show item details modal
+            if hasattr(self, "_selected_item_id"):
+                self._show_item_details(self._selected_item_id)
+                
+        elif button_id == "edit_btn":
+            # Show the edit item modal for the selected item
+            if hasattr(self, "_selected_item_id"):
+                self._edit_item(self._selected_item_id)
+            
+        elif button_id == "delete_btn":
+            # Delete the selected item
+            if hasattr(self, "_selected_item_id"):
+                self._delete_item(self._selected_item_id)
+    
+    def _show_item_details(self, item_id: str) -> None:
+        """Show the item details modal for the selected item."""
+        # Get reference to the app and work system
+        app = self.app
+        if not hasattr(app, "work_system"):
+            return
+            
+        work_system = app.work_system
+        item = work_system.items.get(item_id)
+        
+        if item:
+            # Show the modal with item details
+            self.app.push_screen(ItemDetailsModal(item))
+            
+    def _edit_item(self, item_id: str) -> None:
+        """Show the edit item modal for the selected item."""
+        # Get reference to the app and work system
+        app = self.app
+        if not hasattr(app, "work_system"):
+            return
+            
+        work_system = app.work_system
+        item = work_system.items.get(item_id)
+        
+        if item:
+            # Cache the original item for potential undo
+            original_item = item.copy()
+            
+            # Show the modal with edit form
+            def handle_edit_result(result):
+                if result:
+                    # Optimistically update the UI
+                    table = self.query_one("#dashboard_table", ItemTable)
+                    
+                    # Prepare row data for the updated item
+                    updated_item = original_item.copy()
+                    for key, value in result.items():
+                        setattr(updated_item, key, value)
+                    
+                    # Find the row index with the item_id
+                    row_index = None
+                    for i, row_key in enumerate(table.row_keys):
+                        if str(row_key) == item_id:
+                            row_index = i
+                            break
+                    
+                    if row_index is not None:
+                        # Update the row directly (optimistically)
+                        table.update_cell(item_id, 1, updated_item.title)
+                        table.update_cell(item_id, 2, updated_item.item_type.value if hasattr(updated_item, "item_type") else "")
+                        table.update_cell(item_id, 3, updated_item.status.value if hasattr(updated_item, "status") else "")
+                        table.update_cell(item_id, 4, str(updated_item.priority.value) if hasattr(updated_item, "priority") else "")
+                        
+                        # Apply styling based on new values
+                        table.apply_row_styling()
+                        
+                        # Show success notification with undo option
+                        def undo_edit():
+                            # Revert to original values in UI
+                            table.update_cell(item_id, 1, original_item.title)
+                            table.update_cell(item_id, 2, original_item.item_type.value)
+                            table.update_cell(item_id, 3, original_item.status.value)
+                            table.update_cell(item_id, 4, str(original_item.priority.value))
+                            
+                            # Revert in database
+                            work_system.update_item(item_id, {
+                                "title": original_item.title,
+                                "item_type": original_item.item_type.value,
+                                "status": original_item.status.value,
+                                "priority": original_item.priority.value,
+                                "description": original_item.description,
+                                "tags": getattr(original_item, "tags", [])
+                            })
+                            
+                            # Show confirmation of undo
+                            self.notify("Edit undone", severity="information")
+                        
+                        self.notify("Item updated successfully", severity="success", timeout=5.0, buttons=[("Undo", undo_edit)])
+                    
+                    # Actually update the database in the background
+                    asyncio.create_task(self._update_item_async(item_id, result))
+            
+            self.app.push_screen(EditItemModal(item), callback=handle_edit_result)
+    
+    async def _update_item_async(self, item_id: str, item_data: Dict[str, Union[str, int, bool]]) -> None:
+        """Update an item in the database asynchronously."""
+        # Get reference to the app and work system
+        app = self.app
+        if not hasattr(app, "work_system"):
+            return
+            
+        work_system = app.work_system
+        
+        try:
+            # Update the item
+            work_system.update_item(item_id, item_data)
+        except Exception as e:
+            # If there was an error, show notification
+            self.notify(f"Error updating item: {str(e)}", severity="error")
+            # Refresh to show accurate data
+            self.load_data()
+    
+    def _delete_item(self, item_id: str) -> None:
+        """Delete the selected item after confirmation."""
+        from textual.screen import ModalScreen
+        from textual.containers import Center
+        from textual.widgets import Button, Static
+        
+        # Get reference to the app and work system
+        app = self.app
+        if not hasattr(app, "work_system"):
+            return
+            
+        work_system = app.work_system
+        
+        # Get a copy of the item for potential undo
+        original_item = None
+        if item_id in work_system.items:
+            original_item = work_system.items[item_id].copy()
+        
+        if not original_item:
+            self.notify("Item not found", severity="error")
+            return
+        
+        class DeleteConfirmationModal(ModalScreen):
+            """Modal screen for delete confirmation."""
+            
+            DEFAULT_CSS = """
+            #delete-confirmation {
+                width: 40;
+                height: auto;
+                padding: 1 2;
+                background: $surface;
+                border: tall $primary;
+            }
+            
+            #delete-confirmation Static {
+                width: 100%;
+                text-align: center;
+                margin-bottom: 1;
+            }
+            
+            #confirmation-buttons {
+                width: 100%;
+                height: auto;
+                align: center middle;
+            }
+            
+            #confirmation-buttons Button {
+                margin: 0 1;
+            }
+            """
+            
+            def __init__(self, item_id: str, original_item: WorkItem):
+                super().__init__()
+                self.item_id = item_id
+                self.original_item = original_item
+                
+            def compose(self) -> ComposeResult:
+                with Center():
+                    with Container(id="delete-confirmation"):
+                        yield Static("Are you sure you want to delete this item?")
+                        with Horizontal(id="confirmation-buttons"):
+                            yield Button("Cancel", variant="primary", id="cancel_btn")
+                            yield Button("Delete", variant="error", id="confirm_btn")
+                            
+            def on_button_pressed(self, event: Button.Pressed) -> None:
+                if event.button.id == "cancel_btn":
+                    self.dismiss(False)
+                elif event.button.id == "confirm_btn":
+                    # Dismiss the modal with True to indicate confirmation
+                    self.dismiss(True)
+        
+        # Show the confirmation modal with callback
+        def handle_delete_confirmation(confirmed):
+            if confirmed:
+                # Get the dashboard screen and table
+                dashboard = self.app.query_one("DashboardScreen")
+                table = dashboard.query_one("#dashboard_table", ItemTable)
+                
+                # Remove the row from the table (optimistic UI update)
+                table.remove_row(item_id)
+                
+                # Show success notification with undo option
+                def undo_delete():
+                    # Restore the item in the database
+                    work_system.items[item_id] = original_item
+                    work_system.save_item(original_item)
+                    
+                    # Refresh the display to show the restored item
+                    dashboard.load_data()
+                    
+                    # Show confirmation of undo
+                    dashboard.notify("Delete undone", severity="information")
+                
+                dashboard.notify("Item deleted", severity="success", timeout=5.0, buttons=[("Undo", undo_delete)])
+                
+                # Run the actual delete operation asynchronously
+                asyncio.create_task(dashboard._delete_item_async(item_id))
+        
+        self.app.push_screen(DeleteConfirmationModal(item_id, original_item), callback=handle_delete_confirmation)
+    
+    async def _delete_item_async(self, item_id: str) -> None:
+        """Delete an item from the database asynchronously."""
+        # Get reference to the app and work system
+        app = self.app
+        if not hasattr(app, "work_system"):
+            return
+            
+        work_system = app.work_system
+        
+        try:
+            # Delete the item
+            work_system.delete_item(item_id)
+        except Exception as e:
+            # If there was an error, show notification
+            self.notify(f"Error deleting item: {str(e)}", severity="error")
+            # Refresh to show accurate data
+            self.load_data()
+    
+    def notify(self, message: str, severity: str = "information", timeout: float = 3.0, buttons: List = None) -> None:
+        """Show a notification toast."""
+        # Create a notification
+        notification = Notification(message, title=None, timeout=timeout)
+        
+        # Add buttons if provided
+        if buttons:
+            for label, callback in buttons:
+                notification.add_action(label, callback)
+        
+        # Show the notification
+        self.app.notify(notification)
+
+    def on_item_table_item_edit_requested(self, event: ItemTable.ItemEditRequested) -> None:
+        """Handle edit request from the item table."""
+        self._edit_item(event.item_id)
+    
+    def on_item_table_item_delete_requested(self, event: ItemTable.ItemDeleteRequested) -> None:
+        """Handle delete request from the item table."""
+        self._delete_item(event.item_id)

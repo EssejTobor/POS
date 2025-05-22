@@ -93,12 +93,10 @@ class WorkSystem:
     def _atomic_operation(self):
         """Ensure atomic operations with proper rollback"""
         items_snapshot = self.items.copy()
-        counts_snapshot = self.entry_counts.copy()
         try:
             yield
         except Exception as e:
             self.items = items_snapshot
-            self.entry_counts = counts_snapshot
             raise e
 
     def _refresh_cache(self):
@@ -281,74 +279,6 @@ class WorkSystem:
                 print(f"Error updating item: {e}")
                 raise
 
-    def update_item_with_links(
-        self,
-        item_id: str,
-        field_values: dict[str, object] | None = None,
-        links_to_add: list[tuple[str, str]] | None = None,
-        links_to_remove: list[str] | None = None,
-    ) -> None:
-        """Update an item and modify links atomically."""
-        field_values = field_values or {}
-        links_to_add = links_to_add or []
-        links_to_remove = links_to_remove or []
-
-        with self._atomic_operation():
-            if item_id not in self.items:
-                raise ValueError(f"Item {item_id} not found")
-
-            # Update fields first
-            if field_values:
-                self.update_item(item_id, **field_values)
-
-            # Apply link removals
-            for target in links_to_remove:
-                if not self.remove_link(item_id, target):
-                    raise RuntimeError(f"Failed to remove link to {target}")
-
-            # Apply link additions
-            for target, ltype in links_to_add:
-                if not self.add_link(item_id, target, ltype):
-                    raise RuntimeError(f"Failed to add link to {target}")
-
-    def batch_update_links(
-        self,
-        item_id: str,
-        *,
-        links_to_add: list[tuple[str, str]] | None = None,
-        links_to_remove: list[str] | None = None,
-    ) -> None:
-        """Atomically apply multiple link changes for an item."""
-
-        links_to_add = links_to_add or []
-        links_to_remove = links_to_remove or []
-
-        with self._atomic_operation():
-            for target in links_to_remove:
-                if not self.remove_link(item_id, target):
-                    raise RuntimeError(f"Failed to remove link to {target}")
-
-            for target, ltype in links_to_add:
-                if not self.add_link(item_id, target, ltype):
-                    raise RuntimeError(f"Failed to add link to {target}")
-
-    def delete_item(self, item_id: str) -> None:
-        """Remove an item from the system."""
-        with self._atomic_operation():
-            try:
-                if item_id not in self.items:
-                    raise ValueError(f"Item {item_id} not found")
-
-                try:
-                    self.db.delete_item(item_id)
-                except Exception as e:
-                    raise RuntimeError(f"Failed to delete item: {str(e)}")
-
-                del self.items[item_id]
-            except Exception as e:
-                print(f"Error deleting item: {e}")
-                raise
-
     def export_markdown(self, output_path: str = "work_items.md"):
         with open(output_path, "w") as f:
             f.write("# Work Items\n\n")
@@ -428,16 +358,13 @@ class WorkSystem:
     def get_filtered_items(
         self,
         goal: Optional[str] = None,
-        status: Optional[ItemStatus | list[ItemStatus]] = None,
+        status: Optional[ItemStatus] = None,
         priority: Optional[Priority] = None,
-        item_type: Optional[ItemType | list[ItemType]] = None,
+        item_type: Optional[ItemType] = None,
         tag: Optional[str] = None,
         search_text: Optional[str] = None,
-        *,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
     ) -> List[WorkItem]:
-        """Use optimized database query directly."""
+        """Use optimized database query directly"""
         return self.db.get_items_by_filters(
             goal=goal,
             status=status,
@@ -445,8 +372,6 @@ class WorkSystem:
             item_type=item_type,
             tag=tag,
             search_text=search_text,
-            start_date=start_date,
-            end_date=end_date,
         )
 
     def search_thoughts(
@@ -478,32 +403,9 @@ class WorkSystem:
             bool: True if the link was added successfully, False otherwise
         """
         try:
-            # Verify both items exist
+            # Verify both items exist in our cache
             if source_id not in self.items or target_id not in self.items:
                 print("Error adding link: One or both items don't exist")
-                return False
-
-            # Basic validation rules
-            if source_id == target_id:
-                print("Error adding link: cannot link item to itself")
-                return False
-
-            valid_types = {"references", "evolves-from"}
-            if link_type not in valid_types:
-                print(f"Error adding link: invalid link type {link_type}")
-                return False
-
-            # Circular reference check
-            existing = self.get_links(target_id).get("outgoing", [])
-            if any(l["target_id"] == source_id for l in existing):
-                print("Error adding link: circular reference detected")
-                return False
-
-            # Link count limit
-            MAX_LINKS = 10
-            current_links = self.get_links(source_id).get("outgoing", [])
-            if len(current_links) >= MAX_LINKS:
-                print("Error adding link: maximum links reached")
                 return False
 
             with self._atomic_operation():
@@ -579,6 +481,8 @@ class WorkSystem:
     def get_all_tags(self) -> List[str]:
         """Get all unique tags in the system"""
         return sorted(self.db.get_all_tags())
+        return self.db.get_all_tags()
+
 
     def suggest_link_targets(
         self, goal: str | None = None, limit: int = 50

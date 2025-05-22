@@ -1,53 +1,120 @@
-from __future__ import annotations
+"""
+Base worker thread class for handling background operations.
 
+This module provides a thread-safe way to execute operations off the main thread,
+which is especially important for database operations in Textual applications.
+"""
+
+import threading
+import time
 import traceback
-from typing import Any, Callable, Optional
-
-from textual.app import App
-from textual.worker import Worker
+from functools import partial
+from typing import Any, Callable, Dict, Optional
 
 
-class BaseWorker(Worker):
-    """Worker with lifecycle callbacks and result/error handling."""
+class BaseWorker:
+    """Base class for worker threads that execute operations asynchronously.
+
+    This class handles thread lifecycle management, result callbacks, and error handling.
+    Subclasses should implement the _run method to define the actual work to be done.
+    """
 
     def __init__(
         self,
-        name: str,
-        func: Callable[[], Any],
-        app: App,
-        on_start: Callable[[], None] | None = None,
-        on_success: Callable[[Any], None] | None = None,
-        on_error: Callable[[Exception], None] | None = None,
-        on_complete: Callable[[], None] | None = None,
-    ) -> None:
-        super().__init__(func, name=name)
-        self.app = app
-        self.on_start_cb = on_start
-        self.on_success_cb = on_success
-        self.on_error_cb = on_error
-        self.on_complete_cb = on_complete
+        callback: Optional[Callable] = None,
+        error_callback: Optional[Callable] = None,
+        timeout: float = 30.0,
+    ):
+        """Initialize a worker thread.
+
+        Args:
+            callback: Function to call with the results when the operation completes
+            error_callback: Function to call with error info if the operation fails
+            timeout: Maximum time (seconds) to wait for the thread to complete
+        """
+        self.callback = callback
+        self.error_callback = error_callback
+        self.timeout = timeout
+        self.thread: Optional[threading.Thread] = None
+        self.is_running = False
         self.result: Any = None
-        self.error: Exception | None = None
+        self.error: Optional[Exception] = None
+        self.traceback: Optional[str] = None
 
-    # Textual calls these methods at various stages of execution
-    def on_start(self) -> None:  # pragma: no cover - simple delegation
-        if self.on_start_cb:
-            self.app.call_from_thread(self.on_start_cb)
+    def start(self, **kwargs) -> None:
+        """Start the worker thread with the given parameters.
 
-    def on_success(self, result: Any) -> None:
-        self.result = result
-        if self.on_success_cb:
-            self.app.call_from_thread(self.on_success_cb, result)
+        Args:
+            **kwargs: Parameters to pass to the _run method
+        """
+        if self.is_running:
+            raise RuntimeError("Worker is already running")
 
-    def on_error(self, error: Exception) -> None:
-        self.error = error
-        if self.on_error_cb:
-            self.app.call_from_thread(self.on_error_cb, error)
-        else:
-            self.app.log(
-                f"Worker {self.name} failed: {error}\n{traceback.format_exc()}"
-            )
+        self.is_running = True
+        self.thread = threading.Thread(
+            target=self._thread_wrapper,
+            args=(kwargs,),
+            daemon=True,
+        )
+        self.thread.start()
 
-    def on_complete(self) -> None:  # pragma: no cover - simple delegation
-        if self.on_complete_cb:
-            self.app.call_from_thread(self.on_complete_cb)
+    def _thread_wrapper(self, kwargs: Dict[str, Any]) -> None:
+        """Wrapper method that captures results and errors from the _run method.
+
+        Args:
+            kwargs: Parameters to pass to the _run method
+        """
+        try:
+            self.result = self._run(**kwargs)
+            if self.callback:
+                self.callback(self.result)
+        except Exception as e:
+            self.error = e
+            self.traceback = traceback.format_exc()
+            if self.error_callback:
+                self.error_callback(self.error, self.traceback)
+        finally:
+            self.is_running = False
+
+    def _run(self, **kwargs) -> Any:
+        """Execute the worker's main functionality.
+
+        This method should be overridden by subclasses to implement the actual work.
+
+        Args:
+            **kwargs: Parameters for the operation
+
+        Returns:
+            The result of the operation
+        """
+        raise NotImplementedError("Subclasses must implement _run")
+
+    def wait(self, timeout: Optional[float] = None) -> bool:
+        """Wait for the worker thread to complete.
+
+        Args:
+            timeout: Maximum time (seconds) to wait; defaults to self.timeout
+
+        Returns:
+            True if the thread completed, False if it timed out
+        """
+        if not self.thread:
+            return True
+
+        if timeout is None:
+            timeout = self.timeout
+
+        start_time = time.time()
+        while self.is_running and (time.time() - start_time) < timeout:
+            time.sleep(0.05)
+
+        return not self.is_running
+
+    def cancel(self) -> None:
+        """Mark the worker as canceled.
+
+        Note: This does not actually stop the thread execution since Python threads
+        cannot be forcibly terminated. It only sets a flag that can be checked by
+        long-running operations.
+        """
+        self.is_running = False 

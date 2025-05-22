@@ -67,7 +67,7 @@ python -m src.pos_tui.validation.run item_editing
 
 ### UI Component Validations
 
-**Protocol Names**: `edit_modal`, `item_table`, `confirm_modal`, `detail_screen`
+**Protocol Names**: `edit_modal`, `item_table`
 
 **Description**: Validates UI components without rendering them
 
@@ -76,11 +76,10 @@ python -m src.pos_tui.validation.run item_editing
 - Lifecycle event handling
 - Method signatures and behavior
 - Message handling and event flow
-- Confirm modal button handling
 
 **Usage**:
 ```bash
-python -m src.pos_tui.validation.run edit_modal item_table confirm_modal detail_screen
+python -m src.pos_tui.validation.run edit_modal item_table
 ```
 
 ## Feature Validation Protocols
@@ -137,12 +136,8 @@ The `ItemEditingValidation` protocol in `src/pos_tui/validation/item_management.
 2. **ItemTable Component**:
    - Should display item data in a tabular format
    - Should provide cell update mechanism for optimistic UI updates
-   - Should expose an `update_item` method for modifying rows
    - Should emit appropriate messages for item selection/editing/deletion
    - Should handle context menu and action button events
-3. **ConfirmModal Component**:
-   - Should display confirmation message
-   - Should dismiss with True on confirm and False on cancel
 
 #### Validation Strategy
 
@@ -153,114 +148,6 @@ The `EditItemModalValidation` and `ItemTableValidation` protocols in `src/pos_tu
 3. Verifying properties, methods, and message classes
 4. Simulating user interaction events
 5. Checking for appropriate responses to events
-
-### Linked Items Widget
-
-**Feature Description**: Displays all links for an item grouped by relationship type with color-coded indicators.
-
-#### Essential Behaviors to Validate
-
-1. Links should be grouped by type
-2. Each link should expose "Open" and "Remove" actions
-3. Link types should use consistent colors across widgets
-
-#### Validation Strategy
-
-The `LinkedItemsWidgetValidation` protocol in `src/pos_tui/validation/link_widget.py` validates basic widget behavior by instantiating the widget with an in-memory database and verifying it mounts successfully and exposes a `refresh_links` method.
-
-### Navigation History Validation
-
-**Protocol Name**: `navigation_validation`
-
-**Description**: Verifies breadcrumb history updates when navigating between item detail screens.
-
-**Key Validations**:
-1. Opening a detail screen registers the item in history
-2. Navigating to another item appends it to the trail
-3. Closing a detail screen pops it from the history
-
-**Usage**:
-```bash
-python -m src.pos_tui.validation.run navigation_validation
-```
-
-### Command Palette Validation
-
-**Protocol Name**: `command_palette`
-
-**Description**: Validates fuzzy search and alias matching in the command palette.
-
-**Key Validations**:
-1. Searching by a partial alias returns the correct command
-2. Palette refresh groups commands by category
-
-**Usage**:
-```bash
-python -m src.pos_tui.validation.run command_palette
-```
-### Link Creation Validation
-
-**Protocol Name**: `link_validation`
-
-**Description**: Ensures link creation logic enforces constraints like circular reference detection and link count limits.
-
-**Key Validations**:
-- Valid links can be created between items
-- Duplicate or circular links are rejected
-- Exceeding the maximum link count fails
-
-**Usage**:
-```bash
-python -m src.pos_tui.validation.run link_validation
-```
-
-### Link Tree Visualization
-
-**Protocol Name**: `link_tree`
-
-**Description**: Validates the `LinkTree` widget renders relationships and loads
-child nodes on demand.
-
-**Key Validations**:
-1. Initial tree load displays root children
-2. Expanding a node dynamically loads its children
-
-**Usage**:
-```bash
-python -m src.pos_tui.validation.run link_tree
-```
-
-### Usability Validation
-
-**Protocol Name**: `usability`
-
-**Description**: Validates user preference persistence and theme toggle logic.
-
-**Key Validations**:
-1. Saving preferences writes data to a JSON file
-2. Loading preferences returns the same values
-
-**Usage**:
-```bash
-python -m src.pos_tui.validation.run usability
-```
-
-### Filter Bar Validation
-
-**Protocol Name**: `filter_bar`
-
-**Description**: Ensures advanced filtering options update item tables and are
-persisted via presets.
-
-**Key Validations**:
-1. Multi-select type and status updates query results
-2. Date range filters limit results appropriately
-3. Saving and loading presets restores filter values
-
-**Usage**:
-```bash
-python -m src.pos_tui.validation.run filter_bar
-```
 
 ## Adding New Validation Protocols
 
@@ -298,16 +185,4 @@ Validation results are automatically saved to `data/validation_results/` in JSON
 }
 ```
 
-These results can be reviewed to track validation history and identify areas for improvement.
-
-## Validation Results – 2025-05-22
-
-| Protocol | Status |
-|----------|--------|
-| item_editing | ❌ Fail |
-| edit_modal | ❌ Fail |
-| item_table | ❌ Fail |
-| confirm_modal | ❌ Fail |
-| detail_screen | ❌ Fail |
-
-Validation execution reported failures across all protocols due to missing or incomplete implementations. See the console output for detailed error information.
+These results can be reviewed to track validation history and identify areas for improvement. 
