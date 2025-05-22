@@ -194,7 +194,12 @@ class ValidationProtocol:
 
 
 # Import validation protocols
-from .item_management import ItemCreationValidation, ItemEditingValidation, OptimisticUIValidation
+from .item_management import (
+    ItemCreationValidation,
+    ItemEditingValidation,
+    OptimisticUIValidation,
+    ItemCreationViaFormValidation,
+)
 from .ui_components import ItemFormValidation, UIComponentsValidation
 from .item_links import LinkManagementValidation, LinkNavigationValidation
 from .tree_visualization import TreeVisualizationValidation
@@ -206,6 +211,7 @@ __all__ = [
     "ItemCreationValidation",
     "ItemEditingValidation",
     "OptimisticUIValidation",
+    "ItemCreationViaFormValidation",
     "ItemFormValidation",
     "UIComponentsValidation",
     "LinkManagementValidation",

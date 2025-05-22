@@ -50,11 +50,12 @@ python -m src.pos_tui.validation.run item_editing edit_modal item_table
 
 ### Item Management Validation
 
-**Protocol Name**: `item_editing`
+**Protocol Names**: `item_creation_via_form`, `item_editing`
 
-**Description**: Validates item editing, deletion, and optimistic UI update functionality
+**Description**: Validates item creation through the form interface along with editing, deletion, and optimistic UI update functionality
 
 **Key Validations**:
+- Form submission passes goal and item_type correctly
 - Basic item editing operations
 - Item deletion with proper cleanup
 - Optimistic UI update pattern with undo capability
