@@ -3,7 +3,7 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Iterable
 
 from .models import ItemStatus, ItemType, Priority, WorkItem
 
@@ -231,13 +231,20 @@ class Database:
     def get_items_by_filters(
         self,
         goal: Optional[str] = None,
-        status: Optional[ItemStatus] = None,
+        status: Optional[ItemStatus | Iterable[ItemStatus]] = None,
         priority: Optional[Priority] = None,
-        item_type: Optional[ItemType] = None,
+        item_type: Optional[ItemType | Iterable[ItemType]] = None,
         tag: Optional[str] = None,
         search_text: Optional[str] = None,
+        *,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
     ) -> List[WorkItem]:
-        """Flexible query with multiple optional filters"""
+        """Flexible query with multiple optional filters.
+
+        Parameters support lists for ``status`` and ``item_type`` and optional
+        date range filtering via ``start_date`` and ``end_date`` (``YYYY-MM-DD``).
+        """
         query = ["SELECT wi.* FROM work_items wi"]
         params: list[str | int] = []
         where_added = False
@@ -255,22 +262,41 @@ class Database:
             add_condition("LOWER(wi.goal) = LOWER(?)")
             params.append(goal)
         if status:
-            add_condition("status = ?")
-            params.append(status.value)
+            if isinstance(status, Iterable):
+                placeholders = ",".join("?" for _ in status)
+                add_condition(f"status IN ({placeholders})")
+                params.extend(s.value for s in status)
+            else:
+                add_condition("status = ?")
+                params.append(status.value)
         if priority:
             add_condition("priority = ?")
             params.append(priority.value)
         if item_type:
-            add_condition("item_type = ?")
-            params.append(item_type.value)
+            if isinstance(item_type, Iterable):
+                placeholders = ",".join("?" for _ in item_type)
+                add_condition(f"item_type IN ({placeholders})")
+                params.extend(t.value for t in item_type)
+            else:
+                add_condition("item_type = ?")
+                params.append(item_type.value)
         if tag:
             add_condition("it.tag = ?")
             params.append(tag.lower())
 
         if search_text:
-            add_condition("(LOWER(wi.title) LIKE ? OR LOWER(wi.description) LIKE ?)")
+            add_condition(
+                "(LOWER(wi.title) LIKE ? OR LOWER(wi.description) LIKE ?)"
+            )
             term = f"%{search_text.lower()}%"
             params.extend([term, term])
+
+        if start_date:
+            add_condition("date(wi.created_at) >= date(?)")
+            params.append(start_date)
+        if end_date:
+            add_condition("date(wi.created_at) <= date(?)")
+            params.append(end_date)
 
         query.append("ORDER BY wi.priority DESC, wi.created_at DESC")
 

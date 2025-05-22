@@ -65,9 +65,11 @@ class DashboardScreen(Container):
         worker = ItemFetchWorker(
             self.app,
             self.app.work_system,
-            item_type=filters.item_type,
-            status=filters.status,
+            item_type=list(filters.item_types),
+            status=list(filters.statuses),
             search_text=filters.search_text,
+            start_date=filters.start_date,
+            end_date=filters.end_date,
             sort_key=table.sort_key,
             sort_reverse=table.sort_reverse,
             page=table.current_page,
@@ -109,9 +111,11 @@ class DashboardScreen(Container):
     ) -> None:  # pragma: no cover - simple UI
         table = self.query_one(ItemTable)
         table.set_filters(
-            item_type=event.item_type,
-            status=event.status,
+            item_type=list(event.item_types),
+            status=list(event.statuses),
             search_text=event.search_text,
+            start_date=event.start_date,
+            end_date=event.end_date,
         )
 
     def on_data_table_cell_selected(
@@ -212,7 +216,7 @@ class DashboardScreen(Container):
             self.app.work_system.db.delete_item(item.id)
             return 1
 
-        from ..error import log_error
+        from ..error import log_and_notify
 
         worker = ItemSaveWorker(
             "delete_item",
@@ -220,7 +224,7 @@ class DashboardScreen(Container):
             self.app.connection_manager,
             op,
             on_error=lambda e: (
-                log_error(e),
+                log_and_notify(self.app, e, "Delete failed"),
                 self.call_from_thread(self._restore_deleted, item, index),
             ),
         )

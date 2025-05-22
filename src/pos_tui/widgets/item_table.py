@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Callable, Iterable, List
+from datetime import datetime
 
 from textual.message import Message
 from textual.reactive import reactive
@@ -46,9 +47,11 @@ class ItemTable(DataTable):
         self._items: List[WorkItem] = []
         self._filtered: List[WorkItem] = []
         self._row_items: List[WorkItem] = []
-        self.item_type_filter: ItemType | None = None
-        self.status_filter: ItemStatus | None = None
+        self.item_type_filter: set[ItemType] = set()
+        self.status_filter: set[ItemStatus] = set()
         self.search_text: str = ""
+        self.start_date_filter: str | None = None
+        self.end_date_filter: str | None = None
         self.sort_key: Callable[[WorkItem], object] | None = None
         self.sort_reverse: bool = False
         self._last_click_time: float = 0.0
@@ -245,10 +248,22 @@ class ItemTable(DataTable):
     # ------------------------------------------------------------------
     def _apply_filters(self) -> None:
         items = self._items
-        if self.item_type_filter is not None:
-            items = [i for i in items if i.item_type == self.item_type_filter]
-        if self.status_filter is not None:
-            items = [i for i in items if i.status == self.status_filter]
+        if self.item_type_filter:
+            items = [i for i in items if i.item_type in self.item_type_filter]
+        if self.status_filter:
+            items = [i for i in items if i.status in self.status_filter]
+        if self.start_date_filter:
+            items = [
+                i
+                for i in items
+                if i.created_at.date() >= datetime.fromisoformat(self.start_date_filter).date()
+            ]
+        if self.end_date_filter:
+            items = [
+                i
+                for i in items
+                if i.created_at.date() <= datetime.fromisoformat(self.end_date_filter).date()
+            ]
         if self.search_text:
             term = self.search_text.lower()
             items = [
@@ -261,13 +276,29 @@ class ItemTable(DataTable):
     def set_filters(
         self,
         *,
-        item_type: ItemType | None = None,
-        status: ItemStatus | None = None,
+        item_type: ItemType | list[ItemType] | None = None,
+        status: ItemStatus | list[ItemStatus] | None = None,
         search_text: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ) -> None:
-        self.item_type_filter = item_type
-        self.status_filter = status
+        if item_type is None:
+            self.item_type_filter = set()
+        elif isinstance(item_type, list):
+            self.item_type_filter = set(item_type)
+        else:
+            self.item_type_filter = {item_type}
+
+        if status is None:
+            self.status_filter = set()
+        elif isinstance(status, list):
+            self.status_filter = set(status)
+        else:
+            self.status_filter = {status}
+
         self.search_text = search_text or ""
+        self.start_date_filter = start_date
+        self.end_date_filter = end_date
         self.current_page = 0
         self.refresh_page()
 

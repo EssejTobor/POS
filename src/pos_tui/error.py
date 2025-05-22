@@ -4,6 +4,8 @@ from __future__ import annotations
 import traceback
 from pathlib import Path
 from typing import Any
+from textual.app import App
+from .widgets import ToastNotification
 
 ERROR_LOG = Path(__file__).resolve().parents[2] / "data" / "error.log"
 
@@ -17,3 +19,10 @@ def log_error(err: Exception | str) -> None:
         else:
             fh.write(str(err))
         fh.write("\n")
+
+
+def log_and_notify(app: App, err: Exception | str, message: str = "Error") -> None:
+    """Log an error and display a toast notification."""
+    log_error(err)
+    toast = ToastNotification(f"{message}: {err}")
+    app.push_screen(toast)

@@ -230,6 +230,23 @@ python -m src.pos_tui.validation.run link_tree
 python -m src.pos_tui.validation.run usability
 ```
 
+### Filter Bar Validation
+
+**Protocol Name**: `filter_bar`
+
+**Description**: Ensures advanced filtering options update item tables and are
+persisted via presets.
+
+**Key Validations**:
+1. Multi-select type and status updates query results
+2. Date range filters limit results appropriately
+3. Saving and loading presets restores filter values
+
+**Usage**:
+```bash
+python -m src.pos_tui.validation.run filter_bar
+```
+
 ## Adding New Validation Protocols
 
 To create a new validation protocol:

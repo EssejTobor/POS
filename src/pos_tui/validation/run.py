@@ -26,6 +26,7 @@ from src.pos_tui.validation.links import LinkValidation
 from src.pos_tui.validation.link_tree import LinkTreeValidation
 from src.pos_tui.validation.navigation import NavigationValidation
 from src.pos_tui.validation.usability import UsabilityValidation
+from src.pos_tui.validation.filter_bar import FilterBarValidation
 
 
 def run_selected_validations(validation_names: List[str] = None) -> Dict[str, ValidationResult]:
@@ -50,6 +51,7 @@ def run_selected_validations(validation_names: List[str] = None) -> Dict[str, Va
         "link_tree": LinkTreeValidation,
         "navigation_validation": NavigationValidation,
         "usability": UsabilityValidation,
+        "filter_bar": FilterBarValidation,
         # Add more validation protocols here as they are implemented
     }
     
@@ -163,6 +165,7 @@ def main() -> int:
             "link_tree",
             "navigation_validation",
             "usability",
+            "filter_bar",
             # Add more as implemented
         ]
         
