@@ -8,7 +8,7 @@ This package contains all the custom widgets used in the TUI.
 from .item_table import ItemTable
 from .item_form import ItemEntryForm
 from .item_details import LinkedItemsWidget, ItemDetailsModal
-from .modals import EditItemModal
+from .modals import EditItemModal, ConfirmModal
 from .filter_bar import FilterBar
 from .link_tree import LinkTree, LinkTreeControls
 from .command_palette import CommandPalette, CommandItem
@@ -22,6 +22,7 @@ __all__: list[str] = [
     "LinkedItemsWidget",
     "ItemDetailsModal",
     "EditItemModal",
+    "ConfirmModal",
     "FilterBar",
     "LinkTree",
     "LinkTreeControls",

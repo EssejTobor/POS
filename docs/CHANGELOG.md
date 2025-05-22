@@ -243,6 +243,8 @@
 - Improved async workflow using asyncio.create_task for background operations
 - Updated documentation to use generic Python testing terminology instead of pytest-specific references
 - Updated CSS in `notifications.py` to be compatible with Textual 3.x by replacing `border-left-color` with proper `border` property and using correct color opacity syntax
+- Implemented generic `ConfirmModal` widget and integrated delete confirmation
+- Added unsaved-changes warning in `EditItemModal`
 
 ### Fixed
 - Fixed compatibility issues with the current Textual API version
