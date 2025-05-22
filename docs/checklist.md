@@ -155,6 +155,9 @@ This checklist tracks the implementation progress against the phases defined in 
 ### 6.3 Implement Search and Filtering
 - [x] Enhance dashboard with advanced filtering (`filter_bar.py` exists)
 - [x] Save filter preferences between sessions
+- [x] Display goal column in ItemTable
+- [x] Add goal filter and THOUGHT type option
+- [x] Validation for item listing and viewing
 
 ### 6.4 Add Final Polish
 - [x] Implement consistent error handling

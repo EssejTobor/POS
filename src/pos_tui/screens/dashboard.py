@@ -89,15 +89,17 @@ class DashboardScreen(Screen):
             self.fetch_filtered_items(
                 item_type=event.item_type,
                 search_text=event.search_text,
-                status=event.status
+                status=event.status,
+                goal_filter=event.goal_filter
             )
         )
     
     async def fetch_filtered_items(
-        self, 
-        item_type: Optional[str] = None, 
+        self,
+        item_type: Optional[str] = None,
         search_text: Optional[str] = None,
-        status: Optional[str] = None
+        status: Optional[str] = None,
+        goal_filter: Optional[str] = None,
     ) -> None:
         """Fetch items from database with filters applied."""
         # Get reference to the app and work system
@@ -124,9 +126,10 @@ class DashboardScreen(Screen):
         
         # Get filtered items
         items = work_system.get_filtered_items(
+            goal=goal_filter,
             item_type=type_enum,
             status=status_enum,
-            search_text=search_text
+            search_text=search_text,
         )
         
         # Simulate a delay to show loading (remove in production)
@@ -191,11 +194,12 @@ class DashboardScreen(Screen):
             table.add_row(
                 item.id,
                 item.title,
+                item.goal,
                 item.item_type.value,
                 item.status.value,
                 str(item.priority.value),
                 due_date,
-                key=item.id
+                key=item.id,
             )
         
         # Update pagination info

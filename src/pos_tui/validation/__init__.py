@@ -201,6 +201,7 @@ from .item_management import (
     ItemCreationViaFormValidation,
 )
 from .ui_components import ItemFormValidation, UIComponentsValidation
+from .item_listing_viewing import ItemListingAndViewingValidation
 from .item_links import LinkManagementValidation, LinkNavigationValidation
 from .tree_visualization import TreeVisualizationValidation
 from .navigation_validation import NavigationValidator, run_validation
@@ -214,6 +215,7 @@ __all__ = [
     "ItemCreationViaFormValidation",
     "ItemFormValidation",
     "UIComponentsValidation",
+    "ItemListingAndViewingValidation",
     "LinkManagementValidation",
     "LinkNavigationValidation",
     "TreeVisualizationValidation",
