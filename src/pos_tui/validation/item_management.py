@@ -1,7 +1,8 @@
-"""
-Validation protocol for Item Management features.
+"""Validation protocol for item management features.
 
-This module provides validation scripts for item creation, editing, and deletion.
+This module provides validation scripts for item creation, editing, deletion,
+and optimistic update behaviour.  It uses a temporary database so the
+validation can run without side effects on the real data store.
 """
 
 import os
@@ -20,11 +21,12 @@ from src.models import ItemType, Priority, ItemStatus, WorkItem
 from src.storage import WorkSystem
 
 
-class ItemEditingValidation(ValidationProtocol):
-    """Validation protocol for item editing functionality."""
+class ItemManagementValidation(ValidationProtocol):
+    """Validation protocol for item creation and editing functionality."""
     
     def __init__(self):
-        super().__init__("item_editing")
+        # keep protocol name stable for backward compatibility
+        super().__init__("item_management")
         self.temp_db = None
     
     def _setup_test_db(self) -> str:
@@ -64,12 +66,13 @@ class ItemEditingValidation(ValidationProtocol):
         item_ids = []
         for item_data in test_items:
             item = ws.add_item(
+                goal="validation",
                 title=item_data["title"],
-                description=item_data["description"],
                 item_type=item_data["item_type"],
+                description=item_data["description"],
                 priority=item_data["priority"],
-                status=item_data["status"]
             )
+            ws.update_item(item.id, status=item_data["status"].value)
             item_ids.append(item.id)
         
         # Create some links if the method is available
@@ -78,26 +81,62 @@ class ItemEditingValidation(ValidationProtocol):
         
         self.result.add_note(f"Created temporary database at {temp_db_file.name} with {len(item_ids)} items")
         return temp_db_file.name
-    
+
     def _run_validation(self) -> None:
-        """Run validation for item editing."""
+        """Run validation for item creation and editing."""
         try:
             # Create a temporary database
             self.temp_db = self._setup_test_db()
-            
-            # 1. Validate edit operation
+
+            # 1. Validate create operation
+            self._validate_create_operation()
+
+            # 2. Validate edit operation
             self._validate_edit_operation()
-            
-            # 2. Validate delete operation
+
+            # 3. Validate delete operation
             self._validate_delete_operation()
-            
-            # 3. Validate optimistic UI updates (simulated)
+
+            # 4. Validate optimistic UI updates (simulated)
             self._validate_optimistic_updates()
         finally:
             # Clean up temporary database
             if self.temp_db and os.path.exists(self.temp_db):
                 os.unlink(self.temp_db)
                 self.result.add_note(f"Removed temporary database at {self.temp_db}")
+
+    def _validate_create_operation(self) -> None:
+        """Validate basic item creation."""
+        ws = WorkSystem(self.temp_db)
+
+        before_state = dump_database_state(self.temp_db)
+        count_before = len(ws.items)
+
+        new_item = ws.add_item(
+            goal="validation",
+            title="New Item",
+            item_type=ItemType.TASK,
+            description="Created from validation",
+            priority=Priority.MED,
+        )
+        ws.update_item(new_item.id, status=ItemStatus.IN_PROGRESS.value)
+
+        after_state = dump_database_state(self.temp_db)
+
+        if new_item.id in ws.items:
+            self.result.add_pass("Item created and stored in WorkSystem")
+        else:
+            self.result.add_fail("New item missing from WorkSystem cache")
+
+        if len(ws.items) == count_before + 1:
+            self.result.add_pass("Item count increased after creation")
+        else:
+            self.result.add_fail("Item count did not increase after creation")
+
+        if new_item.id in after_state.get("items", {}):
+            self.result.add_pass("Database state includes new item")
+        else:
+            self.result.add_fail("Database state missing new item")
     
     def _validate_edit_operation(self) -> None:
         """Validate basic edit operation."""
@@ -124,7 +163,7 @@ class ItemEditingValidation(ValidationProtocol):
             "status": new_status.value
         }
         
-        ws.update_item(item_id, edit_data)
+        ws.update_item(item_id, **edit_data)
         
         # Capture updated state
         updated_state = dump_database_state(self.temp_db)
@@ -207,8 +246,9 @@ class ItemEditingValidation(ValidationProtocol):
             self.result.add_fail("No items for optimistic update validation")
             return
         
+        import copy
         item_id = next(iter(ws.items.keys()))
-        original_item = ws.items[item_id].copy()  # Make a copy for later comparison
+        original_item = copy.deepcopy(ws.items[item_id])  # Make a copy for later comparison
         
         # 1. Capture state before modification
         before_state = dump_database_state(self.temp_db)
@@ -226,7 +266,7 @@ class ItemEditingValidation(ValidationProtocol):
         # 4. In the real app, we'd update the UI immediately and then
         # initiate an async task to update the database. Here we'll just
         # call the update directly since we can't test UI components.
-        ws.update_item(item_id, update_data)
+        ws.update_item(item_id, **update_data)
         
         # 5. Verify the change persisted to the database
         updated_item = ws.items[item_id]
@@ -244,7 +284,7 @@ class ItemEditingValidation(ValidationProtocol):
         }
         
         # In the real app, this would be triggered by a button in a toast notification
-        ws.update_item(item_id, original_data)
+        ws.update_item(item_id, **original_data)
         
         # Verify undo worked
         restored_item = ws.items[item_id]
@@ -261,10 +301,12 @@ class ItemEditingValidation(ValidationProtocol):
 
 def run_all_validations() -> None:
     """Run all item management validations."""
-    # Run item editing validation
-    item_editing = ItemEditingValidation()
-    item_editing.validate()
+    validation = ItemManagementValidation()
+    validation.validate()
 
 
 if __name__ == "__main__":
-    run_all_validations() 
+    run_all_validations()
+
+# Backwards compatibility
+ItemEditingValidation = ItemManagementValidation

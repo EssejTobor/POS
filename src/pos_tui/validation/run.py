@@ -14,7 +14,7 @@ from typing import List, Dict, Any, Optional
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from src.pos_tui.validation import ValidationResult, enable_validation_mode
-from src.pos_tui.validation.item_management import ItemEditingValidation
+from src.pos_tui.validation.item_management import ItemManagementValidation
 from src.pos_tui.validation.ui_components import EditItemModalValidation, ItemTableValidation
 
 
@@ -30,7 +30,8 @@ def run_selected_validations(validation_names: List[str] = None) -> Dict[str, Va
     """
     # Available validation protocols
     validation_protocols = {
-        "item_editing": ItemEditingValidation,
+        "item_management": ItemManagementValidation,
+        "item_editing": ItemManagementValidation,  # backward compatibility
         "edit_modal": EditItemModalValidation,
         "item_table": ItemTableValidation,
         # Add more validation protocols here as they are implemented
@@ -136,7 +137,7 @@ def main() -> int:
     if args.list:
         # This matches the protocols defined in run_selected_validations
         available_protocols = [
-            "item_editing",
+            "item_management",
             "edit_modal",
             "item_table",
             # Add more as implemented
