@@ -279,6 +279,14 @@ class WorkSystem:
                 print(f"Error updating item: {e}")
                 raise
 
+    def delete_item(self, item_id: str) -> None:
+        """Remove an item from the database and cache."""
+        with self.db.get_connection() as conn:
+            conn.execute("DELETE FROM work_items WHERE id = ?", (item_id,))
+            conn.commit()
+        if item_id in self.items:
+            del self.items[item_id]
+
     def export_markdown(self, output_path: str = "work_items.md"):
         with open(output_path, "w") as f:
             f.write("# Work Items\n\n")

@@ -59,6 +59,7 @@ python -m src.pos_tui.validation.run item_editing edit_modal item_table
 - Item deletion with proper cleanup
 - Optimistic UI update pattern with undo capability
 - Proper state management during operations
+- Dashboard refresh after saving a new item
 
 **Usage**:
 ```bash
