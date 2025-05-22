@@ -126,7 +126,15 @@ class DashboardScreen(Container):
     def on_item_table_edit_requested(
         self, event: ItemTable.EditRequested
     ) -> None:  # pragma: no cover - UI action
-        self.app.push_screen(ItemFormModal(event.item, self.app.work_system))
+        def _on_result(result: WorkItem | None) -> None:
+            if result is not None:
+                table = self.query_one(ItemTable)
+                table.load_items(self.app.work_system.items.values())
+                self.query_one("#status_bar", Static).update("Item updated")
+
+        self.app.push_screen(
+            ItemFormModal(event.item, self.app.work_system), callback=_on_result
+        )
 
     def on_item_table_delete_requested(
         self, event: ItemTable.DeleteRequested

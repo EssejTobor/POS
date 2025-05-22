@@ -23,13 +23,13 @@ python -m src.pos_tui.validation.run
 python -m src.pos_tui.validation.run --list
 
 # Run specific protocols
-python -m src.pos_tui.validation.run item_editing edit_modal
+python -m src.pos_tui.validation.run item_editing form_modal
 ```
 
 ### Available Validation Protocols
 
 - `item_editing` - Validates item editing, deletion, and optimistic UI functionality
-- `edit_modal` - Validates the EditItemModal component
+- `form_modal` - Validates the ItemFormModal component
 - `item_table` - Validates the ItemTable component
 
 ### Validation Results

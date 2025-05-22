@@ -43,7 +43,7 @@ python -m src.pos_tui.validation.run
 python -m src.pos_tui.validation.run --list
 
 # Run specific protocols
-python -m src.pos_tui.validation.run item_editing edit_modal item_table
+python -m src.pos_tui.validation.run item_editing form_modal item_table
 ```
 
 ## Available Validation Protocols
@@ -67,7 +67,7 @@ python -m src.pos_tui.validation.run item_editing
 
 ### UI Component Validations
 
-**Protocol Names**: `edit_modal`, `item_table`
+**Protocol Names**: `form_modal`, `item_table`
 
 **Description**: Validates UI components without rendering them
 
@@ -79,7 +79,7 @@ python -m src.pos_tui.validation.run item_editing
 
 **Usage**:
 ```bash
-python -m src.pos_tui.validation.run edit_modal item_table
+python -m src.pos_tui.validation.run form_modal item_table
 ```
 
 ## Feature Validation Protocols
@@ -123,11 +123,11 @@ The `ItemEditingValidation` protocol in `src/pos_tui/validation/item_management.
 
 ### UI Component Structure and Behavior
 
-**Feature Description**: UI components like EditItemModal and ItemTable provide essential functionality for the application interface.
+**Feature Description**: UI components like ItemFormModal and ItemTable provide essential functionality for the application interface.
 
 #### Essential Behaviors to Validate
 
-1. **EditItemModal Component**:
+1. **ItemFormModal Component**:
    - Should store and display the item being edited
    - Should provide form fields for all editable properties
    - Should handle form submission and pass data to parent
@@ -141,7 +141,7 @@ The `ItemEditingValidation` protocol in `src/pos_tui/validation/item_management.
 
 #### Validation Strategy
 
-The `EditItemModalValidation` and `ItemTableValidation` protocols in `src/pos_tui/validation/ui_components.py` validate these components by:
+The `ItemFormModalValidation` and `ItemTableValidation` protocols in `src/pos_tui/validation/ui_components.py` validate these components by:
 
 1. Using `UIComponentSimulator` to instantiate components
 2. Simulating component lifecycle events
