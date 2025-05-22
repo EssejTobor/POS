@@ -1,0 +1,26 @@
+{
+  "passed": false,
+  "passes": [
+    "item_entry_form: Goal collected correctly",
+    "item_entry_form: Item type collected correctly",
+    "edit_item_modal: Modal correctly stores the item",
+    "item_table: Table exposes columns attribute",
+    "item_table: Table has update_cell method",
+    "item_table: update_cell method has correct number of parameters",
+    "item_table: Table has message class: ItemSelected",
+    "item_table: Table has message class: ItemEditRequested",
+    "item_table: Table has message class: ItemDeleteRequested"
+  ],
+  "failures": [
+    "edit_item_modal: Validation failed with error: No nodes match '#edit-item-form' on EditItemModal()"
+  ],
+  "notes": [
+    "edit_item_modal: Creating EditItemModal simulator...",
+    "edit_item_modal: Modal mount simulation skipped",
+    "edit_item_modal: Traceback (most recent call last):\n  File \"/workspace/POS/src/pos_tui/validation/__init__.py\", line 131, in run\n    self._run_validation()\n  File \"/workspace/POS/src/pos_tui/validation/ui_components.py\", line 128, in _run_validation\n    form = modal.query_one(\"#edit-item-form\", ItemEntryForm)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/.pyenv/versions/3.12.10/lib/python3.12/site-packages/textual/dom.py\", line 1496, in query_one\n    raise NoMatches(f\"No nodes match {selector!r} on {self!r}\")\ntextual.css.query.NoMatches: No nodes match '#edit-item-form' on EditItemModal()\n",
+    "item_table: Creating ItemTable simulator...",
+    "item_table: Table mount simulation skipped"
+  ],
+  "duration": 0.0021791458129882812,
+  "timestamp": "2025-05-22T17:02:04.966311"
+}

@@ -82,6 +82,7 @@ python -m src.pos_tui.validation.run item_editing
 - Method signatures and behavior
 - Message handling and event flow
 - Form data collection for ItemEntryForm
+- EditItemModal passes updated goal and type values on submit
 
 **Usage**:
 ```bash
@@ -138,6 +139,7 @@ The `ItemEditingValidation` protocol in `src/pos_tui/validation/item_management.
    - Should provide form fields for all editable properties
    - Should handle form submission and pass data to parent
    - Should support cancellation of edits
+   - Should allow editing of goal and item type
 
 2. **ItemTable Component**:
    - Should display item data in a tabular format

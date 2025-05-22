@@ -138,11 +138,12 @@ class EditItemModalValidation(ValidationProtocol):
             
             # Simulate form submission event
             test_data = {
+                "goal": "NewGoal",
                 "title": "Updated Title",
-                "item_type": ItemType.TASK.value,
+                "item_type": ItemType.THOUGHT.value,
                 "priority": Priority.HI.value,
                 "status": ItemStatus.IN_PROGRESS.value,
-                "description": "Updated description"
+                "description": "Updated description",
             }
             
             # Create a message-like object
@@ -150,11 +151,24 @@ class EditItemModalValidation(ValidationProtocol):
                 def __init__(self, data):
                     self.item_data = data
             
+            captured: dict[str, Any] = {}
+
+            def fake_dismiss(value=None):
+                captured["data"] = value
+
+            modal.dismiss = fake_dismiss
+
             # Simulate receiving the message
             try:
                 if hasattr(modal, "on_item_entry_form_item_submitted"):
                     modal.on_item_entry_form_item_submitted(MockSubmittedMessage(test_data))
-                    self.result.add_pass("Successfully simulated form submission event")
+                    if (
+                        captured.get("data", {}).get("goal") == "NewGoal"
+                        and captured["data"].get("item_type") == ItemType.THOUGHT.value
+                    ):
+                        self.result.add_pass("Successfully simulated form submission event")
+                    else:
+                        self.result.add_fail("Submitted data did not include new goal and type")
                 else:
                     self.result.add_fail("Could not simulate form submission - method missing")
             except Exception:
