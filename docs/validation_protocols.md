@@ -56,6 +56,9 @@ python -m src.pos_tui.validation.run item_editing edit_modal item_table
 
 **Key Validations**:
 - Form submission passes goal and item_type correctly
+- Form data collected for all item types (TASK, LEARNING, RESEARCH, THOUGHT)
+- ItemSaveWorker stores items in the database with correct goal and type
+- Thought items receive IDs with the `th` prefix
 - Basic item editing operations
 - Item deletion with proper cleanup
 - Optimistic UI update pattern with undo capability
