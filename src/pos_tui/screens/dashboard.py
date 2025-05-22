@@ -4,7 +4,6 @@ from textual.widgets import Button, DataTable, LoadingIndicator, Static
 from ..widgets import (
     DashboardStatus,
     FilterBar,
-    ItemDetailsModal,
     ItemFormModal,
     ItemTable,
     ConfirmModal,
@@ -14,6 +13,7 @@ from ...models import ItemStatus, WorkItem, ItemType, Priority
 from ..widgets.item_form import ItemEntryForm
 from ..workers import ItemFetchWorker
 from ..workers.db import ItemFetchWorker as DBItemFetchWorker, ItemSaveWorker
+from .detail import ItemDetailScreen
 
 
 
@@ -124,7 +124,7 @@ class DashboardScreen(Container):
     def on_item_table_view_requested(
         self, event: ItemTable.ViewRequested
     ) -> None:  # pragma: no cover - UI action
-        self.app.push_screen(ItemDetailsModal(event.item, self.app.work_system))
+        self.app.push_screen(ItemDetailScreen(event.item, self.app.work_system))
 
     def on_item_table_edit_requested(
         self, event: ItemTable.EditRequested

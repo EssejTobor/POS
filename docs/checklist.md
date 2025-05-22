@@ -99,9 +99,9 @@ This checklist tracks the implementation progress against the phases defined in 
 - [x] Add visual indicators for link types
 
 ### 4.3 Create Item Detail View
-- [x] Implement `ItemDetailScreen` (likely handled in dashboard.py)
-- [x] Add navigation from table to detail view
-- [ ] Implement breadcrumb navigation
+ - [x] Implement `ItemDetailScreen` (likely handled in dashboard.py)
+ - [x] Add navigation from table to detail view
+ - [x] Implement breadcrumb navigation
 
 ### 4.4 Feature Validation
 - [x] Create relationship validation protocols
