@@ -74,7 +74,7 @@ This checklist tracks the implementation progress against the phases defined in 
 - [x] Create `ConfirmModal` in `widgets/modals.py` (integrated into table actions)
 - [x] Add delete button to item table rows
 - [x] Connect deletion logic to `ItemSaveWorker`
-- [ ] Implement optimistic UI updates with undo capability
+- [x] Implement optimistic UI updates with undo capability
 
 ### 3.5 Feature Validation
 - [x] Create first-principles validation framework

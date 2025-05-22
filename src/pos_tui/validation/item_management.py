@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from src.pos_tui.validation import ValidationProtocol, ValidationResult
 from src.pos_tui.validation.introspect import dump_database_state, compare_database_states
 from src.models import ItemType, Priority, ItemStatus, WorkItem
-from src.work_system import WorkSystem
+from src.storage import WorkSystem
 
 
 class ItemEditingValidation(ValidationProtocol):
@@ -42,7 +42,7 @@ class ItemEditingValidation(ValidationProtocol):
                 "title": "Test Task 1",
                 "description": "This is a test task",
                 "item_type": ItemType.TASK,
-                "priority": Priority.HIGH,
+                "priority": Priority.HI,
                 "status": ItemStatus.NOT_STARTED
             },
             {
@@ -220,7 +220,7 @@ class ItemEditingValidation(ValidationProtocol):
         # 3. Prepare update data
         update_data = {
             "title": f"Optimistic: {original_item.title}",
-            "priority": Priority.HIGH.value
+            "priority": Priority.HI.value
         }
         
         # 4. In the real app, we'd update the UI immediately and then
