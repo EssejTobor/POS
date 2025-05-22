@@ -8,6 +8,7 @@ from ..widgets import (
     ItemFormModal,
     ItemTable,
     ConfirmModal,
+    ToastNotification,
 )
 from ...models import ItemStatus, WorkItem
 from ..workers import ItemFetchWorker
@@ -155,7 +156,15 @@ class DashboardScreen(Container):
             del self.app.work_system.items[item.id]
 
         table.load_items(self.app.work_system.items.values())
-        self.query_one("#status_bar", Static).update("Item deleted. Press 'u' to undo.")
+        self.query_one("#status_bar", Static).update("Item deleted.")
+
+        toast = ToastNotification("Item deleted", show_undo=True)
+
+        def _toast_result(result: bool | None) -> None:
+            if result:
+                self.action_undo_delete()
+
+        self.app.push_screen(toast, callback=_toast_result)
 
         def op(conn):
             self.app.work_system.db.delete_item(item.id)
