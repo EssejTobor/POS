@@ -4,7 +4,7 @@ from typing import Iterable
 
 from textual.app import ComposeResult
 from textual.containers import Container
-from textual.widgets import Button, Select, Static
+from textual.widgets import Button, Input, Select, Static
 
 
 class LinkEditor(Static):
@@ -15,11 +15,13 @@ class LinkEditor(Static):
     ) -> None:
         super().__init__(*args, **kwargs)
         self.link_options = list(link_options or [])
+        self.filtered_options = self.link_options.copy()
         self.links: list[tuple[str, str]] = []
 
     def compose(self) -> ComposeResult:
         with Container(id="link_controls"):
-            yield Select(self.link_options, prompt="Target", id="link_target_selector")
+            yield Input(placeholder="Search", id="link_search")
+            yield Select(self.filtered_options, prompt="Target", id="link_target_selector")
             yield Select(
                 [
                     ("References", "references"),
@@ -37,10 +39,12 @@ class LinkEditor(Static):
     def _refresh_links(self) -> None:
         container = self.query_one("#linked_items", Container)
         container.clear()
+        icons = {"references": "🔗", "evolves-from": "↩"}
         for idx, (target, link_type) in enumerate(self.links):
+            icon = icons.get(link_type, "→")
             container.mount(
                 Container(
-                    Static(f"{target} ({link_type})"),
+                    Static(f"{icon} {target} ({link_type})"),
                     Button("Remove", id=f"remove_link_{idx}"),
                 )
             )
@@ -64,3 +68,11 @@ class LinkEditor(Static):
             if 0 <= idx < len(self.links):
                 self.links.pop(idx)
                 self._refresh_links()
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id == "link_search":
+            text = event.value.lower()
+            self.filtered_options = [
+                opt for opt in self.link_options if text in opt[0].lower()
+            ]
+            self.query_one("#link_target_selector", Select).options = self.filtered_options
