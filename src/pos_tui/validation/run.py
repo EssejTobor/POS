@@ -20,6 +20,7 @@ from src.pos_tui.validation.ui_components import (
     ItemTableValidation,
     ConfirmModalValidation,
 )
+from src.pos_tui.validation.link_widget import LinkedItemsWidgetValidation
 
 
 def run_selected_validations(validation_names: List[str] = None) -> Dict[str, ValidationResult]:
@@ -38,6 +39,7 @@ def run_selected_validations(validation_names: List[str] = None) -> Dict[str, Va
         "edit_modal": EditItemModalValidation,
         "item_table": ItemTableValidation,
         "confirm_modal": ConfirmModalValidation,
+        "linked_items_widget": LinkedItemsWidgetValidation,
         # Add more validation protocols here as they are implemented
     }
     
@@ -145,6 +147,7 @@ def main() -> int:
             "edit_modal",
             "item_table",
             "confirm_modal",
+            "linked_items_widget",
             # Add more as implemented
         ]
         

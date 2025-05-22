@@ -96,7 +96,7 @@ This checklist tracks the implementation progress against the phases defined in 
 ### 4.2 Implement Simple Link Visualization
 - [x] Create `LinkedItemsWidget` (likely implemented as `item_details.py`)
 - [x] Integrate into item detail view
-- [ ] Add visual indicators for link types
+- [x] Add visual indicators for link types
 
 ### 4.3 Create Item Detail View
 - [x] Implement `ItemDetailScreen` (likely handled in dashboard.py)
