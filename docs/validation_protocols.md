@@ -18,6 +18,19 @@ The POS application uses a first-principles approach to validation that avoids e
 3. **UI Component Simulation** - UI components are validated by simulating their lifecycle and events
 4. **Result Documentation** - Validation results are captured, displayed, and stored for future reference
 
+## Global Testing Strategy
+
+**IMPORTANT**: This first-principles validation approach is the standardized testing methodology for ALL phases of the project. It replaces all traditional testing approaches mentioned in earlier phases.
+
+For all features across all implementation phases (including retroactively for Phases 1-2):
+- Create validation protocols using the framework in `src/pos_tui/validation/`
+- Avoid external testing frameworks (pytest, unittest, etc.)
+- Use introspection and simulation to validate functionality
+- Document protocols in this file
+- Update checklist.md as validation protocols are implemented
+
+When implementing features from any phase, validation protocols must be created using this approach. Existing features should gradually migrate to this approach as they are modified or enhanced.
+
 ## Running Validations
 
 The validation framework provides a command-line interface:

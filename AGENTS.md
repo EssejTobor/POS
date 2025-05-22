@@ -41,6 +41,16 @@ These rules apply to the entire repository unless a deeper `AGENTS.md` overrides
    - Use `UIComponentSimulator` to validate UI components without rendering
    - Verify properties, methods, and event handling
 
+### IMPORTANT: Global Testing Strategy
+
+**This first-principles approach REPLACES ALL TESTING across ALL PHASES of the project.**
+
+- All features (new and existing) must use this validation framework
+- Any mention of tests/testing in documentation refers to this approach
+- Never use external testing frameworks (pytest, unittest, etc.)
+- Gradually migrate existing features to this approach as they are modified
+- Always create validation protocols for any new feature implementation
+
 ### Running Validations
 
 The validation framework provides a command-line interface:

@@ -98,9 +98,15 @@ The Personal Operating System (POS) is a terminal-based application for personal
 * **Widgets**: Forms, Tables, Trees, Modals
 * **Event Handling**: Use `on_*` methods and `run_worker_thread` for async-safe DB access
 
+### Implementation Tracking
+
+* Progress tracked via `docs/checklist.md` based on the phased Implementation Plan
+* All new features should update the checklist to reflect current status
+* Overall implementation progress measured by phase completion percentages
+
 ### Testing
 
-* Domain logic tested with standard `pytest`
+* Domain logic tested with standard Python testing tools
 * TUI smoke tests for startup, widget rendering, and modal logic
 * Use headless mode for CI compatibility
 
