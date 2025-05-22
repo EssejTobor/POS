@@ -15,6 +15,7 @@ from ..models import WorkItem
 from .commands import Command, CommandRegistry
 from .screens import DashboardScreen, LinkTreeScreen, NewItemScreen
 from .widgets import CommandPalette
+from .preferences import load_preferences, save_preferences
 from .workers import WorkerPool, DatabaseWorker, ItemFetchWorker
 from .workers.base import BaseWorker
 from .workers.db import DBConnectionManager
@@ -35,12 +36,16 @@ class POSTUI(App):
         self.worker_pool = WorkerPool()
         self.connection_manager = DBConnectionManager(self.work_system.db.db_path)
         self.breadcrumb_history: list[WorkItem] = []
+        prefs = load_preferences()
+        self._theme_name = prefs.get("theme", "dark")
 
     BINDINGS = [
         ("1", "switch_tab('dashboard')", "Dashboard"),
         ("2", "switch_tab('new-item')", "New Item"),
         ("3", "switch_tab('link-tree')", "Link Tree"),
         ("ctrl+p", "toggle_palette()", "Command Palette"),
+        ("ctrl+t", "toggle_theme()", "Theme"),
+        ("?", "open_help()", "Help"),
     ]
 
     def schedule_worker(self, worker: BaseWorker, name: str | None = None) -> str:
@@ -89,9 +94,27 @@ class POSTUI(App):
         if self.breadcrumb_history and self.breadcrumb_history[-1].id == item.id:
             self.breadcrumb_history.pop()
 
+    def action_toggle_theme(self) -> None:
+        self._theme_name = "light" if self._theme_name == "dark" else "dark"
+        prefs = load_preferences()
+        prefs["theme"] = self._theme_name
+        save_preferences(prefs)
+        theme_file = Path(__file__).parent / "styles" / f"theme_{self._theme_name}.css"
+        if theme_file.is_file():
+            self.load_css(theme_file)
+            self.refresh()
+
+    def action_open_help(self) -> None:
+        from .screens.shortcuts import ShortcutHelpScreen
+
+        self.push_screen(ShortcutHelpScreen())
+
     def on_mount(self) -> None:
         """Handle the app mount event."""
         self.title = f"POS v{self._get_version()}"
+        theme_file = Path(__file__).parent / "styles" / f"theme_{self._theme_name}.css"
+        if theme_file.is_file():
+            self.load_css(theme_file)
         # Register some basic commands
         self.command_registry.register_many(
             [
@@ -112,6 +135,18 @@ class POSTUI(App):
                     "View Link Tree",
                     lambda: self.action_switch_tab("link-tree"),
                     "navigation",
+                ),
+                Command(
+                    "toggle_theme",
+                    "Toggle Theme",
+                    self.action_toggle_theme,
+                    "system",
+                ),
+                Command(
+                    "help",
+                    "Keyboard Shortcuts",
+                    self.action_open_help,
+                    "system",
                 ),
             ]
         )

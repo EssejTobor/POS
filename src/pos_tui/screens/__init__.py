@@ -9,10 +9,12 @@ from .dashboard import DashboardScreen
 from .link_tree import LinkTreeScreen
 from .new_item import NewItemScreen
 from .detail import ItemDetailScreen
+from .shortcuts import ShortcutHelpScreen
 
 __all__: list[str] = [
     "DashboardScreen",
     "NewItemScreen",
     "LinkTreeScreen",
     "ItemDetailScreen",
+    "ShortcutHelpScreen",
 ]

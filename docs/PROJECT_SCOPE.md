@@ -52,6 +52,7 @@ The Personal Operating System (POS) is a terminal-based application for personal
 * View evolution and reference trees
 * Filter by tags, status, priority, or type
 * Use search and command palette for power navigation
+* Toggle between light and dark themes
 
 ---
 

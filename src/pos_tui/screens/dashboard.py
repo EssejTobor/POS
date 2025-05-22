@@ -212,12 +212,17 @@ class DashboardScreen(Container):
             self.app.work_system.db.delete_item(item.id)
             return 1
 
+        from ..error import log_error
+
         worker = ItemSaveWorker(
             "delete_item",
             self.app,
             self.app.connection_manager,
             op,
-            on_error=lambda e: self.call_from_thread(self._restore_deleted, item, index),
+            on_error=lambda e: (
+                log_error(e),
+                self.call_from_thread(self._restore_deleted, item, index),
+            ),
         )
         self.app.schedule_worker(worker)
 

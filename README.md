@@ -13,6 +13,8 @@ POS is designed to help track work items, goals, and thoughts through an interac
 - Visualize thought hierarchies and evolution
 - Filter and search across your knowledge base
 - Navigate efficiently using keyboard shortcuts and command palette
+- Toggle between light and dark themes
+- View a keyboard shortcut reference screen
 
 ## Getting Started
 
