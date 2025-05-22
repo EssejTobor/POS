@@ -145,6 +145,7 @@ This checklist tracks the implementation progress against the phases defined in 
 ### 6.1 Implement Command Palette
 - [x] Create `CommandPalette` widget
 - [x] Register core commands
+- [x] Add fuzzy search, categories, and aliases
 
 ### 6.2 Add Keyboard Navigation
 - [x] Implement focus management across the application (partial)

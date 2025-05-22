@@ -123,12 +123,14 @@ class POSTUI(App):
                     "Switch to Dashboard",
                     lambda: self.action_switch_tab("dashboard"),
                     "navigation",
+                    aliases=["home"],
                 ),
                 Command(
                     "new_item",
                     "Create New Item",
                     lambda: self.action_switch_tab("new-item"),
                     "navigation",
+                    aliases=["task", "new"],
                 ),
                 Command(
                     "link_tree",

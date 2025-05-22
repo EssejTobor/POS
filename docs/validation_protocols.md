@@ -183,6 +183,21 @@ The `LinkedItemsWidgetValidation` protocol in `src/pos_tui/validation/link_widge
 ```bash
 python -m src.pos_tui.validation.run navigation_validation
 ```
+
+### Command Palette Validation
+
+**Protocol Name**: `command_palette`
+
+**Description**: Validates fuzzy search and alias matching in the command palette.
+
+**Key Validations**:
+1. Searching by a partial alias returns the correct command
+2. Palette refresh groups commands by category
+
+**Usage**:
+```bash
+python -m src.pos_tui.validation.run command_palette
+```
 ### Link Creation Validation
 
 **Protocol Name**: `link_validation`

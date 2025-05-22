@@ -47,9 +47,12 @@ class ItemDetailScreen(Screen):
     def _build_breadcrumb_items(self) -> list[WorkItem]:
         """Return the current breadcrumb history."""
         try:
-            return list(getattr(self.app, "breadcrumb_history", []))
+            history = list(getattr(self.app, "breadcrumb_history", []))
         except NoActiveAppError:
-            return []
+            history = []
+        if not history or history[-1].id != self.item.id:
+            history.append(self.item)
+        return history
 
     # --------------------------------------------------------------
     # Compose layout

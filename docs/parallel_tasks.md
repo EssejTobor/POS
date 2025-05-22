@@ -3,9 +3,9 @@
 The following tasks from the implementation plan are still open but can be worked on independently without major conflicts. These tasks mainly refine navigation and usability features.
 
 ## Command Palette Enhancements
-- Add fuzzy search with highlighted matches
-- Support command categories with icons and separators
-- Implement command aliases for quick access
+- [x] Add fuzzy search with highlighted matches
+- [x] Support command categories with icons and separators
+- [x] Implement command aliases for quick access
 
 ## Responsive Layout
 - Create fluid layouts that adjust on window resize

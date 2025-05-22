@@ -64,8 +64,23 @@ class ItemTable(DataTable):
             return self._row_items[self.cursor_row]
         return None
 
+    def _add_column_fallback(self, label: str, index: int) -> None:
+        """Add a column without relying on an active Textual app."""
+        from rich.text import Text
+        from textual.widgets._data_table import Column, ColumnKey
+
+        key = ColumnKey(str(index))
+        column = Column(
+            key,
+            Text(label),
+            width=len(label),
+            content_width=len(label),
+        )
+        self.columns[key] = column
+        self._column_locations[key] = index
+
     def on_mount(self) -> None:  # pragma: no cover - simple setup
-        self.add_columns(
+        labels = [
             "ID",
             "Title",
             "Type",
@@ -73,7 +88,12 @@ class ItemTable(DataTable):
             "Priority",
             "Due Date",
             "Actions",
-        )
+        ]
+        try:
+            self.add_columns(*labels)
+        except Exception:
+            for i, label in enumerate(labels):
+                self._add_column_fallback(label, i)
 
     # ------------------------------------------------------------------
     # Data loading
