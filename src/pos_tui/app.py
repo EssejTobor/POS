@@ -11,6 +11,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from ..storage import WorkSystem
+from ..models import WorkItem
 from .commands import Command, CommandRegistry
 from .screens import DashboardScreen, LinkTreeScreen, NewItemScreen
 from .widgets import CommandPalette
@@ -33,6 +34,7 @@ class POSTUI(App):
         self.command_registry = CommandRegistry()
         self.worker_pool = WorkerPool()
         self.connection_manager = DBConnectionManager(self.work_system.db.db_path)
+        self.breadcrumb_history: list[WorkItem] = []
 
     BINDINGS = [
         ("1", "switch_tab('dashboard')", "Dashboard"),
@@ -75,6 +77,17 @@ class POSTUI(App):
             self.palette.close()
         else:
             self.palette.open()
+
+    def register_detail(self, item: WorkItem) -> None:
+        """Add ``item`` to breadcrumb history."""
+        if self.breadcrumb_history and self.breadcrumb_history[-1].id == item.id:
+            return
+        self.breadcrumb_history.append(item)
+
+    def unregister_detail(self, item: WorkItem) -> None:
+        """Remove ``item`` from breadcrumb history if it's the current entry."""
+        if self.breadcrumb_history and self.breadcrumb_history[-1].id == item.id:
+            self.breadcrumb_history.pop()
 
     def on_mount(self) -> None:
         """Handle the app mount event."""

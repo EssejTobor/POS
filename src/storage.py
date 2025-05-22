@@ -311,6 +311,27 @@ class WorkSystem:
                 if not self.add_link(item_id, target, ltype):
                     raise RuntimeError(f"Failed to add link to {target}")
 
+    def batch_update_links(
+        self,
+        item_id: str,
+        *,
+        links_to_add: list[tuple[str, str]] | None = None,
+        links_to_remove: list[str] | None = None,
+    ) -> None:
+        """Atomically apply multiple link changes for an item."""
+
+        links_to_add = links_to_add or []
+        links_to_remove = links_to_remove or []
+
+        with self._atomic_operation():
+            for target in links_to_remove:
+                if not self.remove_link(item_id, target):
+                    raise RuntimeError(f"Failed to remove link to {target}")
+
+            for target, ltype in links_to_add:
+                if not self.add_link(item_id, target, ltype):
+                    raise RuntimeError(f"Failed to add link to {target}")
+
     def delete_item(self, item_id: str) -> None:
         """Remove an item from the system."""
         with self._atomic_operation():

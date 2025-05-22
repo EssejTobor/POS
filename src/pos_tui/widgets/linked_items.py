@@ -52,15 +52,17 @@ class LinkedItemsWidget(Static):
         self.links = grouped
         for group, items in grouped.items():
             direction, ltype = group.split(":")
+            arrow = "→" if direction == "outgoing" else "←"
             header = Static(
-                f"{link_type_icon(ltype)} {direction.title()} {format_link_type(ltype)}",
+                f"{link_type_icon(ltype)} {arrow} {direction.title()} {format_link_type(ltype)}",
                 classes="link_group_header",
             )
             container.mount(header)
             for idx, link in enumerate(items):
                 target_id = link["target_id"] if direction == "outgoing" else link["source_id"]
                 title = link.get("title", "")
-                item_text = f"{target_id} - {title}"
+                arrow_item = "→" if direction == "outgoing" else "←"
+                item_text = f"{arrow_item} {target_id} - {title}"
                 item_row = Container(
                     Static(item_text, classes="linked_item", id=f"label_{direction}_{idx}"),
                     Button("Open", id=f"open_{target_id}"),
