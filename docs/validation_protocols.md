@@ -159,7 +159,8 @@ The `EditItemModalValidation` and `ItemTableValidation` protocols in `src/pos_tu
 
 **Protocol Name**: `item_listing_and_viewing`
 
-**Description**: Ensures goals are displayed in the dashboard table and that filtering by goal and THOUGHT type works.
+**Description**: Simulates the Dashboard screen with the ``FilterBar`` to verify
+goal display and filtering behaviour.
 
 **Key Validations**:
 - Goal column present with correct values
