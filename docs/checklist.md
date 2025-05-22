@@ -155,6 +155,7 @@ This checklist tracks the implementation progress against the phases defined in 
 ### 6.3 Implement Search and Filtering
 - [x] Enhance dashboard with advanced filtering (`filter_bar.py` e ists)
 - [x] Save filter preferences between sessions
+- [x] Support multi-select filters, date ranges and filter presets
 
 ### 6.4 Add Final Polish
 - [x] Implement consistent error handling

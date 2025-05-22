@@ -277,9 +277,9 @@ class ItemEntryForm(Static):
                 ):
                     self.work_system.add_link(item.id, target.split()[0], link_type)
         except Exception as e:  # pragma: no cover - basic error handling
-            from ..error import log_error
+            from ..error import log_and_notify
 
-            log_error(e)
+            log_and_notify(self.app, e, "Save failed")
             success = False
             message = str(e)
 

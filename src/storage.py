@@ -428,13 +428,16 @@ class WorkSystem:
     def get_filtered_items(
         self,
         goal: Optional[str] = None,
-        status: Optional[ItemStatus] = None,
+        status: Optional[ItemStatus | list[ItemStatus]] = None,
         priority: Optional[Priority] = None,
-        item_type: Optional[ItemType] = None,
+        item_type: Optional[ItemType | list[ItemType]] = None,
         tag: Optional[str] = None,
         search_text: Optional[str] = None,
+        *,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
     ) -> List[WorkItem]:
-        """Use optimized database query directly"""
+        """Use optimized database query directly."""
         return self.db.get_items_by_filters(
             goal=goal,
             status=status,
@@ -442,6 +445,8 @@ class WorkSystem:
             item_type=item_type,
             tag=tag,
             search_text=search_text,
+            start_date=start_date,
+            end_date=end_date,
         )
 
     def search_thoughts(

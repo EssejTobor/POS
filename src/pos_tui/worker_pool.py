@@ -51,9 +51,11 @@ class ItemFetchWorker(DatabaseWorker):
         app: App,
         work_system: WorkSystem,
         *,
-        item_type: ItemType | None = None,
-        status: ItemStatus | None = None,
+        item_type: ItemType | list[ItemType] | None = None,
+        status: ItemStatus | list[ItemStatus] | None = None,
         search_text: str = "",
+        start_date: str | None = None,
+        end_date: str | None = None,
         sort_key: Callable[[WorkItem], object] | None = None,
         sort_reverse: bool = False,
         page: int = 0,
@@ -65,6 +67,8 @@ class ItemFetchWorker(DatabaseWorker):
         self.item_type = item_type
         self.status = status
         self.search_text = search_text
+        self.start_date = start_date
+        self.end_date = end_date
         self.sort_key = sort_key
         self.sort_reverse = sort_reverse
         self.page = page
@@ -77,6 +81,8 @@ class ItemFetchWorker(DatabaseWorker):
             item_type=self.item_type,
             status=self.status,
             search_text=self.search_text or None,
+            start_date=self.start_date,
+            end_date=self.end_date,
         )
         if self.sort_key:
             items = sorted(

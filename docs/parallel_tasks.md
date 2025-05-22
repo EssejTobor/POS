@@ -13,12 +13,12 @@ The following tasks from the implementation plan are still open but can be worke
 - Add breakpoints for small terminals with compact widgets
 
 ## Advanced Filtering Options
-- Support multi-select filters in the filter bar
-- Add date range filtering with a simple date picker
-- Implement named filter presets stored in preferences
+- [x] Support multi-select filters in the filter bar
+- [x] Add date range filtering with a simple date picker
+- [x] Implement named filter presets stored in preferences
 
 ## Error Handling Improvements
-- Display error notifications with levels (warning, error)
+- [x] Display error notifications with levels (warning, error)
 - Implement retry options for failed operations
 - Provide an error detail viewer with copy-to-clipboard
 
