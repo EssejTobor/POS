@@ -20,6 +20,7 @@ from src.pos_tui.validation import (
     ItemEditingValidation,
     OptimisticUIValidation,
     UIComponentsValidation,
+    ItemListingAndViewingValidation,
     LinkManagementValidation,
     LinkNavigationValidation
 )
@@ -37,6 +38,7 @@ def get_available_protocols() -> Dict[str, ValidationProtocol]:
         "item_editing": ItemEditingValidation(),
         "optimistic_ui": OptimisticUIValidation(),
         "ui_components": UIComponentsValidation(),
+        "item_listing_and_viewing": ItemListingAndViewingValidation(),
         "link_management": LinkManagementValidation(),
         "link_navigation": LinkNavigationValidation(),
     }
@@ -112,7 +114,7 @@ def run_protocol_group(group_name: str) -> bool:
     # Define protocol groups
     groups = {
         "item": ["item_creation", "item_creation_via_form", "item_editing", "optimistic_ui"],
-        "ui": ["ui_components"],
+        "ui": ["ui_components", "item_listing_and_viewing"],
         "links": ["link_management", "link_navigation"],
     }
     

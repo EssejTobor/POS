@@ -52,18 +52,20 @@ class FilterBar(Container):
     
     class FilterChanged(Message):
         """Message sent when filters are changed."""
-        
+
         def __init__(
-            self, 
-            item_type: str = None, 
+            self,
+            item_type: str = None,
             search_text: str = None,
             status: str = None,
-            priority: str = None
+            priority: str = None,
+            goal_filter: str = None,
         ) -> None:
             self.item_type = item_type
             self.search_text = search_text
             self.status = status
             self.priority = priority
+            self.goal_filter = goal_filter
             super().__init__()
     
     def __init__(self, *args, **kwargs):
@@ -72,14 +74,16 @@ class FilterBar(Container):
         self._current_search = ""
         self._current_status = None
         self._current_priority = None
+        self._current_goal = ""
         
     def compose(self) -> ComposeResult:
         """Compose the filter bar widgets."""
         # Type filter dropdown
         yield Label("Type:", classes="filter-label")
         
+        type_options = [(t.value, t.name) for t in ItemType]
         yield Select(
-            [(t.value, t.name) for t in ItemType],
+            type_options,
             prompt="All Types",
             id="type_filter",
         )
@@ -87,6 +91,10 @@ class FilterBar(Container):
         # Search input
         yield Label("Search:", classes="filter-label")
         yield Input(placeholder="Search titles...", id="search_input")
+
+        # Goal filter
+        yield Label("Goal:", classes="filter-label")
+        yield Input(placeholder="Filter goal...", id="goal_filter_input")
         
         # Status toggle buttons
         with Horizontal(id="status_buttons"):
@@ -110,6 +118,9 @@ class FilterBar(Container):
         """Handle changes to the search input."""
         if event.input.id == "search_input":
             self._current_search = event.value
+            self._emit_filter_changed()
+        elif event.input.id == "goal_filter_input":
+            self._current_goal = event.value
             self._emit_filter_changed()
     
     def on_select_changed(self, event: Select.Changed) -> None:
@@ -155,6 +166,9 @@ class FilterBar(Container):
         # Clear search input
         search_input = self.query_one("#search_input", Input)
         search_input.value = ""
+
+        goal_input = self.query_one("#goal_filter_input", Input)
+        goal_input.value = ""
         
         # Deselect all status buttons
         for status_btn in self.query("Button.status-button"):
@@ -165,6 +179,7 @@ class FilterBar(Container):
         self._current_search = ""
         self._current_status = None
         self._current_priority = None
+        self._current_goal = ""
         
         # Emit event with cleared filters
         self._emit_filter_changed()
@@ -176,6 +191,7 @@ class FilterBar(Container):
                 item_type=self._current_type,
                 search_text=self._current_search,
                 status=self._current_status,
-                priority=self._current_priority
+                priority=self._current_priority,
+                goal_filter=self._current_goal,
             )
-        ) 
+        )

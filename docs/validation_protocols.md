@@ -152,6 +152,18 @@ The `EditItemModalValidation` and `ItemTableValidation` protocols in `src/pos_tu
 4. Simulating user interaction events
 5. Checking for appropriate responses to events
 
+### Item Listing and Viewing
+
+**Protocol Name**: `item_listing_and_viewing`
+
+**Description**: Ensures goals are displayed in the dashboard table and that filtering by goal and THOUGHT type works.
+
+**Key Validations**:
+- Goal column present with correct values
+- Type filter includes THOUGHT option
+- Filtering by goal returns only matching items
+- Filtering by THOUGHT type shows only thoughts
+
 ## Adding New Validation Protocols
 
 To create a new validation protocol:

@@ -75,7 +75,8 @@ class ItemTable(DataTable):
         """Set up the table when mounted."""
         # Add columns with sorting enabled
         self.add_column("ID", width=12)
-        self.add_column("Title", width=30) 
+        self.add_column("Title", width=30)
+        self.add_column("Goal", width=20)
         self.add_column("Type", width=10)
         self.add_column("Status", width=12)
         self.add_column("Priority", width=8)
@@ -84,14 +85,14 @@ class ItemTable(DataTable):
         
         # Make columns sortable
         for column_key in self.columns.keys():
-            if column_key != 6:  # Skip Actions column
+            if column_key != 7:  # Skip Actions column
                 self.columns[column_key].sortable = True
     
     @on(DataTable.HeaderSelected)
     def handle_header_selected(self, event: DataTable.HeaderSelected) -> None:
         """Handle column header selection for sorting."""
         # Don't sort the action column
-        if event.column_index == 6:
+        if event.column_index == 7:
             event.stop()
             return
             
@@ -108,7 +109,7 @@ class ItemTable(DataTable):
     @on(DataTable.CellSelected)
     def handle_cell_selected(self, event: DataTable.CellSelected) -> None:
         """Handle cell selection in the actions column."""
-        if event.coordinate.column == 6 and event.value == "✏️":
+        if event.coordinate.column == 7 and event.value == "✏️":
             # Edit button clicked
             if event.row_key is not None:
                 self.post_message(self.ItemEditRequested(str(event.row_key)))
@@ -166,8 +167,8 @@ class ItemTable(DataTable):
                 continue
                 
             # Apply priority styling
-            priority = row[4]
-            status = row[3]
+            priority = row[5]
+            status = row[4]
             
             # Priority styles
             if priority == "3":
@@ -186,7 +187,7 @@ class ItemTable(DataTable):
     def add_row(self, *args, **kwargs) -> Optional[RowKey]:
         """Override add_row to apply styling after adding a row and add action buttons."""
         # Add edit button to actions column
-        if len(args) == 6:  # If no action cell provided
+        if len(args) == 7:  # If no action cell provided
             args = list(args)  # Convert to list so we can modify
             args.append("✏️")  # Add edit button
         
@@ -209,7 +210,7 @@ class ItemTable(DataTable):
         self.update_cell_at(Coordinate(row=self.row_keys.index(row_key), column=column_index), value)
         
         # If we're updating a cell that affects styling, reapply styling
-        if column_index in [3, 4]:  # Status or Priority columns
+        if column_index in [4, 5]:  # Status or Priority columns
             self.apply_row_styling()
     
     def next_page(self) -> None:

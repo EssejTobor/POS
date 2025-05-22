@@ -18,6 +18,7 @@ from src.pos_tui.validation import (
     ItemEditingValidation,
     OptimisticUIValidation,
     UIComponentsValidation,
+    ItemListingAndViewingValidation,
     LinkManagementValidation,
     LinkNavigationValidation,
     TreeVisualizationValidation
@@ -33,6 +34,7 @@ def run_all_validations():
     validations = [
         # Phase 1-2 validations
         UIComponentsValidation(),
+        ItemListingAndViewingValidation(),
 
         # Phase 3 validations
         ItemCreationValidation(),
