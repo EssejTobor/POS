@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 from typing import Iterable
 
 from textual.app import ComposeResult
@@ -14,6 +15,9 @@ from .link_editor import LinkEditor
 
 class ItemEntryForm(Static):
     """Form for creating new :class:`~src.models.WorkItem` instances."""
+
+    CSS_PATH = Path(__file__).parent.parent / "styles" / "item_form.css"
+    DEFAULT_CSS = CSS_PATH.read_text()
 
     BINDINGS = [
         ("ctrl+s", "submit", "Save"),
@@ -104,10 +108,13 @@ class ItemEntryForm(Static):
             "description_field",
             "due_date_field",
         ]:
-            widget = self.query_one(f"#{widget_id}", Input, expect_none=True)
-            if widget is not None:
-                widget.remove_class("error")
+            self._clear_field_error(widget_id)
         self.query_one("#validation_message", Static).update("")
+
+    def _clear_field_error(self, widget_id: str) -> None:
+        widget = self.query_one(f"#{widget_id}", Input, expect_none=True)
+        if widget is not None:
+            widget.remove_class("error")
 
     def reset_form(self) -> None:
         """Clear all input fields and link selections."""
@@ -139,6 +146,26 @@ class ItemEntryForm(Static):
             suggestions = [t for t in self.tag_options if t.startswith(text)]
             sug_widget = self.query_one("#tag_suggestions", Static)
             sug_widget.update(", ".join(suggestions[:5]))
+            return
+
+        if event.input.id == "title_field":
+            if event.value.strip():
+                self._clear_field_error("title_field")
+                self.query_one("#validation_message", Static).update("")
+            else:
+                self._show_error("title_field", "Title is required")
+        elif event.input.id == "due_date_field":
+            value = event.value.strip()
+            if not value:
+                self._clear_field_error("due_date_field")
+                self.query_one("#validation_message", Static).update("")
+            else:
+                try:
+                    datetime.strptime(value, "%Y-%m-%d")
+                    self._clear_field_error("due_date_field")
+                    self.query_one("#validation_message", Static).update("")
+                except ValueError:
+                    self._show_error("due_date_field", "Invalid date format")
 
     def on_button_pressed(
         self, event: Button.Pressed
