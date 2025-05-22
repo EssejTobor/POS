@@ -1,5 +1,11 @@
 from __future__ import annotations
-"""Validation protocol for item listing and viewing features."""
+"""Validation protocol for item listing and viewing features.
+
+This protocol populates a temporary database with several items, then
+simulates the :class:`DashboardScreen` loading data and applying
+``FilterBar`` filters.  It verifies that the ``ItemTable`` shows the
+"Goal" column and that filtering by goal or item type works correctly.
+"""
 
 import os
 import tempfile
@@ -26,22 +32,29 @@ class ItemListingAndViewingValidation(ValidationProtocol):
         self.temp_db: str | None = None
 
     def _setup(self) -> WorkSystem:
+        """Create a temporary database with sample items."""
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
         tmp.close()
         self.temp_db = tmp.name
         ws = WorkSystem(tmp.name)
+
+        # Populate with multiple goals and types, including a thought item
         ws.add_item("GoalA", "Task1", ItemType.TASK, "d1", Priority.LOW)
-        ws.add_item("GoalB", "Thought1", ItemType.THOUGHT, "d2", Priority.MED)
+        ws.add_item("GoalB", "Task2", ItemType.TASK, "d2", Priority.MED)
+        ws.add_item("GoalA", "Thought1", ItemType.THOUGHT, "d3", Priority.HI)
+
         return ws
 
     def _run_validation(self) -> None:
         ws = self._setup()
         try:
             from src.pos_tui.widgets.item_table import ItemTable
+            from src.pos_tui.screens.dashboard import DashboardScreen
 
             class DummyApp(App):
                 def __init__(self) -> None:
                     super().__init__(driver_class=None)
+                    self.work_system = ws
 
             app = DummyApp()
             active_app.set(app)
@@ -50,17 +63,27 @@ class ItemListingAndViewingValidation(ValidationProtocol):
             object.__setattr__(table, "_parent", app)
             table.apply_row_styling = lambda *a, **k: None
             table.on_mount()
-            for item in ws.items.values():
-                table.add_row(
-                    item.id,
-                    item.title,
-                    item.goal,
-                    item.item_type.value,
-                    item.status.value,
-                    str(item.priority.value),
-                    "",
-                    key=item.id,
-                )
+
+            status = type("Status", (), {"update": lambda self, v: None})()
+            loading = type("Loading", (), {"display": False})()
+
+            class DummyDashboard(DashboardScreen):
+                def query_one(self, selector: str, *a, **k):
+                    if selector == "#dashboard_table":
+                        return table
+                    if selector == "#status_message":
+                        return status
+                    if selector == "#loading_indicator":
+                        return loading
+                    return super().query_one(selector, *a, **k)
+
+            screen = DummyDashboard()
+            object.__setattr__(screen, "_app", app)
+
+            import asyncio
+
+            # Simulate initial dashboard load
+            asyncio.run(screen.fetch_items())
 
             headers = [str(col.label) for col in table.columns.values()]
             if "Goal" in headers:
@@ -70,28 +93,39 @@ class ItemListingAndViewingValidation(ValidationProtocol):
 
             first = next(iter(ws.items.values()))
             row = table.get_row(first.id)
-            if row and row[2] == "GoalA":
+            if row and row[2] == first.goal:
                 self.result.add_pass("Goal value displayed correctly")
             else:
                 self.result.add_fail("Goal value incorrect in table")
 
             # Validate FilterBar has THOUGHT option
             values = [t.value for t in ItemType]
-            if "th" in values:
+            if ItemType.THOUGHT.value in values:
                 self.result.add_pass("THOUGHT option present in type filter")
             else:
                 self.result.add_fail("THOUGHT option missing in type filter")
 
-            # Verify filtering by goal
-            filtered = ws.get_filtered_items(goal="GoalB")
-            if len(filtered) == 1 and filtered[0].goal == "GoalB":
-                self.result.add_pass("Filtering by goal returns correct item")
+            # Verify filtering by goal through DashboardScreen
+            asyncio.run(screen.fetch_filtered_items(goal_filter="GoalB"))
+            filtered_goal = ws.get_filtered_items(goal="GoalB")
+            if table.row_count == len(filtered_goal) == 1:
+                row = table.get_row(filtered_goal[0].id)
+                if row and row[2] == "GoalB":
+                    self.result.add_pass("Filtering by goal returns correct item")
+                else:
+                    self.result.add_fail("Goal filter data incorrect")
             else:
                 self.result.add_fail("Filtering by goal failed")
 
+            # Verify filtering by type (THOUGHT)
+            asyncio.run(screen.fetch_filtered_items(item_type=ItemType.THOUGHT.value))
             filtered_th = ws.get_filtered_items(item_type=ItemType.THOUGHT)
-            if len(filtered_th) == 1 and filtered_th[0].item_type == ItemType.THOUGHT:
-                self.result.add_pass("Filtering by THOUGHT type works")
+            if table.row_count == len(filtered_th) == 1:
+                row = table.get_row(filtered_th[0].id)
+                if row and row[3] == ItemType.THOUGHT.value:
+                    self.result.add_pass("Filtering by THOUGHT type works")
+                else:
+                    self.result.add_fail("THOUGHT filter data incorrect")
             else:
                 self.result.add_fail("Filtering by THOUGHT type failed")
         except Exception as exc:

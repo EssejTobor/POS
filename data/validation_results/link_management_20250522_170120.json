@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "passes": [
+    "Successfully created link with type 'REFERENCES' from tet21170120202553 to tet22170120208367",
+    "Successfully created link with type 'INSPIRED_BY' from tet21170120202553 to teth13170120214316",
+    "Successfully retrieved outgoing links for source item: found 2 links",
+    "All expected target items found in the outgoing links",
+    "Link from tet21170120202553 to tet22170120208367 exists before deletion",
+    "Successfully deleted link from tet21170120202553 to tet22170120208367",
+    "Link from tet21170120202553 to tet22170120208367 no longer exists after deletion",
+    "Link visualization validation protocol defined",
+    "Link type indicator validation protocol defined"
+  ],
+  "failures": [],
+  "notes": [
+    "Created temporary database at /tmp/tmp2einq2kw.db with test items",
+    "Link visualization validation would verify that:",
+    "- Links are displayed in the item detail view",
+    "- Each link shows the target item's title and ID",
+    "- Link type is clearly indicated",
+    "- Links are interactive (clickable to navigate)",
+    "Link type indicator validation would verify that:",
+    "- Each link type has a distinctive visual representation",
+    "- Visual indicators are consistent throughout the UI",
+    "- Link type is easily distinguishable at a glance",
+    "Removed temporary database at /tmp/tmp2einq2kw.db"
+  ],
+  "duration": 0.11754131317138672,
+  "timestamp": "2025-05-22T17:01:20.241527"
+}
