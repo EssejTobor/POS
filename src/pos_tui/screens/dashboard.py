@@ -44,10 +44,10 @@ class DashboardScreen(Container):
 
     def on_mount(self) -> None:
         self.query_one(LoadingIndicator).display = False
-        self.refresh()
+        self.load_items()
 
     def action_refresh(self) -> None:
-        self.refresh()
+        self.load_items()
 
     def action_create(self) -> None:  # pragma: no cover - simple UI
         self.app.action_switch_tab("new-item")
@@ -55,7 +55,7 @@ class DashboardScreen(Container):
     # --------------------------------------------------------------
     # Data Loading
     # --------------------------------------------------------------
-    def refresh(self) -> None:
+    def load_items(self) -> None:
         """Fetch items from the database asynchronously."""
         loading = self.query_one(LoadingIndicator)
         table = self.query_one(ItemTable)
@@ -122,12 +122,12 @@ class DashboardScreen(Container):
             table.open_context_menu(event.coordinate.row)
 
     def on_item_table_view_requested(
-        self, event: ItemTable.ViewRequested
+        self, event: ItemTable.ItemSelected
     ) -> None:  # pragma: no cover - UI action
         self.app.push_screen(ItemDetailScreen(event.item, self.app.work_system))
 
     def on_item_table_edit_requested(
-        self, event: ItemTable.EditRequested
+        self, event: ItemTable.ItemEditRequested
     ) -> None:  # pragma: no cover - UI action
         self.app.push_screen(ItemFormModal(event.item, self.app.work_system))
 
@@ -181,7 +181,7 @@ class DashboardScreen(Container):
             )
 
     def on_item_table_delete_requested(
-        self, event: ItemTable.DeleteRequested
+        self, event: ItemTable.ItemDeleteRequested
     ) -> None:  # pragma: no cover - UI action
         modal = ConfirmModal(
             f"Delete '{event.item.title}'?",

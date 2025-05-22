@@ -25,17 +25,17 @@ class ItemTable(DataTable):
         ("d", "delete_selected", "Delete"),
     ]
 
-    class ViewRequested(Message):
+    class ItemSelected(Message):
         def __init__(self, sender: "ItemTable", item: WorkItem) -> None:
             super().__init__(sender)
             self.item = item
 
-    class EditRequested(Message):
+    class ItemEditRequested(Message):
         def __init__(self, sender: "ItemTable", item: WorkItem) -> None:
             super().__init__(sender)
             self.item = item
 
-    class DeleteRequested(Message):
+    class ItemDeleteRequested(Message):
         def __init__(self, sender: "ItemTable", item: WorkItem) -> None:
             super().__init__(sender)
             self.item = item
@@ -188,21 +188,21 @@ class ItemTable(DataTable):
         if item is None:
             return
         self.last_action = "view"
-        self.post_message(self.ViewRequested(self, item))
+        self.post_message(self.ItemSelected(self, item))
 
     def action_edit_selected(self) -> None:  # pragma: no cover - simple action
         item = self._selected_item()
         if item is None:
             return
         self.last_action = "edit"
-        self.post_message(self.EditRequested(self, item))
+        self.post_message(self.ItemEditRequested(self, item))
 
     def action_delete_selected(self) -> None:  # pragma: no cover - simple action
         item = self._selected_item()
         if item is None:
             return
         self.last_action = "delete"
-        self.post_message(self.DeleteRequested(self, item))
+        self.post_message(self.ItemDeleteRequested(self, item))
 
     def open_context_menu(self, row_index: int) -> None:
         """Open a simple context menu for the given row."""
@@ -303,6 +303,6 @@ class ItemTable(DataTable):
         if event.coordinate == self._last_click_coord and event.time - self._last_click_time < 0.5:
             item = self._selected_item()
             if item is not None:
-                self.post_message(self.ViewRequested(self, item))
+                self.post_message(self.ItemSelected(self, item))
         self._last_click_coord = event.coordinate
         self._last_click_time = event.time

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
+from textual._context import NoActiveAppError
 from textual.containers import Container, VerticalScroll
 from textual.widgets import Button, Static, TabbedContent, TabPane
 from textual.screen import Screen
@@ -45,7 +46,10 @@ class ItemDetailScreen(Screen):
 
     def _build_breadcrumb_items(self) -> list[WorkItem]:
         """Return the current breadcrumb history."""
-        return list(getattr(self.app, "breadcrumb_history", []))
+        try:
+            return list(getattr(self.app, "breadcrumb_history", []))
+        except NoActiveAppError:
+            return []
 
     # --------------------------------------------------------------
     # Compose layout
