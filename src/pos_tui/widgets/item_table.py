@@ -118,6 +118,37 @@ class ItemTable(DataTable):
             self.add_row(*self._item_to_row(item), style=self._row_style(item))
             self._row_items.append(item)
 
+    def update_item(self, item: WorkItem) -> None:
+        """Update the table row for the given item."""
+        for i, existing in enumerate(self._items):
+            if existing.id == item.id:
+                self._items[i] = item
+                break
+        for row_index, row_item in enumerate(self._row_items):
+            if row_item.id == item.id:
+                self._row_items[row_index] = item
+                cells = self._item_to_row(item)
+                for col, value in enumerate(cells):
+                    super().update_cell(row_index, col, value)
+                break
+
+    def remove_item(self, item_id: str) -> int | None:
+        """Remove the item from the table and return its row index."""
+        index = None
+        for i, existing in enumerate(self._items):
+            if existing.id == item_id:
+                index = i
+                del self._items[i]
+                break
+        if index is None:
+            return None
+        for row_index, row_item in enumerate(self._row_items):
+            if row_item.id == item_id:
+                del self._row_items[row_index]
+                self.remove_row(row_index)
+                break
+        return index
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
