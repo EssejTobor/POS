@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from src.pos_tui.validation import ValidationProtocol, ValidationResult
 from src.pos_tui.validation.introspect import dump_database_state, compare_database_states
 from src.models import ItemType, Priority, ItemStatus, WorkItem
-from src.work_system import WorkSystem
+from src.storage import WorkSystem
 
 
 class ItemEditingValidation(ValidationProtocol):
@@ -42,7 +42,7 @@ class ItemEditingValidation(ValidationProtocol):
                 "title": "Test Task 1",
                 "description": "This is a test task",
                 "item_type": ItemType.TASK,
-                "priority": Priority.HIGH,
+                "priority": Priority.HI,
                 "status": ItemStatus.NOT_STARTED
             },
             {
@@ -64,12 +64,13 @@ class ItemEditingValidation(ValidationProtocol):
         item_ids = []
         for item_data in test_items:
             item = ws.add_item(
+                goal="test",
                 title=item_data["title"],
                 description=item_data["description"],
                 item_type=item_data["item_type"],
                 priority=item_data["priority"],
-                status=item_data["status"]
             )
+            ws.update_item(item.id, status=item_data["status"])
             item_ids.append(item.id)
         
         # Create some links if the method is available
@@ -119,12 +120,11 @@ class ItemEditingValidation(ValidationProtocol):
         new_title = f"Edited: {original_item.title}"
         new_status = ItemStatus.IN_PROGRESS if original_item.status != ItemStatus.IN_PROGRESS else ItemStatus.COMPLETED
         
-        edit_data = {
-            "title": new_title,
-            "status": new_status.value
-        }
-        
-        ws.update_item(item_id, edit_data)
+        ws.update_item(
+            item_id,
+            title=new_title,
+            status=new_status.value,
+        )
         
         # Capture updated state
         updated_state = dump_database_state(self.temp_db)
@@ -208,7 +208,7 @@ class ItemEditingValidation(ValidationProtocol):
             return
         
         item_id = next(iter(ws.items.keys()))
-        original_item = ws.items[item_id].copy()  # Make a copy for later comparison
+        original_item = WorkItem.from_dict(ws.items[item_id].to_dict())
         
         # 1. Capture state before modification
         before_state = dump_database_state(self.temp_db)
@@ -218,33 +218,35 @@ class ItemEditingValidation(ValidationProtocol):
         self.result.add_note("Simulating optimistic UI update...")
         
         # 3. Prepare update data
-        update_data = {
-            "title": f"Optimistic: {original_item.title}",
-            "priority": Priority.HIGH.value
-        }
-        
+        update_title = f"Optimistic: {original_item.title}"
+
         # 4. In the real app, we'd update the UI immediately and then
         # initiate an async task to update the database. Here we'll just
         # call the update directly since we can't test UI components.
-        ws.update_item(item_id, update_data)
+        ws.update_item(
+            item_id,
+            title=update_title,
+            priority=Priority.HI.value,
+        )
         
         # 5. Verify the change persisted to the database
         updated_item = ws.items[item_id]
         after_state = dump_database_state(self.temp_db)
         
-        if updated_item.title == update_data["title"]:
+        if updated_item.title == update_title:
             self.result.add_pass("Database update for optimistic UI change succeeded")
         else:
-            self.result.add_fail(f"Database update failed. Expected title '{update_data['title']}', got '{updated_item.title}'")
+            self.result.add_fail(
+                f"Database update failed. Expected title '{update_title}', got '{updated_item.title}'"
+            )
         
         # 6. Simulate undo operation
-        original_data = {
-            "title": original_item.title,
-            "priority": original_item.priority.value
-        }
-        
         # In the real app, this would be triggered by a button in a toast notification
-        ws.update_item(item_id, original_data)
+        ws.update_item(
+            item_id,
+            title=original_item.title,
+            priority=original_item.priority.value,
+        )
         
         # Verify undo worked
         restored_item = ws.items[item_id]

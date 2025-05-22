@@ -81,3 +81,43 @@ Footer {
     padding: 0 1;
     background: $boost;
 }
+
+/* --------------------------------------------------------------
+   Confirm Modal styles
+   -------------------------------------------------------------- */
+#confirm_container {
+    width: 50%;
+    padding: 1 2;
+    background: $panel;
+    border: round $warning;
+    layout: vertical;
+    align: center middle;
+}
+
+#confirm_container.danger {
+    border: round $error;
+}
+
+#confirm_buttons {
+    layout: horizontal;
+    width: 100%;
+    align-horizontal: center;
+    padding-top: 1;
+}
+
+/* --------------------------------------------------------------
+   Toast Notification styles
+   -------------------------------------------------------------- */
+#toast_container {
+    width: 40%;
+    padding: 1 2;
+    background: $boost;
+    border: round $primary;
+    layout: horizontal;
+    align-horizontal: center;
+    align-vertical: center;
+}
+
+#toast_container Button {
+    margin-left: 1;
+}

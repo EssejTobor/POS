@@ -67,7 +67,7 @@ python -m src.pos_tui.validation.run item_editing
 
 ### UI Component Validations
 
-**Protocol Names**: `edit_modal`, `item_table`
+**Protocol Names**: `edit_modal`, `item_table`, `confirm_modal`, `detail_screen`
 
 **Description**: Validates UI components without rendering them
 
@@ -76,10 +76,11 @@ python -m src.pos_tui.validation.run item_editing
 - Lifecycle event handling
 - Method signatures and behavior
 - Message handling and event flow
+- Confirm modal button handling
 
 **Usage**:
 ```bash
-python -m src.pos_tui.validation.run edit_modal item_table
+python -m src.pos_tui.validation.run edit_modal item_table confirm_modal detail_screen
 ```
 
 ## Feature Validation Protocols
@@ -136,8 +137,12 @@ The `ItemEditingValidation` protocol in `src/pos_tui/validation/item_management.
 2. **ItemTable Component**:
    - Should display item data in a tabular format
    - Should provide cell update mechanism for optimistic UI updates
+   - Should expose an `update_item` method for modifying rows
    - Should emit appropriate messages for item selection/editing/deletion
    - Should handle context menu and action button events
+3. **ConfirmModal Component**:
+   - Should display confirmation message
+   - Should dismiss with True on confirm and False on cancel
 
 #### Validation Strategy
 
@@ -148,6 +153,35 @@ The `EditItemModalValidation` and `ItemTableValidation` protocols in `src/pos_tu
 3. Verifying properties, methods, and message classes
 4. Simulating user interaction events
 5. Checking for appropriate responses to events
+
+### Linked Items Widget
+
+**Feature Description**: Displays all links for an item grouped by relationship type with color-coded indicators.
+
+#### Essential Behaviors to Validate
+
+1. Links should be grouped by type
+2. Each link should expose "Open" and "Remove" actions
+3. Link types should use consistent colors across widgets
+
+#### Validation Strategy
+
+The `LinkedItemsWidgetValidation` protocol in `src/pos_tui/validation/link_widget.py` validates basic widget behavior by instantiating the widget with an in-memory database and verifying it mounts successfully and exposes a `refresh_links` method.
+### Link Creation Validation
+
+**Protocol Name**: `link_validation`
+
+**Description**: Ensures link creation logic enforces constraints like circular reference detection and link count limits.
+
+**Key Validations**:
+- Valid links can be created between items
+- Duplicate or circular links are rejected
+- Exceeding the maximum link count fails
+
+**Usage**:
+```bash
+python -m src.pos_tui.validation.run link_validation
+```
 
 ## Adding New Validation Protocols
 
@@ -185,4 +219,16 @@ Validation results are automatically saved to `data/validation_results/` in JSON
 }
 ```
 
-These results can be reviewed to track validation history and identify areas for improvement. 
+These results can be reviewed to track validation history and identify areas for improvement.
+
+## Validation Results – 2025-05-22
+
+| Protocol | Status |
+|----------|--------|
+| item_editing | ❌ Fail |
+| edit_modal | ❌ Fail |
+| item_table | ❌ Fail |
+| confirm_modal | ❌ Fail |
+| detail_screen | ❌ Fail |
+
+Validation execution reported failures across all protocols due to missing or incomplete implementations. See the console output for detailed error information.

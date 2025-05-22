@@ -9,6 +9,7 @@ from textual.widgets import Tree
 
 from ...models import ItemStatus, ItemType, WorkItem
 from ...storage import WorkSystem
+from .link_utils import link_type_color
 
 
 class LinkTree(Tree[str]):
@@ -169,9 +170,5 @@ class LinkTree(Tree[str]):
 
     @staticmethod
     def _link_color(link_type: str) -> str:
-        return {
-            "references": "blue",
-            "evolves-from": "green",
-            "inspired-by": "yellow",
-            "parent-child": "magenta",
-        }.get(link_type, "white")
+        """Return color for ``link_type`` using shared mapping."""
+        return link_type_color(link_type)

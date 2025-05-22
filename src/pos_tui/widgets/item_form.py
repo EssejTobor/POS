@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 from typing import Iterable
 
 from textual.app import ComposeResult
 from textual.containers import Container
 from textual.widgets import Button, Input, LoadingIndicator, Select, Static
+from textual.message import Message
 
 from ...models import ItemStatus, ItemType, Priority, WorkItem
 from ...storage import WorkSystem
@@ -15,10 +17,33 @@ from .link_editor import LinkEditor
 class ItemEntryForm(Static):
     """Form for creating new :class:`~src.models.WorkItem` instances."""
 
+    CSS_PATH = Path(__file__).parent.parent / "styles" / "item_form.css"
+    DEFAULT_CSS = CSS_PATH.read_text()
+
     BINDINGS = [
         ("ctrl+s", "submit", "Save"),
         ("ctrl+c", "cancel", "Cancel"),
     ]
+
+    class SaveStarted(Message):
+        """Emitted when the save worker begins."""
+
+        def __init__(self, sender: "ItemEntryForm") -> None:
+            super().__init__(sender)
+
+    class SaveResult(Message):
+        """Emitted when the save operation finishes."""
+
+        def __init__(self, sender: "ItemEntryForm", success: bool, message: str) -> None:
+            super().__init__(sender)
+            self.success = success
+            self.message = message
+
+    class Cancelled(Message):
+        """Emitted when the user cancels the form."""
+
+        def __init__(self, sender: "ItemEntryForm") -> None:
+            super().__init__(sender)
 
     def __init__(
         self,
@@ -104,10 +129,13 @@ class ItemEntryForm(Static):
             "description_field",
             "due_date_field",
         ]:
-            widget = self.query_one(f"#{widget_id}", Input, expect_none=True)
-            if widget is not None:
-                widget.remove_class("error")
+            self._clear_field_error(widget_id)
         self.query_one("#validation_message", Static).update("")
+
+    def _clear_field_error(self, widget_id: str) -> None:
+        widget = self.query_one(f"#{widget_id}", Input, expect_none=True)
+        if widget is not None:
+            widget.remove_class("error")
 
     def reset_form(self) -> None:
         """Clear all input fields and link selections."""
@@ -139,6 +167,26 @@ class ItemEntryForm(Static):
             suggestions = [t for t in self.tag_options if t.startswith(text)]
             sug_widget = self.query_one("#tag_suggestions", Static)
             sug_widget.update(", ".join(suggestions[:5]))
+            return
+
+        if event.input.id == "title_field":
+            if event.value.strip():
+                self._clear_field_error("title_field")
+                self.query_one("#validation_message", Static).update("")
+            else:
+                self._show_error("title_field", "Title is required")
+        elif event.input.id == "due_date_field":
+            value = event.value.strip()
+            if not value:
+                self._clear_field_error("due_date_field")
+                self.query_one("#validation_message", Static).update("")
+            else:
+                try:
+                    datetime.strptime(value, "%Y-%m-%d")
+                    self._clear_field_error("due_date_field")
+                    self.query_one("#validation_message", Static).update("")
+                except ValueError:
+                    self._show_error("due_date_field", "Invalid date format")
 
     def on_button_pressed(
         self, event: Button.Pressed
@@ -168,11 +216,13 @@ class ItemEntryForm(Static):
                 return
 
         self.query_one("#save_loading", LoadingIndicator).display = True
+        self.post_message(self.SaveStarted(self))
         self.run_worker(self._save_item, thread=True)
 
     def action_cancel(self) -> None:  # pragma: no cover - simple UI
         self.reset_form()
         self.query_one("#validation_message", Static).update("Canceled")
+        self.post_message(self.Cancelled(self))
 
     def _save_item(self) -> None:
         """Worker method to perform database save."""
@@ -181,21 +231,28 @@ class ItemEntryForm(Static):
         try:
             if self.work_system is not None:
                 if self.item is not None:
-                    self.work_system.update_item(
-                        self.item.id,
-                        title=self.query_one("#title_field", Input).value.strip(),
-                        item_type=ItemType(
+                    fields = {
+                        "title": self.query_one("#title_field", Input).value.strip(),
+                        "item_type": ItemType(
                             self.query_one("#type_selector", Select).value
                             or ItemType.TASK.value
                         ),
-                        description=self.query_one("#description_field", Input).value,
-                        priority=Priority(
+                        "description": self.query_one("#description_field", Input).value,
+                        "priority": Priority(
                             int(self.query_one("#priority_selector", Select).value or 2)
                         ),
-                        status=ItemStatus(
+                        "status": ItemStatus(
                             self.query_one("#status_selector", Select).value
                             or ItemStatus.NOT_STARTED.value
                         ),
+                    }
+                    links = [
+                        (l.split()[0], t) for l, t in (self.link_editor.links if self.link_editor else [])
+                    ]
+                    self.work_system.update_item_with_links(
+                        self.item.id,
+                        field_values=fields,
+                        links_to_add=links,
                     )
                     item = self.work_system.items[self.item.id]
                 else:
@@ -229,3 +286,4 @@ class ItemEntryForm(Static):
             self.reset_form()
         else:
             self.query_one("#validation_message", Static).update(f"Error: {message}")
+        self.post_message(self.SaveResult(self, success, message))
