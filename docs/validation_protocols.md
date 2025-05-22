@@ -183,6 +183,22 @@ The `LinkedItemsWidgetValidation` protocol in `src/pos_tui/validation/link_widge
 python -m src.pos_tui.validation.run link_validation
 ```
 
+### Link Tree Visualization
+
+**Protocol Name**: `link_tree`
+
+**Description**: Validates the `LinkTree` widget renders relationships and loads
+child nodes on demand.
+
+**Key Validations**:
+1. Initial tree load displays root children
+2. Expanding a node dynamically loads its children
+
+**Usage**:
+```bash
+python -m src.pos_tui.validation.run link_tree
+```
+
 ## Adding New Validation Protocols
 
 To create a new validation protocol:
