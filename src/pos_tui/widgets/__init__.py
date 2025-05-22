@@ -11,6 +11,7 @@ from .item_details_modal import ItemDetailsModal
 from .item_form import ItemEntryForm
 from .item_form_modal import ItemFormModal
 from .modals import ConfirmModal
+from .toast import ToastNotification
 from .item_table import ItemTable
 from .link_editor import LinkEditor
 from .link_tree import LinkTree
@@ -28,5 +29,6 @@ __all__: list[str] = [
     "CommandPalette",
     "DashboardStatus",
     "ConfirmModal",
+    "ToastNotification",
     # "Message",
 ]

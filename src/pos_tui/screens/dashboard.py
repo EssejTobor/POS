@@ -8,6 +8,7 @@ from ..widgets import (
     ItemFormModal,
     ItemTable,
     ConfirmModal,
+    ToastNotification,
 )
 from ...models import ItemStatus, WorkItem, ItemType, Priority
 from ..widgets.item_form import ItemEntryForm
@@ -205,9 +206,7 @@ class DashboardScreen(Container):
         if item.id in self.app.work_system.items:
             del self.app.work_system.items[item.id]
 
-        self.query_one("#status_bar", Static).update(
-            "Item deleted. Press 'u' to undo."
-        )
+
 
         def op(conn):
             self.app.work_system.db.delete_item(item.id)
