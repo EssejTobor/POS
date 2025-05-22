@@ -1,0 +1,9 @@
+:root {
+  --surface: #1e1e1e;
+  --text: #ffffff;
+  --primary: #3b82f6;
+  --boost: #333333;
+  --panel: #222222;
+  --warning: orange;
+  --error: red;
+}

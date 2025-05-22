@@ -215,6 +215,21 @@ child nodes on demand.
 python -m src.pos_tui.validation.run link_tree
 ```
 
+### Usability Validation
+
+**Protocol Name**: `usability`
+
+**Description**: Validates user preference persistence and theme toggle logic.
+
+**Key Validations**:
+1. Saving preferences writes data to a JSON file
+2. Loading preferences returns the same values
+
+**Usage**:
+```bash
+python -m src.pos_tui.validation.run usability
+```
+
 ## Adding New Validation Protocols
 
 To create a new validation protocol:

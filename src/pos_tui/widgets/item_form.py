@@ -23,6 +23,10 @@ class ItemEntryForm(Static):
     BINDINGS = [
         ("ctrl+s", "submit", "Save"),
         ("ctrl+c", "cancel", "Cancel"),
+        ("enter", "submit", "Save"),
+        ("escape", "cancel", "Cancel"),
+        ("tab", "focus_next", "Next"),
+        ("shift+tab", "focus_previous", "Previous"),
     ]
 
     class SaveStarted(Message):
@@ -273,6 +277,9 @@ class ItemEntryForm(Static):
                 ):
                     self.work_system.add_link(item.id, target.split()[0], link_type)
         except Exception as e:  # pragma: no cover - basic error handling
+            from ..error import log_error
+
+            log_error(e)
             success = False
             message = str(e)
 

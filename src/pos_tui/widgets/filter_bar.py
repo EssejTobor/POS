@@ -6,6 +6,7 @@ from textual.message import Message
 from textual.widgets import Button, Input, Select
 
 from ...models import ItemStatus, ItemType
+from ..preferences import load_preferences, save_preferences
 
 
 class FilterBar(Container):
@@ -26,6 +27,17 @@ class FilterBar(Container):
         self.status: ItemStatus | None = None
         self.search_text: str = ""
 
+    def on_mount(self) -> None:
+        prefs = load_preferences().get("filters", {})
+        if prefs:
+            self.item_type = ItemType(prefs.get("item_type")) if prefs.get("item_type") else None
+            self.status = ItemStatus(prefs.get("status")) if prefs.get("status") else None
+            self.search_text = prefs.get("search_text", "")
+            select = self.query_one("#filter_type", Select)
+            select.value = self.item_type.value if self.item_type else ""
+            search = self.query_one("#filter_search", Input)
+            search.value = self.search_text
+
     def compose(self) -> ComposeResult:
         type_options = [("All", "")] + [(t.name.title(), t.value) for t in ItemType]
         yield Select(type_options, prompt="Type", id="filter_type")
@@ -41,6 +53,7 @@ class FilterBar(Container):
         if event.select.id == "filter_type":
             value = event.value or None
             self.item_type = ItemType(value) if value else None
+            self._save_preferences()
             self.post_message(self.FilterChanged(self))
 
     def on_input_changed(
@@ -48,6 +61,7 @@ class FilterBar(Container):
     ) -> None:  # pragma: no cover - simple UI
         if event.input.id == "filter_search":
             self.search_text = event.value
+            self._save_preferences()
             self.post_message(self.FilterChanged(self))
 
     def on_button_pressed(
@@ -61,4 +75,14 @@ class FilterBar(Container):
         }
         if event.button.id in mapping:
             self.status = mapping[event.button.id]
+            self._save_preferences()
             self.post_message(self.FilterChanged(self))
+
+    def _save_preferences(self) -> None:
+        prefs = load_preferences()
+        prefs["filters"] = {
+            "item_type": self.item_type.value if self.item_type else None,
+            "status": self.status.value if self.status else None,
+            "search_text": self.search_text,
+        }
+        save_preferences(prefs)
