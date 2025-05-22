@@ -136,6 +136,7 @@ The `ItemEditingValidation` protocol in `src/pos_tui/validation/item_management.
 2. **ItemTable Component**:
    - Should display item data in a tabular format
    - Should provide cell update mechanism for optimistic UI updates
+   - Should expose an `update_item` method for modifying rows
    - Should emit appropriate messages for item selection/editing/deletion
    - Should handle context menu and action button events
 
