@@ -154,6 +154,22 @@ The `EditItemModalValidation` and `ItemTableValidation` protocols in `src/pos_tu
 4. Simulating user interaction events
 5. Checking for appropriate responses to events
 
+### Link Creation Validation
+
+**Protocol Name**: `link_validation`
+
+**Description**: Ensures link creation logic enforces constraints like circular reference detection and link count limits.
+
+**Key Validations**:
+- Valid links can be created between items
+- Duplicate or circular links are rejected
+- Exceeding the maximum link count fails
+
+**Usage**:
+```bash
+python -m src.pos_tui.validation.run link_validation
+```
+
 ## Adding New Validation Protocols
 
 To create a new validation protocol:

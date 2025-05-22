@@ -231,21 +231,28 @@ class ItemEntryForm(Static):
         try:
             if self.work_system is not None:
                 if self.item is not None:
-                    self.work_system.update_item(
-                        self.item.id,
-                        title=self.query_one("#title_field", Input).value.strip(),
-                        item_type=ItemType(
+                    fields = {
+                        "title": self.query_one("#title_field", Input).value.strip(),
+                        "item_type": ItemType(
                             self.query_one("#type_selector", Select).value
                             or ItemType.TASK.value
                         ),
-                        description=self.query_one("#description_field", Input).value,
-                        priority=Priority(
+                        "description": self.query_one("#description_field", Input).value,
+                        "priority": Priority(
                             int(self.query_one("#priority_selector", Select).value or 2)
                         ),
-                        status=ItemStatus(
+                        "status": ItemStatus(
                             self.query_one("#status_selector", Select).value
                             or ItemStatus.NOT_STARTED.value
                         ),
+                    }
+                    links = [
+                        (l.split()[0], t) for l, t in (self.link_editor.links if self.link_editor else [])
+                    ]
+                    self.work_system.update_item_with_links(
+                        self.item.id,
+                        field_values=fields,
+                        links_to_add=links,
                     )
                     item = self.work_system.items[self.item.id]
                 else:
