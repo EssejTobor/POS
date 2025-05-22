@@ -280,11 +280,71 @@ class ItemCreationValidation(ValidationProtocol):
         # We expect 3 total items from our three creation tests
         expected_total = 3
         actual_total = len(ws.items)
-        
+
         if actual_total == expected_total:
             self.result.add_pass(f"Database contains expected total of {expected_total} items")
         else:
             self.result.add_fail(f"Unexpected item count in database. Expected {expected_total}, got {actual_total}")
+
+
+class ItemCreationViaFormValidation(ValidationProtocol):
+    """Validate that NewItemScreen passes form data correctly to ItemSaveWorker."""
+
+    def __init__(self) -> None:
+        super().__init__("item_creation_via_form")
+
+    def _run_validation(self) -> None:
+        from src.pos_tui.screens.new_item import NewItemScreen
+        from src.pos_tui.widgets.item_form import ItemEntryForm
+        from src.pos_tui.workers.item_workers import ItemSaveWorker
+
+        class DummyScreen(NewItemScreen):
+            def __init__(self) -> None:
+                super().__init__()
+                self.indicator = type("Ind", (), {"display": False})()
+
+            def query_one(self, selector: str, *a, **kw):
+                if selector == "#save_indicator":
+                    return self.indicator
+                return super().query_one(selector, *a, **kw)
+
+        screen = DummyScreen()
+
+        test_data = {
+            "goal": "FormGoal",
+            "title": "Form Item",
+            "item_type": ItemType.THOUGHT.value,
+            "priority": Priority.HI.value,
+            "status": ItemStatus.NOT_STARTED.value,
+            "description": "desc",
+            "tags": [],
+        }
+
+        captured: dict[str, Any] = {}
+
+        def fake_start(self, **kwargs):
+            captured.update(kwargs)
+
+        original_start = ItemSaveWorker.start
+        ItemSaveWorker.start = fake_start
+        try:
+            message = ItemEntryForm.ItemSubmitted(test_data, [])
+            import asyncio
+            asyncio.run(screen.on_item_entry_form_item_submitted(message))
+        finally:
+            ItemSaveWorker.start = original_start
+
+        item_data = captured.get("item_data", {})
+
+        if item_data.get("goal") == test_data["goal"]:
+            self.result.add_pass("Goal passed to ItemSaveWorker")
+        else:
+            self.result.add_fail("Goal missing from ItemSaveWorker parameters")
+
+        if item_data.get("item_type") == ItemType.THOUGHT.value:
+            self.result.add_pass("Item type passed correctly to ItemSaveWorker")
+        else:
+            self.result.add_fail("Item type not passed correctly to ItemSaveWorker")
 
 
 class ItemEditingValidation(ValidationProtocol):
