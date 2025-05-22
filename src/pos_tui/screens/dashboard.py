@@ -23,6 +23,11 @@ from ..widgets.modals import EditItemModal
 class DashboardScreen(Screen):
     """Screen displaying an overview of work items with filtering and management capabilities."""
 
+    BINDINGS = [
+        ("e", "edit_selected_row", "Edit"),
+        ("d", "delete_selected_row", "Delete"),
+    ]
+
     def compose(self) -> ComposeResult:
         """Compose the dashboard layout."""
         # Header section
@@ -65,9 +70,10 @@ class DashboardScreen(Screen):
         """Handle item selection in the table."""
         # Enable action buttons when an item is selected
         self._update_action_buttons(True)
-        
+
         # Store the selected item ID
         self._selected_item_id = event.item_id
+        self._launch_edit_screen(event.item_id)
     
     def on_filter_bar_filter_changed(self, event: FilterBar.FilterChanged) -> None:
         """Handle filter change events from the filter bar."""
@@ -245,6 +251,16 @@ class DashboardScreen(Screen):
         if item:
             # Show the modal with item details
             self.app.push_screen(ItemDetailsModal(item))
+
+    def _launch_edit_screen(self, item_id: str) -> None:
+        """Open the NewItemScreen pre-filled with the selected item."""
+        app = self.app
+        if not hasattr(app, "work_system"):
+            return
+        work_system = app.work_system
+        item = work_system.items.get(item_id)
+        if item:
+            self.app.push_screen(NewItemScreen(item=item.to_dict()))
             
     def _edit_item(self, item_id: str) -> None:
         """Show the edit item modal for the selected item."""
@@ -472,3 +488,11 @@ class DashboardScreen(Screen):
     def on_item_table_item_delete_requested(self, event: ItemTable.ItemDeleteRequested) -> None:
         """Handle delete request from the item table."""
         self._delete_item(event.item_id)
+
+    def action_edit_selected_row(self) -> None:
+        if hasattr(self, "_selected_item_id"):
+            self._launch_edit_screen(self._selected_item_id)
+
+    def action_delete_selected_row(self) -> None:
+        if hasattr(self, "_selected_item_id"):
+            self._delete_item(self._selected_item_id)

@@ -18,6 +18,10 @@ from .dashboard import DashboardScreen
 class NewItemScreen(Screen):
     """Screen for entering and editing work items."""
 
+    def __init__(self, item: dict | None = None) -> None:
+        super().__init__()
+        self.item = item
+
     def compose(self) -> ComposeResult:
         """Compose the new item screen layout."""
         yield ItemEntryForm(id="item_entry_form")
@@ -27,6 +31,9 @@ class NewItemScreen(Screen):
         """Set up event handlers when the screen is mounted."""
         # Hide the loading indicator initially
         self.query_one("#save_indicator").display = False
+        if self.item:
+            form = self.query_one(ItemEntryForm)
+            form.edit_item(WorkItem.from_dict(self.item))
     
     def edit_item(self, item: WorkItem) -> None:
         """Set up the form to edit an existing item."""

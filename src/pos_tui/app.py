@@ -54,6 +54,8 @@ class POSTUI(App):
         Binding("ctrl+p", "toggle_command_palette", "Command Palette"),
         Binding("f1", "show_shortcuts", "Shortcuts"),
         Binding("t", "toggle_theme", "Toggle Theme"),
+        Binding("e", "edit_selected_item", "Edit"),
+        Binding("d", "delete_selected_item", "Delete"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -221,6 +223,20 @@ class POSTUI(App):
         
         # Show notification
         self.notify_info(f"Switched to {theme_name} theme")
+
+    def action_edit_selected_item(self) -> None:
+        try:
+            dashboard = self.query_one(DashboardScreen)
+            dashboard.action_edit_selected_row()
+        except Exception:
+            pass
+
+    def action_delete_selected_item(self) -> None:
+        try:
+            dashboard = self.query_one(DashboardScreen)
+            dashboard.action_delete_selected_row()
+        except Exception:
+            pass
     
     def notify_error(self, message: str, auto_dismiss: Optional[float] = 8.0) -> None:
         """Show an error notification.
