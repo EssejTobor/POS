@@ -281,6 +281,36 @@ class WorkSystem:
                 print(f"Error updating item: {e}")
                 raise
 
+    def update_item_with_links(
+        self,
+        item_id: str,
+        field_values: dict[str, object] | None = None,
+        links_to_add: list[tuple[str, str]] | None = None,
+        links_to_remove: list[str] | None = None,
+    ) -> None:
+        """Update an item and modify links atomically."""
+        field_values = field_values or {}
+        links_to_add = links_to_add or []
+        links_to_remove = links_to_remove or []
+
+        with self._atomic_operation():
+            if item_id not in self.items:
+                raise ValueError(f"Item {item_id} not found")
+
+            # Update fields first
+            if field_values:
+                self.update_item(item_id, **field_values)
+
+            # Apply link removals
+            for target in links_to_remove:
+                if not self.remove_link(item_id, target):
+                    raise RuntimeError(f"Failed to remove link to {target}")
+
+            # Apply link additions
+            for target, ltype in links_to_add:
+                if not self.add_link(item_id, target, ltype):
+                    raise RuntimeError(f"Failed to add link to {target}")
+
     def delete_item(self, item_id: str) -> None:
         """Remove an item from the system."""
         with self._atomic_operation():
@@ -422,9 +452,32 @@ class WorkSystem:
             bool: True if the link was added successfully, False otherwise
         """
         try:
-            # Verify both items exist in our cache
+            # Verify both items exist
             if source_id not in self.items or target_id not in self.items:
                 print("Error adding link: One or both items don't exist")
+                return False
+
+            # Basic validation rules
+            if source_id == target_id:
+                print("Error adding link: cannot link item to itself")
+                return False
+
+            valid_types = {"references", "evolves-from"}
+            if link_type not in valid_types:
+                print(f"Error adding link: invalid link type {link_type}")
+                return False
+
+            # Circular reference check
+            existing = self.get_links(target_id).get("outgoing", [])
+            if any(l["target_id"] == source_id for l in existing):
+                print("Error adding link: circular reference detected")
+                return False
+
+            # Link count limit
+            MAX_LINKS = 10
+            current_links = self.get_links(source_id).get("outgoing", [])
+            if len(current_links) >= MAX_LINKS:
+                print("Error adding link: maximum links reached")
                 return False
 
             with self._atomic_operation():
