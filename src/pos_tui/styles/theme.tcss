@@ -1,0 +1,2 @@
+.label { padding-bottom: 1; }
+.input { border: solid 1 $surface; padding: 1; }
