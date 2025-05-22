@@ -1,0 +1,16 @@
+/* Styles for the ItemEntryForm widget */
+
+ItemEntryForm Input {
+    width: 100%;
+    border: tall $surface;
+    padding: 0 1;
+}
+
+ItemEntryForm Input:focus {
+    border: heavy $primary;
+}
+
+ItemEntryForm Input.error {
+    border: heavy $error;
+}
+
