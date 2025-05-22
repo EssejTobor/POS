@@ -67,7 +67,7 @@ python -m src.pos_tui.validation.run item_editing
 
 ### UI Component Validations
 
-**Protocol Names**: `edit_modal`, `item_table`
+**Protocol Names**: `edit_modal`, `item_table`, `confirm_modal`
 
 **Description**: Validates UI components without rendering them
 
@@ -76,10 +76,11 @@ python -m src.pos_tui.validation.run item_editing
 - Lifecycle event handling
 - Method signatures and behavior
 - Message handling and event flow
+- Confirm modal button handling
 
 **Usage**:
 ```bash
-python -m src.pos_tui.validation.run edit_modal item_table
+python -m src.pos_tui.validation.run edit_modal item_table confirm_modal
 ```
 
 ## Feature Validation Protocols
@@ -138,6 +139,9 @@ The `ItemEditingValidation` protocol in `src/pos_tui/validation/item_management.
    - Should provide cell update mechanism for optimistic UI updates
    - Should emit appropriate messages for item selection/editing/deletion
    - Should handle context menu and action button events
+3. **ConfirmModal Component**:
+   - Should display confirmation message
+   - Should dismiss with True on confirm and False on cancel
 
 #### Validation Strategy
 
@@ -185,4 +189,15 @@ Validation results are automatically saved to `data/validation_results/` in JSON
 }
 ```
 
-These results can be reviewed to track validation history and identify areas for improvement. 
+These results can be reviewed to track validation history and identify areas for improvement.
+
+## Validation Results – 2025-05-22
+
+| Protocol | Status |
+|----------|--------|
+| item_editing | ❌ Fail |
+| edit_modal | ❌ Fail |
+| item_table | ❌ Fail |
+| confirm_modal | ❌ Fail |
+
+Validation execution reported failures across all protocols due to missing or incomplete implementations. See the console output for detailed error information.

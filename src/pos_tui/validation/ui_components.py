@@ -228,11 +228,52 @@ class ItemTableValidation(ValidationProtocol):
             self.result.add_fail(f"Failed to import ItemTable: {str(e)}")
 
 
+class ConfirmModalValidation(ValidationProtocol):
+    """Validation protocol for the ConfirmModal component."""
+
+    def __init__(self) -> None:
+        super().__init__("confirm_modal")
+
+    def _run_validation(self) -> None:
+        """Run validation for the ConfirmModal."""
+        try:
+            from src.pos_tui.widgets.modals import ConfirmModal
+
+            message = "Delete item?"
+            simulator = UIComponentSimulator(ConfirmModal, message)
+
+            modal = simulator.instantiate()
+
+            if getattr(modal, "message", None) == message:
+                self.result.add_pass("Modal correctly stores message")
+            else:
+                self.result.add_fail("Modal failed to store message")
+
+            try:
+                simulator.simulate_mount()
+                self.result.add_pass("Modal mount simulation successful")
+            except Exception as e:  # pragma: no cover - animation
+                self.result.add_fail(f"Modal mount simulation failed: {e}")
+
+            for method in ["action_confirm", "action_cancel", "on_button_pressed"]:
+                if hasattr(modal, method):
+                    self.result.add_pass(f"Modal has method {method}")
+                else:
+                    self.result.add_fail(f"Modal missing method {method}")
+
+        except ImportError as e:
+            self.result.add_fail(f"Failed to import ConfirmModal: {e}")
+
+
 def run_ui_validations() -> None:
     """Run all UI component validations."""
     # Validate EditItemModal
     edit_modal = EditItemModalValidation()
     edit_modal.validate()
+
+    # Validate ConfirmModal
+    confirm_modal = ConfirmModalValidation()
+    confirm_modal.validate()
     
     # Validate ItemTable
     item_table = ItemTableValidation()
