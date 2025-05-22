@@ -12,6 +12,14 @@ from textual.widgets import Input, ListItem, ListView, Static
 from ..commands import Command, CommandRegistry
 
 
+class PaletteItem(ListItem):
+    """List item storing a command reference."""
+
+    def __init__(self, command: Command, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.command = command
+
+
 class CommandPalette(Container):
     """UI widget for searching and executing commands."""
 
@@ -52,8 +60,14 @@ class CommandPalette(Container):
     def _refresh_results(self, commands: Iterable[Command]) -> None:
         assert self.results is not None
         self.results.clear()
+        current_cat = None
         for cmd in commands:
-            self.results.append(ListItem(Static(f"{cmd.name} - {cmd.description}")))
+            if cmd.category != current_cat:
+                current_cat = cmd.category
+                header = ListItem(Static(current_cat.title()), classes="category", disabled=True)
+                self.results.append(header)
+            item = PaletteItem(cmd, Static(f"{cmd.name} - {cmd.description}"))
+            self.results.append(item)
 
     # --------------------------------------------------------------
     # Event handlers
@@ -62,5 +76,32 @@ class CommandPalette(Container):
         if not self.visible:
             return
         term = event.value.lower()
-        cmds = [c for c in self.registry.all_commands() if term in c.name.lower()]
+        cmds = self.registry.search(term)
         self._refresh_results(cmds)
+
+    def on_input_key(self, event: Input.Key) -> None:
+        if event.key == "down" and self.results is not None:
+            self.results.focus()
+            event.stop()
+        elif event.key == "escape":
+            self.close()
+            event.stop()
+        elif event.key == "enter" and self.results is not None:
+            # if only one command, execute it
+            items = [it for it in self.results.children if isinstance(it, PaletteItem)]
+            if len(items) == 1:
+                cmd = items[0].command
+                cmd.action()
+                self.registry.add_history(cmd.name)
+                self.close()
+            event.stop()
+
+    def on_list_view_key(self, event: ListView.Key) -> None:
+        if event.key == "escape":
+            self.close()
+            event.stop()
+        elif event.key == "enter" and isinstance(event.item, PaletteItem):
+            cmd = event.item.command
+            cmd.action()
+            self.registry.add_history(cmd.name)
+            self.close()

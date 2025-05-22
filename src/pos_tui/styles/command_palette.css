@@ -7,3 +7,8 @@
     layout: vertical;
     dock: top;
 }
+
+.category {
+    color: $secondary;
+    text-style: bold;
+}
