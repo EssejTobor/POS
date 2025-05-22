@@ -1,7 +1,18 @@
-
 # POS Textual UI Linear Implementation Plan
 
 This plan reorganizes the Textual UI implementation into a sequential process with clear dependencies between phases. Each phase builds directly on the previous one, creating a more linear and manageable development approach.
+
+## Global Testing Strategy
+
+**IMPORTANT**: All testing across all phases follows the first-principles validation framework in `src/pos_tui/validation/`. Any references to "tests" or "testing" in this implementation plan refer to implementing validation protocols using this framework, NOT external testing frameworks.
+
+The validation approach includes:
+1. Self-validating scripts that verify their own results
+2. System state introspection to examine database and application state
+3. UI component simulation to validate lifecycle and events
+4. Result documentation to capture and report validation outcomes
+
+All features must have corresponding validation protocols implemented using this framework.
 
 ## Phase 1: Core Infrastructure
 
@@ -41,6 +52,16 @@ This plan reorganizes the Textual UI implementation into a sequential process wi
 2. Add placeholder screens and basic navigation
 3. Create application entry point in `__main__.py`
 
+### 1.4 Validate Core Infrastructure
+1. Create validation protocols for worker thread functionality:
+   - Validate thread lifecycle (creation, execution, termination)
+   - Test result callback mechanism with success and error cases
+   - Validate error handling and recovery
+2. Implement validation for database connection management:
+   - Validate connection pooling behavior
+   - Test thread safety with concurrent operations
+   - Validate timeout and retry mechanisms
+3. Add validation for application startup and initialization
 
 **Deliverable:** Running application shell with working database connection and thread management.
 
@@ -76,12 +97,15 @@ This plan reorganizes the Textual UI implementation into a sequential process wi
    - Handle empty results and errors
 3. Add automatic refresh on screen mount
 
-### 2.4 Test Basic UI
-1. Write unit tests for item fetching:
-   - Test filtering logic
-   - Test sorting functionality
-   - Test error scenarios
-2. Add visual tests for table rendering
+### 2.4 Validate Basic UI
+1. Create validation protocols for item fetching:
+   - Validate filtering logic with different parameters
+   - Test sorting functionality with various columns
+   - Validate error scenarios and recovery
+2. Implement validation for table rendering:
+   - Validate correct display of item data
+   - Test empty state handling
+   - Validate responsive behavior
 
 **Deliverable:** Application that displays work items in a table format with basic styling.
 
@@ -134,13 +158,19 @@ This plan reorganizes the Textual UI implementation into a sequential process wi
 3. Connect deletion logic to `ItemSaveWorker`
 4. Implement optimistic UI updates with undo capability
 
-### 3.5 Test Item Management
-1. Write tests for form validation:
-   - Test required fields
-   - Test field formatting
-   - Test validation error display
-2. Test item creation and editing flow
-3. Test deletion with confirmation
+### 3.5 Implement Feature Validation
+1. Create validation protocols for form functionality:
+   - Validate required fields and constraints
+   - Test field formatting and validation rules
+   - Validate error display and resolution
+2. Implement validation for item operations:
+   - Validate item creation workflow
+   - Test item editing with various changes
+   - Validate deletion with confirmation
+3. Add validation for optimistic UI updates:
+   - Test immediate UI feedback
+   - Validate undo capability
+   - Test error recovery scenarios
 
 **Deliverable:** Complete CRUD functionality for work items with form-based editing.
 
@@ -190,19 +220,19 @@ This plan reorganizes the Textual UI implementation into a sequential process wi
    - Enable quick navigation to parent items
    - Add history tracking
 
-### 4.4 Test Relationship Management
-1. Test link creation and deletion:
-   - Test constraints (can't link to self, etc.)
-   - Test link type validation
-   - Test concurrent operations
-2. Test link visualization:
-   - Verify correct grouping and sorting
-   - Test filtering options
-   - Validate visual indicators
-3. Test navigation between related items:
-   - Verify breadcrumb accuracy
-   - Test navigation history
-   - Check circular navigation handling
+### 4.4 Validate Relationship Management
+1. Create validation protocols for link operations:
+   - Validate link creation with different types
+   - Test link constraints (circular references, etc.)
+   - Validate deletion and cleanup
+2. Implement validation for link visualization:
+   - Validate correct grouping and display
+   - Test filtering and sorting options
+   - Validate visual indicators for different link types
+3. Add validation for navigation between related items:
+   - Validate breadcrumb accuracy and function
+   - Test navigation flow between items
+   - Validate handling of complex relationship graphs
 
 **Deliverable:** Item relationship management and basic visualization of links.
 
@@ -283,20 +313,19 @@ This plan reorganizes the Textual UI implementation into a sequential process wi
    - Implement partial tree updates
    - Add cancelable expansions for very large trees
 
-### 5.4 Test Tree Visualization
-1. Test tree rendering with various data structures:
-   - Simple chains (linear relationships)
-   - Complex networks (many interconnections)
-   - Cyclic relationships (detect and handle cycles)
-   - Deep hierarchies (test depth limits)
-2. Test performance with large datasets:
-   - Benchmark rendering speed
-   - Test memory usage
-   - Verify smooth scrolling and interaction
-3. Test interaction handling:
-   - Verify selection behavior
-   - Test keyboard navigation
-   - Check context menu functionality
+### 5.4 Validate Tree Visualization
+1. Create validation protocols for tree rendering:
+   - Validate correct display with various data structures
+   - Test layout algorithms with different tree shapes
+   - Validate node and connection styling
+2. Implement validation for performance:
+   - Validate node virtualization efficiency
+   - Test incremental loading behavior
+   - Validate memory usage with large datasets
+3. Add validation for interaction handling:
+   - Validate selection behavior and events
+   - Test keyboard navigation through the tree
+   - Validate context menu functionality
 
 **Deliverable:** Interactive visualization of item relationships as expandable trees.
 
@@ -404,11 +433,23 @@ This plan reorganizes the Textual UI implementation into a sequential process wi
      - Adapt UI to terminal theme
      - Implement true color fallbacks
 
-### 6.5 Comprehensive Testing
-1. Run full test suite across all components
-2. Perform usability testing with sample workflows
-3. Optimize performance bottlenecks
-4. Fix any remaining issues
+### 6.5 Comprehensive Validation
+1. Create comprehensive validation protocols across all components:
+   - Validate end-to-end workflows
+   - Test integration between components
+   - Validate system behavior under stress
+2. Implement validation for usability patterns:
+   - Validate keyboard navigation paths
+   - Test focus management across screens
+   - Validate accessibility features
+3. Add validation for performance benchmarks:
+   - Validate rendering performance
+   - Test database operation timing
+   - Validate responsiveness under load
+4. Create validation for error handling and recovery:
+   - Test system resilience to failures
+   - Validate graceful degradation
+   - Test data consistency after errors
 
 **Deliverable:** Fully functional, polished application with keyboard navigation, command palette, and advanced filtering.
 
