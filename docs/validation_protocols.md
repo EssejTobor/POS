@@ -167,6 +167,22 @@ The `EditItemModalValidation` and `ItemTableValidation` protocols in `src/pos_tu
 #### Validation Strategy
 
 The `LinkedItemsWidgetValidation` protocol in `src/pos_tui/validation/link_widget.py` validates basic widget behavior by instantiating the widget with an in-memory database and verifying it mounts successfully and exposes a `refresh_links` method.
+
+### Navigation History Validation
+
+**Protocol Name**: `navigation_validation`
+
+**Description**: Verifies breadcrumb history updates when navigating between item detail screens.
+
+**Key Validations**:
+1. Opening a detail screen registers the item in history
+2. Navigating to another item appends it to the trail
+3. Closing a detail screen pops it from the history
+
+**Usage**:
+```bash
+python -m src.pos_tui.validation.run navigation_validation
+```
 ### Link Creation Validation
 
 **Protocol Name**: `link_validation`

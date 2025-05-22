@@ -44,31 +44,15 @@ class ItemDetailScreen(Screen):
         return "\n".join(details)
 
     def _build_breadcrumb_items(self) -> list[WorkItem]:
-        path: list[WorkItem] = []
-        current_id = self.item.id
-        visited: set[str] = set()
-        while current_id and current_id not in visited:
-            visited.add(current_id)
-            itm = self.work_system.items.get(current_id)
-            if not itm:
-                break
-            path.append(itm)
-            links = self.work_system.get_links(current_id)
-            parent = next(
-                (l for l in links.get("incoming", []) if l["link_type"] == "parent-child"),
-                None,
-            )
-            if parent:
-                current_id = parent["source_id"]
-            else:
-                break
-        path.reverse()
-        return path
+        """Return the current breadcrumb history."""
+        return list(getattr(self.app, "breadcrumb_history", []))
 
     # --------------------------------------------------------------
     # Compose layout
     # --------------------------------------------------------------
     def compose(self) -> ComposeResult:
+        if hasattr(self.app, "register_detail"):
+            self.app.register_detail(self.item)
         self._path = self._build_breadcrumb_items()
         with Container(id="breadcrumbs"):
             for i, itm in enumerate(self._path):
@@ -96,6 +80,10 @@ class ItemDetailScreen(Screen):
     def on_mount(self) -> None:
         tree = self.query_one("#detail_links", LinkTree)
         tree.load(self.item.id)
+
+    def on_unmount(self) -> None:
+        if hasattr(self.app, "unregister_detail"):
+            self.app.unregister_detail(self.item)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:  # pragma: no cover - UI actions
         if event.button.id == "edit_button":
