@@ -219,7 +219,7 @@ class ConfirmModalValidation(ValidationProtocol):
             from src.pos_tui.widgets.modals import ConfirmModal
 
             message = "Delete item?"
-            simulator = UIComponentSimulator(ConfirmModal, message)
+            simulator = UIComponentSimulator(ConfirmModal, message=message)
 
             modal = simulator.instantiate()
 
