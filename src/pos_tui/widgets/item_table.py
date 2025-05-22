@@ -51,6 +51,8 @@ class ItemTable(DataTable):
         self.search_text: str = ""
         self.sort_key: Callable[[WorkItem], object] | None = None
         self.sort_reverse: bool = False
+        self._last_click_time: float = 0.0
+        self._last_click_coord: tuple[int, int] | None = None
 
     def _selected_item(self) -> WorkItem | None:
         if self.cursor_row is None:
@@ -293,3 +295,14 @@ class ItemTable(DataTable):
                 self.sort_key = key_map[label]
                 self.sort_reverse = False
             self.refresh_page()
+
+    def on_data_table_cell_selected(
+        self, event: DataTable.CellSelected
+    ) -> None:
+        """Detect double-clicks on a row to open details."""
+        if event.coordinate == self._last_click_coord and event.time - self._last_click_time < 0.5:
+            item = self._selected_item()
+            if item is not None:
+                self.post_message(self.ViewRequested(self, item))
+        self._last_click_coord = event.coordinate
+        self._last_click_time = event.time

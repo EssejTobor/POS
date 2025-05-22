@@ -123,7 +123,7 @@ class LinkTree(Tree[str]):
             child_item: WorkItem = child["item"]
             label = (
                 f"[{self._link_color(link_type)}]{link_type}[/{self._link_color(link_type)}]"
-                f" -> {self._format_item_plain(child_item)}"
+                f" → {self._format_item_plain(child_item)}"
             )
             child_node = node.add(label)
             child_node.allow_expand = True
