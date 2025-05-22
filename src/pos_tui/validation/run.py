@@ -15,7 +15,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from src.pos_tui.validation import ValidationResult, enable_validation_mode
 from src.pos_tui.validation.item_management import ItemEditingValidation
-from src.pos_tui.validation.ui_components import EditItemModalValidation, ItemTableValidation
+from src.pos_tui.validation.ui_components import (
+    EditItemModalValidation,
+    ItemTableValidation,
+    ConfirmModalValidation,
+)
 
 
 def run_selected_validations(validation_names: List[str] = None) -> Dict[str, ValidationResult]:
@@ -33,6 +37,7 @@ def run_selected_validations(validation_names: List[str] = None) -> Dict[str, Va
         "item_editing": ItemEditingValidation,
         "edit_modal": EditItemModalValidation,
         "item_table": ItemTableValidation,
+        "confirm_modal": ConfirmModalValidation,
         # Add more validation protocols here as they are implemented
     }
     
@@ -139,6 +144,7 @@ def main() -> int:
             "item_editing",
             "edit_modal",
             "item_table",
+            "confirm_modal",
             # Add more as implemented
         ]
         
