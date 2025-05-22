@@ -11,6 +11,7 @@ import traceback
 
 from ...storage import WorkSystem
 from ... import schemas
+from ...models import ItemType, Priority, ItemStatus
 from .base import BaseWorker
 
 
@@ -209,27 +210,34 @@ class ItemSaveWorker(BaseWorker):
                 else:
                     # Create new item
                     goal = item_data.get("goal", "")
-                    item_type = item_data.get("item_type", "task")
+                    item_type_val = item_data.get("item_type", ItemType.TASK.value)
+                    item_type = ItemType(item_type_val)
                     title = item_data.get("title", "")
                     description = item_data.get("description", "")
-                    priority = item_data.get("priority", "medium")
-                    status = item_data.get("status", "not_started")
+                    priority_val = item_data.get("priority", Priority.MED.value)
+                    priority = Priority(int(priority_val)) if not isinstance(priority_val, Priority) else priority_val
+                    status_val = item_data.get("status", ItemStatus.NOT_STARTED.value)
+                    status = ItemStatus(status_val)
                     tags = item_data.get("tags", [])
-                    
+
                     # Create new item
-                    new_id = work_system.add_work_item(
+                    new_item = work_system.add_work_item(
                         goal=goal,
                         item_type=item_type,
                         title=title,
                         description=description,
                         priority=priority,
-                        status=status,
-                        tags=tags,
                     )
+                    new_id = new_item.id
+
+                    # Apply additional fields
+                    work_system.update_item(new_id, status=status)
+                    for tag in tags:
+                        work_system.add_tag_to_item(new_id, tag)
                     
                     if new_id:
                         # Get the created item
-                        item = work_system.get_work_item(new_id)
+                        item = work_system.items[new_id].to_dict()
                         
                         # Handle links if provided
                         if links is not None:

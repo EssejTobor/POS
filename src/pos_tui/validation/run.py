@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from src.pos_tui.validation import (
     ValidationProtocol,
     ItemCreationValidation,
+    ItemCreationViaFormValidation,
     ItemEditingValidation,
     OptimisticUIValidation,
     UIComponentsValidation,
@@ -32,6 +33,7 @@ def get_available_protocols() -> Dict[str, ValidationProtocol]:
     """
     return {
         "item_creation": ItemCreationValidation(),
+        "item_creation_via_form": ItemCreationViaFormValidation(),
         "item_editing": ItemEditingValidation(),
         "optimistic_ui": OptimisticUIValidation(),
         "ui_components": UIComponentsValidation(),
@@ -109,7 +111,7 @@ def run_protocol_group(group_name: str) -> bool:
     """
     # Define protocol groups
     groups = {
-        "item": ["item_creation", "item_editing", "optimistic_ui"],
+        "item": ["item_creation", "item_creation_via_form", "item_editing", "optimistic_ui"],
         "ui": ["ui_components"],
         "links": ["link_management", "link_navigation"],
     }

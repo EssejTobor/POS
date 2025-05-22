@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from src.pos_tui.validation import (
     ItemCreationValidation,
+    ItemCreationViaFormValidation,
     ItemEditingValidation,
     OptimisticUIValidation,
     UIComponentsValidation,
@@ -32,9 +33,10 @@ def run_all_validations():
     validations = [
         # Phase 1-2 validations
         UIComponentsValidation(),
-        
+
         # Phase 3 validations
         ItemCreationValidation(),
+        ItemCreationViaFormValidation(),
         ItemEditingValidation(),
         OptimisticUIValidation(),
         

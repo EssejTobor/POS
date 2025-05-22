@@ -48,9 +48,16 @@ class NewItemScreen(Screen):
         loading = self.query_one("#save_indicator")
         loading.display = True
 
-        # Start the worker to save the item
+        # Determine if this is an edit operation
+        item_id = self.item.get("id") if self.item else None
+
+        # Start the worker to save the item with full data
         worker = ItemSaveWorker(callback=self._on_save_completed)
-        worker.start(item_data=message.item_data)
+        worker.start(
+            item_data=message.item_data,
+            links=message.links,
+            item_id=item_id,
+        )
     
     def _on_save_completed(self, result: dict) -> None:
         """Handle completion of the save worker."""
