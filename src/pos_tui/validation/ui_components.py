@@ -244,6 +244,44 @@ class ConfirmModalValidation(ValidationProtocol):
             self.result.add_fail(f"Failed to import ConfirmModal: {e}")
 
 
+class DetailScreenValidation(ValidationProtocol):
+    """Validation protocol for the ItemDetailScreen."""
+
+    def __init__(self) -> None:
+        super().__init__("detail_screen")
+
+    def _run_validation(self) -> None:
+        try:
+            from src.pos_tui.screens.detail import ItemDetailScreen
+
+            item = WorkItem(
+                id="d1",
+                title="Detail",
+                goal="g",
+                item_type=ItemType.TASK,
+                description="desc",
+                priority=Priority.MED,
+                status=ItemStatus.NOT_STARTED,
+            )
+
+            ws = WorkSystem(":memory:")
+            ws.items[item.id] = item
+
+            screen = ItemDetailScreen(item, ws)
+            path = screen._build_breadcrumb_items()
+            if path and path[-1].id == item.id:
+                self.result.add_pass("Breadcrumb generated correctly")
+            else:
+                self.result.add_fail("Breadcrumb generation failed")
+
+            if hasattr(screen, "compose"):
+                self.result.add_pass("Screen has compose method")
+            else:
+                self.result.add_fail("Screen missing compose method")
+        except Exception as e:
+            self.result.add_fail(f"DetailScreen validation error: {e}")
+
+
 def run_ui_validations() -> None:
     """Run all UI component validations."""
     # Validate EditItemModal
@@ -253,11 +291,16 @@ def run_ui_validations() -> None:
     # Validate ConfirmModal
     confirm_modal = ConfirmModalValidation()
     confirm_modal.validate()
-    
+
     # Validate ItemTable
     item_table = ItemTableValidation()
     item_table.validate()
 
+    # Validate DetailScreen
+    detail_screen = DetailScreenValidation()
+    detail_screen.validate()
+
 
 if __name__ == "__main__":
     run_ui_validations() 
+

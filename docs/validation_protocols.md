@@ -67,7 +67,7 @@ python -m src.pos_tui.validation.run item_editing
 
 ### UI Component Validations
 
-**Protocol Names**: `edit_modal`, `item_table`, `confirm_modal`
+**Protocol Names**: `edit_modal`, `item_table`, `confirm_modal`, `detail_screen`
 
 **Description**: Validates UI components without rendering them
 
@@ -80,7 +80,7 @@ python -m src.pos_tui.validation.run item_editing
 
 **Usage**:
 ```bash
-python -m src.pos_tui.validation.run edit_modal item_table confirm_modal
+python -m src.pos_tui.validation.run edit_modal item_table confirm_modal detail_screen
 ```
 
 ## Feature Validation Protocols
@@ -200,5 +200,6 @@ These results can be reviewed to track validation history and identify areas for
 | edit_modal | ❌ Fail |
 | item_table | ❌ Fail |
 | confirm_modal | ❌ Fail |
+| detail_screen | ❌ Fail |
 
 Validation execution reported failures across all protocols due to missing or incomplete implementations. See the console output for detailed error information.

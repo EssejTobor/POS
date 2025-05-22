@@ -19,6 +19,7 @@ from src.pos_tui.validation.ui_components import (
     EditItemModalValidation,
     ItemTableValidation,
     ConfirmModalValidation,
+    DetailScreenValidation,
 )
 
 
@@ -38,6 +39,7 @@ def run_selected_validations(validation_names: List[str] = None) -> Dict[str, Va
         "edit_modal": EditItemModalValidation,
         "item_table": ItemTableValidation,
         "confirm_modal": ConfirmModalValidation,
+        "detail_screen": DetailScreenValidation,
         # Add more validation protocols here as they are implemented
     }
     
@@ -145,6 +147,7 @@ def main() -> int:
             "edit_modal",
             "item_table",
             "confirm_modal",
+            "detail_screen",
             # Add more as implemented
         ]
         
