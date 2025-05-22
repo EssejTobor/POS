@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "passes": [
+    "item_entry_form: Goal collected correctly",
+    "item_entry_form: Item type collected correctly",
+    "edit_item_modal: Modal correctly stores the item",
+    "edit_item_modal: Modal has required method: on_mount",
+    "edit_item_modal: Modal has required method: on_item_entry_form_item_submitted",
+    "edit_item_modal: Modal has required method: on_button_pressed",
+    "edit_item_modal: Successfully simulated form submission event",
+    "item_table: Table exposes columns attribute",
+    "item_table: Table has update_cell method",
+    "item_table: update_cell method has correct number of parameters",
+    "item_table: Table has message class: ItemSelected",
+    "item_table: Table has message class: ItemEditRequested",
+    "item_table: Table has message class: ItemDeleteRequested"
+  ],
+  "failures": [],
+  "notes": [
+    "edit_item_modal: Creating EditItemModal simulator...",
+    "edit_item_modal: Modal mount simulation skipped",
+    "item_table: Creating ItemTable simulator...",
+    "item_table: Table mount simulation skipped"
+  ],
+  "duration": 0.0013880729675292969,
+  "timestamp": "2025-05-22T17:02:33.933984"
+}
