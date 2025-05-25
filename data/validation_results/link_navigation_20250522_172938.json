@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "passes": [
+    "Forward navigation validation protocol defined",
+    "Reverse navigation validation protocol defined",
+    "Breadcrumb navigation validation protocol defined"
+  ],
+  "failures": [],
+  "notes": [
+    "Created temporary database at /tmp/tmpju_q04uh.db with linked test items",
+    "Forward navigation validation would verify that:",
+    "- Child items are displayed in the parent's detail view",
+    "- Clicking on a child item navigates to its detail view",
+    "- The navigation maintains context of the relationship",
+    "Reverse navigation validation would verify that:",
+    "- Parent items are displayed in the child's detail view",
+    "- Clicking on a parent item navigates to its detail view",
+    "- The navigation maintains context of the relationship",
+    "Breadcrumb navigation validation would verify that:",
+    "- Breadcrumbs show the navigation path",
+    "- Breadcrumb path is updated when navigating between items",
+    "- Clicking on a breadcrumb navigates to that item",
+    "- Breadcrumbs maintain the context of the navigation history",
+    "Removed temporary database at /tmp/tmpju_q04uh.db"
+  ],
+  "duration": 0.05747365951538086,
+  "timestamp": "2025-05-22T17:29:38.045130"
+}

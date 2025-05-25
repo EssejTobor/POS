@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "passes": [
+    "Goal column present in table",
+    "Goal value displayed correctly",
+    "THOUGHT option present in type filter",
+    "Filtering by goal returns correct item",
+    "Filtering by THOUGHT type works"
+  ],
+  "failures": [],
+  "notes": [
+    "Removed temporary database /tmp/tmp2_3o89wl.db"
+  ],
+  "duration": 1.556732416152954,
+  "timestamp": "2025-05-22T17:29:37.923815"
+}
