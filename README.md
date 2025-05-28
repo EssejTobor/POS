@@ -87,6 +87,11 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Contributing
 
+This could also be known as the “piece of shit” (POS) application. I was trying to build from first principles to understand all the friction involved in manually tracking self-help habits. So I started from scratch — raw files, no frameworks, no guardrails — just to feel the pain. And...it was unbearable, but insightful.
+
+I intended to implement a full textual interface (still broken), and while I’ve mostly abandoned this, I’d genuinely be happy to collaborate if you find any part of it interesting.
+
+
 1. Fork the repository
 2. Create a feature branch
 3. Commit your changes
