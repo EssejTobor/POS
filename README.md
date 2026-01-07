@@ -30,6 +30,7 @@ POS is designed to help track work items, goals, and thoughts through an interac
 
 POS is currently using Textual 3.2.0 for its interface (v0.4.0), with the legacy CLI functionality deprecated.
 
+
 ## Documentation
 
 For detailed information about the project's scope and implementation strategy, see [Project Scope](docs/PROJECT_SCOPE.md).
