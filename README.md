@@ -1,45 +1,94 @@
-# Personal Operating System (POS)
+# Personal Organization System (POS)
 
-A terminal-based personal task and knowledge management system built with Python and the Textual framework (v3.2.0).
+A command-line interface (CLI) tool for managing work items, tasks, and personal organization.
 
-## Overview
+## Features
 
-POS is designed to help track work items, goals, and thoughts through an interactive Terminal User Interface (TUI). The application provides a structured way to manage personal information, link related items, and visualize relationships between different pieces of knowledge.
+- Create and manage work items with titles, descriptions, and goals
+- Organize items by priority and status
+- Track progress and completion of tasks
+- Backup and restore functionality
+- Export data to JSON format
+- Command-line interface with rich text formatting
 
-## Core Features
+## Installation
 
-- Create and manage work items through a form-based interface
-- Link items with semantic relationship types 
-- Visualize thought hierarchies and evolution
-- Filter and search across your knowledge base
-- Navigate efficiently using keyboard shortcuts and command palette
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/pos.git
+cd pos
+```
 
-## Getting Started
+2. Create and activate a virtual environment:
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
 
-1. Clone the repository
-2. Install dependencies: `pip install -r requirements.txt`
-3. Launch the application: `python main.py`
+3. Install the package in development mode:
+```bash
+pip install -e .
+```
+
+## Usage
+
+After installation, you can run the application using:
+
+```bash
+pos
+```
+
+Or run it directly using:
+
+```bash
+python run.py
+```
 
 ## Project Structure
 
-- `src/` - Core application code 
-- `data/` - Database and storage location
-- `docs/` - Documentation including PROJECT_SCOPE.md
-
-## Project Status
-
-POS is currently using Textual 3.2.0 for its interface (v0.4.0), with the legacy CLI functionality deprecated.
-
-## Documentation
-
-For detailed information about the project's scope and implementation strategy, see [Project Scope](docs/PROJECT_SCOPE.md).
-
-## Validation Runner
-
-Run built-in validation protocols from the command line:
-
-```bash
-python -m src.pos_tui.validation.run --all
+```
+pos/                      # Root project directory
+├── src/                 # Source code directory
+│   ├── __init__.py
+│   ├── cli.py          # Command-line interface
+│   ├── database.py     # Database operations
+│   ├── display.py      # Display formatting
+│   └── ...
+├── tests/              # Test directory
+│   ├── __init__.py
+│   └── ...
+├── data/              # Data directory
+│   ├── db/           # Database files
+│   └── backups/      # Backup files
+├── docs/             # Documentation
+├── .venv/            # Virtual environment (not in source control)
+├── .gitignore
+├── README.md
+├── requirements.txt
+├── setup.py         # Package configuration
+└── run.py          # Main entry point
 ```
 
-Use `--list` to display protocols or `--protocol <name>` to run one.
+## Development
+
+1. Install development dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+2. Run tests:
+```bash
+python -m pytest tests/
+```
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request 

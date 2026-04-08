@@ -1,105 +1,32 @@
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:  # pragma: no cover - only for type checkers
-    from pydantic import BaseModel, Field
-else:
-    try:
-        from pydantic import BaseModel, Field  # type: ignore[attr-defined]
-    except Exception:  # pragma: no cover - allow running without pydantic
-
-        class BaseModelMeta(type):
-            def __new__(
-                mcls, name: str, bases: tuple[type, ...], ns: dict
-            ) -> "BaseModelMeta":
-                annotations = ns.get("__annotations__", {})
-                fields: dict[str, dict[str, object]] = {}
-                for attr in annotations:
-                    value = ns.get(attr, None)
-                    if isinstance(value, dict) and "_field_info" in value:
-                        fields[attr] = value["_field_info"]
-                        ns[attr] = None
-                    else:
-                        fields[attr] = {"default": value, "default_factory": None}
-                ns["_fields_info"] = fields
-                return super().__new__(mcls, name, bases, ns)
-
-        class BaseModel(metaclass=BaseModelMeta):
-            _fields_info: dict[str, dict[str, object]]
-
-            def __init__(self, **data: object) -> None:
-                for name, info in self._fields_info.items():
-                    alias = info.get("alias")
-                    if alias and alias in data:
-                        value = data[alias]
-                    elif name in data:
-                        value = data[name]
-                    else:
-                        factory = info.get("default_factory")
-                        if factory is not None:
-                            value = factory()
-                        else:
-                            value = info.get("default")
-                    setattr(self, name, value)
-
-        from typing import Callable
-
-        def Field(
-            default: object = None,
-            *,
-            default_factory: Callable[[], object] | None = None,
-            alias: str | None = None,
-            **_: object,
-        ) -> object:
-            return {
-                "_field_info": {
-                    "default": default,
-                    "default_factory": default_factory,
-                    "alias": alias,
-                }
-            }
-
+from typing import List, Optional
+from pydantic import BaseModel, Field
 
 class ItemType(Enum):
     """Defines the different types of work items that can be tracked"""
-
-    TASK = "t"  # Regular tasks - day-to-day work items
+    TASK = "t"      # Regular tasks - day-to-day work items
     LEARNING = "l"  # Learning-related items - educational goals
     RESEARCH = "r"  # Research-related items - investigation tasks
     THOUGHT = "th"  # Thought items - ideas and concepts to track
 
-
 class ItemStatus(Enum):
     """Defines the possible states of a work item"""
-
-    NOT_STARTED = "not_started"  # New items start here
-    IN_PROGRESS = "in_progress"  # Items currently being worked on
-    COMPLETED = "completed"  # Finished items
-
+    NOT_STARTED = "not_started"   # New items start here
+    IN_PROGRESS = "in_progress"   # Items currently being worked on
+    COMPLETED = "completed"       # Finished items
 
 class Priority(Enum):
     """Defines priority levels for work items"""
-
-    LOW = 1  # Low urgency/importance
-    MED = 2  # Medium urgency/importance
-    HI = 3  # High urgency/importance - critical items
-
-
-class LinkType(Enum):
-    """Defines the types of relationships between work items"""
-    
-    REFERENCES = "references"  # Basic connection between items
-    EVOLVES_FROM = "evolves-from"  # Shows thought evolution
-    INSPIRED_BY = "inspired-by"  # Influence without direct evolution
-    PARENT_CHILD = "parent-child"  # Hierarchical relationship
-
+    LOW = 1    # Low urgency/importance
+    MED = 2    # Medium urgency/importance
+    HI = 3     # High urgency/importance - critical items
 
 class WorkItem(BaseModel):
     """
     Core data structure representing a single work item.
     Uses Pydantic for validation and serialization.
-
+    
     Attributes:
         title: Short description of the item
         item_type: Category of the work item (TASK/LEARNING/RESEARCH/THOUGHT)
@@ -111,7 +38,6 @@ class WorkItem(BaseModel):
         created_at: Timestamp of creation
         updated_at: Timestamp of last modification
     """
-
     id: str = Field(default="")
     title: str
     goal: str
@@ -121,7 +47,7 @@ class WorkItem(BaseModel):
     status: ItemStatus = ItemStatus.NOT_STARTED
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
-
+    
     def update_status(self, new_status: ItemStatus):
         self.status = new_status
         self.updated_at = datetime.now()
@@ -132,27 +58,27 @@ class WorkItem(BaseModel):
 
     def to_dict(self) -> dict:
         return {
-            "id": self.id,
-            "title": self.title,
-            "goal": self.goal,
-            "item_type": self.item_type.value,
-            "description": self.description,
-            "priority": self.priority.value,
-            "status": self.status.value,
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
+            'id': self.id,
+            'title': self.title,
+            'goal': self.goal,
+            'item_type': self.item_type.value,
+            'description': self.description,
+            'priority': self.priority.value,
+            'status': self.status.value,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "WorkItem":
+    def from_dict(cls, data: dict) -> 'WorkItem':
         return cls(
-            id=data["id"],
-            title=data["title"],
-            goal=data.get("goal", "legacy"),
-            item_type=ItemType(data["item_type"]),
-            description=data["description"],
-            priority=Priority(data["priority"]),
-            status=ItemStatus(data["status"]),
-            created_at=datetime.fromisoformat(data["created_at"]),
-            updated_at=datetime.fromisoformat(data["updated_at"]),
-        )
+            id=data['id'],
+            title=data['title'],
+            goal=data.get('goal', 'legacy'),
+            item_type=ItemType(data['item_type']),
+            description=data['description'],
+            priority=Priority(data['priority']),
+            status=ItemStatus(data['status']),
+            created_at=datetime.fromisoformat(data['created_at']),
+            updated_at=datetime.fromisoformat(data['updated_at'])
+        ) 
