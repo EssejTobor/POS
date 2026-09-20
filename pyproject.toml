@@ -1,29 +1,31 @@
 [project]
 name = "pos"
 version = "0.2.0"
-description = "Add your description here"
+description = "Personal Organization System - a CLI for managing work items, thoughts, goals, and relationships."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13,<3.14"
 dependencies = [
-    "textual>=2.1.0",
+    "pydantic>=2.10.6,<3",
     "rich>=13.0.0"
 ]
 
-[project.optional-dependencies]
-dev = [
-  "pytest",
-  "pre-commit",
-  "mypy",
-  "ruff",
-  "black",
-  "isort"
-]
+[project.scripts]
+pos = "src.cli:main"
 
-test = [
-  "pytest"
-]
+[project.optional-dependencies]
+tui = ["textual>=2.1.0"]
+
+[dependency-groups]
+dev = ["pytest", "mypy", "ruff"]
+
+[build-system]
+requires = ["setuptools>=77,<83"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["src", "src.*"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 ignore_missing_imports = true
 
