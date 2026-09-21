@@ -99,6 +99,9 @@
 ## [Unreleased]
 
 ### Added
+- Documented the smallest reliable request-to-operation workflow: translate a
+  natural-language request once into the validated `add` command, persist it
+  through `WorkSystem` to SQLite, and read it back with `list` for inspection.
 - Created `item_links` table for storing relationships between work items
 - Added foreign key constraints and appropriate indexes for the `item_links` table
 - Implemented `add_link()` method to create relationships between items with error handling
@@ -137,4 +140,3 @@
 - Updated class docstring for `WorkSystemCLI` to document the new link and unlink commands
 - Updated class docstring for `WorkSystemCLI` to document the `optimize` command
 - Enhanced the Display class to support advanced tree-based relationship visualizations
-

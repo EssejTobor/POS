@@ -46,6 +46,48 @@ Or run it directly using:
 uv run --locked python run.py
 ```
 
+### Smallest request-to-operation path
+
+POS does not currently include a natural-language parser or agent. The smallest
+reliable path is therefore one explicit translation from the request into the
+existing `add` command, followed by a read command:
+
+```text
+natural-language request
+  -> add <goal>-<type>-<priority>-<title>-<description>
+  -> Pydantic validation
+  -> WorkSystem operation
+  -> SQLite commit in data/db/work_items.db
+  -> list <goal> (or list all) to inspect the result
+```
+
+For example, translate “Remember to buy milk and eggs for Home” into this CLI
+session:
+
+```text
+(work) add Home-t-MED-Buy groceries-Milk and eggs
+(work) list Home
+```
+
+The successful `add` response includes the generated item ID. `list Home`
+reads the item back through the normal application path, so it is the shortest
+confirmation that the operation was accepted, persisted, and is inspectable.
+For a portable artifact, run `export work_items.md`; for relationships, append
+`--link-to <item_id> --link-type <type>` when adding and inspect with
+`link_tree <item_id>`.
+
+The translation step must preserve POS's command vocabulary:
+
+- Types: `t` (task), `l` (learning), `r` (research), or `th` (thought).
+- Priorities: `HI`, `MED`, or `LOW`.
+- Link types: `references`, `evolves-from`, `inspired-by`, or `parent-child`.
+- The five required `add` fields are hyphen-delimited. Avoid hyphens in the
+  goal, type, priority, and title; the description may contain them.
+
+This is intentionally the smallest path using today's capabilities. Adding
+free-form language interpretation directly to POS would be a new capability,
+not part of the current execution path.
+
 ## Project Structure
 
 ```
